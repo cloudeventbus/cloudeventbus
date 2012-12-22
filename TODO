@@ -1,0 +1,7 @@
+- Get NATS in Maven Central
+- Design protocol
+- Design client interface
+- Build codec
+- Implement server
+- Implement client
+
