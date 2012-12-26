@@ -35,7 +35,6 @@ public class Certificate {
 	static final int MAX_STRING_LENGTH = 16384;
 	static final int SIGNATURE_LENGTH = 256;
 
-	private final int version;
 	private final Type type;
 	private final long serialNumber;
 	private final long issuer;
@@ -49,7 +48,6 @@ public class Certificate {
 	private volatile byte[] hash;
 
 	public Certificate(Type type, long serialNumber, long issuer, long expirationDate, PublicKey publicKey, List<String> subscribePermissions, List<String> publishPermissions, String comment, byte[] signature) {
-		this.version = 1;
 		if (type == null) {
 			throw new IllegalArgumentException("type cannot be null");
 		}
@@ -73,10 +71,6 @@ public class Certificate {
 	public Certificate(InputStream in) throws IOException {
 		final DataInputStream data = new DataInputStream(in);
 		try {
-			version = data.read();
-			if (version != 1) {
-				throw new InvalidCertificateException("Unable to parse certificate with version " + version);
-			}
 			this.type = Type.values()[data.read()];
 			serialNumber = data.readLong();
 			issuer = data.readLong();
@@ -116,7 +110,6 @@ public class Certificate {
 
 	private void store(OutputStream out, boolean writeSignature) throws IOException {
 		final DataOutputStream data = new DataOutputStream(out);
-		data.write(1); // Version
 		data.write(type.ordinal());
 		data.writeLong(serialNumber);
 		data.writeLong(issuer);
@@ -184,10 +177,6 @@ public class Certificate {
 		return Collections.unmodifiableList(new ArrayList<>(subscribePermissions));
 	}
 
-	public int getVersion() {
-		return version;
-	}
-
 	public Type getType() {
 		return type;
 	}
@@ -234,7 +223,6 @@ public class Certificate {
 		if (expirationDate != that.expirationDate) return false;
 		if (issuer != that.issuer) return false;
 		if (serialNumber != that.serialNumber) return false;
-		if (version != that.version) return false;
 		if (comment != null ? !comment.equals(that.comment) : that.comment != null) return false;
 		if (!publicKey.equals(that.publicKey)) return false;
 		if (!publishPermissions.equals(that.publishPermissions)) return false;
@@ -247,9 +235,7 @@ public class Certificate {
 
 	@Override
 	public int hashCode() {
-		int result = version;
-		result = 31 * result + type.hashCode();
-		result = 31 * result + (int) (serialNumber ^ (serialNumber >>> 32));
+		int result = (int) (serialNumber ^ (serialNumber >>> 32));
 		result = 31 * result + (int) (issuer ^ (issuer >>> 32));
 		result = 31 * result + (int) (expirationDate ^ (expirationDate >>> 32));
 		result = 31 * result + publicKey.hashCode();
