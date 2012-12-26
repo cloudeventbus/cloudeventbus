@@ -87,11 +87,12 @@ public class Certificate {
 			subscribePermissions = commaSeperateStringToList(subscribe);
 			final String publish = readString(data);
 			publishPermissions = commaSeperateStringToList(publish);
-			comment = readString(data);
+			final String commentString = readString(data);
+			comment = commentString.length() == 0 ? null : commentString;
 
 			final byte[] signature = new byte[SIGNATURE_LENGTH];
 			final int readBytes = data.read(signature);
-			if (readBytes == 0) {
+			if (readBytes <= 0) {
 				this.signature = null;
 			} else if (readBytes != SIGNATURE_LENGTH) {
 				throw new EOFException("Premature end of certificate");
