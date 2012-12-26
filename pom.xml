@@ -2,11 +2,128 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+	<modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.github.cloudeventbus</groupId>
-    <artifactId>cloudeventbus</artifactId>
-    <version>0.1-SNAPSHOT</version>
+	<groupId>com.github.cloudeventbus</groupId>
+	<artifactId>cloudeventbus</artifactId>
+	<version>0.1-SNAPSHOT</version>
+	<modules>
+		<module>codec</module>
+		<module>common</module>
+		<module>spike</module>
+	</modules>
 
-    
+	<packaging>pom</packaging>
+
+	<properties>
+		<jackson.version>1.9.8</jackson.version>
+		<logback.version>1.0.6</logback.version>
+		<nats.version>0.4-SNAPSHOT</nats.version>
+		<netty.version>3.5.3.Final</netty.version>
+		<netty4.version>4.0.0.Alpha8</netty4.version>
+		<slf4j.version>1.6.5</slf4j.version>
+		<spring.version>3.1.1.RELEASE</spring.version>
+		<testng.version>6.3.1</testng.version>
+		<java.version>1.7</java.version>
+		<commons-codec.version>1.7</commons-codec.version>
+	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<!-- Modules -->
+			<dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>common</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<!-- Third party dependencies -->
+			<dependency>
+				<groupId>io.netty</groupId>
+				<artifactId>netty</artifactId>
+				<version>${netty4.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.codehaus.jackson</groupId>
+				<artifactId>jackson-mapper-asl</artifactId>
+				<version>${jackson.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.testng</groupId>
+				<artifactId>testng</artifactId>
+				<version>${testng.version}</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-context</artifactId>
+				<version>${spring.version}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>commons-logging</groupId>
+						<artifactId>commons-logging</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+			<dependency>
+				<groupId>com.github.mheath</groupId>
+				<artifactId>nats-client</artifactId>
+				<version>${nats.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.github.mheath</groupId>
+				<artifactId>nats-client-spring</artifactId>
+				<version>${nats.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>ch.qos.logback</groupId>
+				<artifactId>logback-classic</artifactId>
+				<version>${logback.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-api</artifactId>
+				<version>${slf4j.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>jcl-over-slf4j</artifactId>
+				<version>${slf4j.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>commons-codec</groupId>
+				<artifactId>commons-codec</artifactId>
+				<version>${commons-codec.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<name>Mike Heath</name>
+			<email>elcapo@gmail.com</email>
+		</developer>
+	</developers>
+
 </project>
