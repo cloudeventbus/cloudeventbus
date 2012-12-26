@@ -1,7 +1,11 @@
-- Get NATS in Maven Central
-- Design protocol
+- Build simple PKI
+- Build simple PKI command-line tools
+X Design protocol
 - Design client interface
 - Build codec
 - Implement server
 - Implement client
-
+- Implement a VCAP service gateway
+- Create a BOSH release
+- Browser client/server (websocket based)
+- Build a Node.js client
