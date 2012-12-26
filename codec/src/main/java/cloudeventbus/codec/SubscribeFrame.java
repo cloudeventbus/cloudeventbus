@@ -1,7 +1,10 @@
 package cloudeventbus.codec;
 
 /**
- * @author Mike Heath <heathma@ldschurch.org>
+ * @author Mike Heath <elcapo@gmail.com>
  */
-public class SubscribeFrame {
+public class SubscribeFrame extends AbstractSubscriptionFrame {
+	public SubscribeFrame(String subject) {
+		super(subject);
+	}
 }
