@@ -16,8 +16,14 @@
  */
 package cloudeventbus.codec;
 
+import io.netty.buffer.ByteBuf;
+
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-public class PublishFrame {
+public class PublishFrame extends AbstractMessageFrame {
+
+	public PublishFrame(String subject, String replySubject, ByteBuf body) {
+		super(subject, replySubject, body);
+	}
 }

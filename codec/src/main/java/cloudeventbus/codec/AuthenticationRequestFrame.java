@@ -17,6 +17,10 @@
 package cloudeventbus.codec;
 
 /**
+ * Represent an authentication request. The request contains a challenge consisting of a random string of bytes. The
+ * client encrypts this challenge using its private key and returns the encrypted challenge to the server in an
+ * {@link AuthenticationResponseFrame}.
+ *
  * @author Mike Heath <elcapo@gmail.com>
  */
 public class AuthenticationRequestFrame implements Frame {
@@ -24,13 +28,13 @@ public class AuthenticationRequestFrame implements Frame {
 	/**
 	 * Base64 encoded authentication challenge.
 	 */
-	private final String challenge;
+	private final byte[] challenge;
 
-	public AuthenticationRequestFrame(String challenge) {
-		this.challenge = challenge;
+	public AuthenticationRequestFrame(byte[] challenge) {
+		this.challenge = challenge.clone();
 	}
 
-	public String getChallenge() {
-		return challenge;
+	public byte[] getChallenge() {
+		return challenge.clone();
 	}
 }

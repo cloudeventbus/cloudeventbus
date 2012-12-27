@@ -19,16 +19,29 @@ package cloudeventbus.codec;
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-public class ErrorFrame {
+public class ErrorFrame implements Frame {
 
-	private final String message;
+	public enum Code {
 
-	public ErrorFrame() {
-		this(null);
 	}
 
-	public ErrorFrame(String message) {
+	private final Code code;
+	private final String message;
+
+	public ErrorFrame(Code code) {
+		this(code, null);
+	}
+
+	public ErrorFrame(Code code, String message) {
+		if (code == null) {
+			throw new IllegalArgumentException("Code cannot be null");
+		}
+		this.code = code;
 		this.message = message;
+	}
+
+	public Code getCode() {
+		return code;
 	}
 
 	public String getMessage() {

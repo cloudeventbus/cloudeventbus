@@ -16,43 +16,47 @@
  */
 package cloudeventbus.codec;
 
+import cloudeventbus.pki.CertificateChain;
+
 /**
+ * Holds the response to an authentication request.
+ *
  * @author Mike Heath <elcapo@gmail.com>
  */
 public class AuthenticationResponseFrame implements Frame {
 
 	/**
-	 * The X.509 certificate that identifies the client (Base64 encoded.)
+	 * The certificates that identify the client.
 	 */
-	private final String certificate;
+	private final CertificateChain certificates;
 
 	/**
-	 * Random bytes sent by the client as part of the digital signature (Base64 encoded).
+	 * Random bytes sent by the client as part of the digital signature.
 	 */
-	private final String salt;
+	private final byte[] salt;
 
 	/**
 	 * The digital signature. This consists of the challenge sent by the server in the
-	 * {@link AuthenticationRequestFrame} concatenated with the {@code salt} and encrypted with the private key associated
-	 * with the public key stored in the {@code certificate}.
+	 * {@link AuthenticationRequestFrame} concatenated with the {@code salt} and encrypted with the private key
+	 * associated with the the last certificate in the certificate chain.
 	 */
-	private final String digitalSignature;
+	private final byte[] digitalSignature;
 
-	public AuthenticationResponseFrame(String certificate, String salt, String digitalSignature) {
-		this.certificate = certificate;
-		this.salt = salt;
+	public AuthenticationResponseFrame(CertificateChain certificates, byte[] salt, byte[] digitalSignature) {
+		this.certificates = certificates;
+		this.salt = salt.clone();
 		this.digitalSignature = digitalSignature;
 	}
 
-	public String getCertificate() {
-		return certificate;
+	public CertificateChain getCertificates() {
+		return certificates;
 	}
 
-	public String getSalt() {
-		return salt;
+	public byte[] getSalt() {
+		return salt.clone();
 	}
 
-	public String getDigitalSignature() {
-		return digitalSignature;
+	public byte[] getDigitalSignature() {
+		return digitalSignature.clone();
 	}
 }

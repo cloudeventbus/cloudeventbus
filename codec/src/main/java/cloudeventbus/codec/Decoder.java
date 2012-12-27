@@ -17,11 +17,17 @@
 package cloudeventbus.codec;
 
 import cloudeventbus.Constants;
+import cloudeventbus.pki.CertificateChain;
+import cloudeventbus.pki.CertificateStoreLoader;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.util.CharsetUtil;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.Base64InputStream;
+
+import java.io.ByteArrayInputStream;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
@@ -56,26 +62,95 @@ public class Decoder extends ByteToMessageDecoder<Frame> {
 		in.skipBytes(DELIMITER.capacity());
 		final String[] parts = command.split("\\s+");
 		final String frameType = parts[0];
+		final int argumentsLength = parts.length - 1;
 		switch (frameType) {
 			case FrameTypes.AUTH_RESPONSE:
-				assertArguments(3, parts.length, "authentication response");
-				final String certificate = parts[1];
-				final String salt = parts[2];
-				final String digitalSignature = parts[3];
-				return new AuthenticationResponseFrame(certificate, salt, digitalSignature);
-
+				assertArgumentsLength(3, argumentsLength, "authentication response");
+				final CertificateChain certificates = new CertificateChain();
+				final ByteArrayInputStream certificateChainIn = new ByteArrayInputStream(parts[1].getBytes());
+				CertificateStoreLoader.load(new Base64InputStream(certificateChainIn), certificates);
+				final byte[] salt = Base64.decodeBase64(parts[2]);
+				final byte[] digitalSignature = Base64.decodeBase64(parts[3]);
+				return new AuthenticationResponseFrame(certificates, salt, digitalSignature);
 			case FrameTypes.AUTHENTICATE:
-				assertArguments(1, parts.length, "authentication request");
-				final String challenge = parts[1];
+				assertArgumentsLength(1, argumentsLength, "authentication request");
+				final byte[] challenge = Base64.decodeBase64(parts[1]);
 				return new AuthenticationRequestFrame(challenge);
+			case FrameTypes.ERROR:
+				if (parts.length == 0) {
+					throw new DecodingException("Error is missing error code");
+				}
+				final Integer errorIndex = Integer.valueOf(parts[1]);
+				final ErrorFrame.Code errorCode = ErrorFrame.Code.values()[errorIndex];
+				int messageIndex = 1;
+				messageIndex = skipWhiteSpace(messageIndex, command);
+				while (Character.isDigit(command.charAt(messageIndex))) {
+					messageIndex++;
+				}
+				messageIndex = skipWhiteSpace(messageIndex, command);
+				final String errorMessage = command.substring(messageIndex).trim();
+				if (errorMessage.length() > 0) {
+					return new ErrorFrame(errorCode, errorMessage);
+				} else {
+					return new ErrorFrame(errorCode);
+				}
+			case FrameTypes.GREETING:
+				assertArgumentsLength(1, argumentsLength, "greeting");
+				final String version = parts[1];
+				return new GreetingFrame(version);
+			case FrameTypes.OK:
+				return OkFrame.OK;
+			case FrameTypes.PING:
+				return PingFrame.PING;
+			case FrameTypes.PONG:
+				return PongFrame.PONG;
+			case FrameTypes.PUBLISH:
+			case FrameTypes.SEND:
+				if (argumentsLength < 2 || argumentsLength > 3) {
+					throw new DecodingException("Expected message frame to have 2 or 3 arguments. It has " + argumentsLength + ".");
+				}
+				final String messageSubject = parts[1];
+				final String replySubject;
+				final Integer messageLength;
+				if (parts.length == 3) {
+					replySubject = null;
+					messageLength = Integer.valueOf(parts[2]);
+				} else {
+					replySubject = parts[2];
+					messageLength = Integer.valueOf(parts[3]);
+				}
+				if (in.readableBytes() < messageLength) {
+					return null;
+				}
+				final ByteBuf messageBody = in.readBytes(messageLength);
+				if (frameType == FrameTypes.PUBLISH) {
+					return new PublishFrame(messageSubject, replySubject, messageBody);
+				} else {
+					return new SendFrame(messageSubject, replySubject, messageBody);
+				}
+			case FrameTypes.SERVER_READY:
+				return ServerReadyFrame.SERVER_READY;
+			case FrameTypes.SUBSCRIBE:
+				assertArgumentsLength(1, argumentsLength, "subscribe");
+				return new SubscribeFrame(parts[1]);
+			case FrameTypes.UNSUBSCRIBE:
+				assertArgumentsLength(1, argumentsLength, "unsubscribe");
+				return new UnsubscribeFrame(parts[1]);
+			default:
+				throw new DecodingException("Unknown frame type " + frameType);
 		}
-		return null; // TODO Complete this
 	}
 
-	private void assertArguments(int expectedArguments, int framePartsLenth, String frameName) {
-		final int actualArguments = framePartsLenth - 1;
-		if (actualArguments != expectedArguments) {
-			throw new DecodingException("Expected " + frameName + " to have " + expectedArguments + " arguments. It has " + actualArguments + ".");
+	private int skipWhiteSpace(int messageIndex, String command) {
+		while (Character.isWhitespace(command.charAt(messageIndex))) {
+			messageIndex++;
+		}
+		return messageIndex;
+	}
+
+	private void assertArgumentsLength(int expectedArguments, int argumentsLength, String frameName) {
+		if (argumentsLength != expectedArguments) {
+			throw new DecodingException("Expected " + frameName + " to have " + expectedArguments + " arguments. It has " + argumentsLength + ".");
 		}
 	}
 

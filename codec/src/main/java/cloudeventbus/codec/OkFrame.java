@@ -19,7 +19,7 @@ package cloudeventbus.codec;
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-public class OkFrame {
+public class OkFrame implements Frame {
 
 	public static final OkFrame OK = new OkFrame();
 

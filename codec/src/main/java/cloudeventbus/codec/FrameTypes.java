@@ -27,7 +27,6 @@ class FrameTypes {
 	public static final String GREETING =      "G";
 	public static final String PING =          "I";
 	public static final String PONG =          "J";
-	public static final String MESSAGE =       "M";
 	public static final String OK =            "O";
 	public static final String PUBLISH =       "P";
 	public static final String AUTH_RESPONSE = "R";

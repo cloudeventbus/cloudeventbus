@@ -19,5 +19,14 @@ package cloudeventbus.codec;
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-public class GreetingFrame {
+public class GreetingFrame implements Frame {
+	final String serverVersion;
+
+	public GreetingFrame(String serverVersion) {
+		this.serverVersion = serverVersion;
+	}
+
+	public String getServerVersion() {
+		return serverVersion;
+	}
 }

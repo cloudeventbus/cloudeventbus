@@ -19,8 +19,15 @@ package cloudeventbus.codec;
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-public class UnsubscribeFrame extends AbstractSubscriptionFrame {
+public class UnsubscribeFrame implements Frame {
+
+	private final String subject;
+
 	public UnsubscribeFrame(String subject) {
-		super(subject);
+		this.subject = subject;
+	}
+
+	public String getSubject() {
+		return subject;
 	}
 }
