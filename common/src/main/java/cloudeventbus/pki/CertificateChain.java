@@ -16,7 +16,7 @@ public class CertificateChain extends AbstractList<Certificate> {
 		if (internalList.size() == 0) {
 			return internalList.add(certificate);
 		} else {
-			final Certificate previousCertificate = internalList.get(internalList.size() - 1);
+			final Certificate previousCertificate = getLast();
 			previousCertificate.validateSignature(certificate);
 			for (Certificate c : internalList) {
 				if (c.getSerialNumber() == certificate.getSerialNumber()) {
@@ -35,5 +35,22 @@ public class CertificateChain extends AbstractList<Certificate> {
 	@Override
 	public int size() {
 		return internalList.size();
+	}
+
+	/**
+	 * Returns the first certificate in the chain. This certificate is typically signed by an authority.
+	 *
+	 * @return the first certificate.
+	 */
+	public Certificate getFirst() {
+		return get(0);
+	}
+
+	/**
+	 * Returns the last certificate in the chain.
+	 * @return the last certificate in the chain.
+	 */
+	public Certificate getLast() {
+		return internalList.get(internalList.size() - 1);
 	}
 }
