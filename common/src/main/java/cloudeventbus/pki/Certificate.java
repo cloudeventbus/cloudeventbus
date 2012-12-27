@@ -2,6 +2,10 @@ package cloudeventbus.pki;
 
 import cloudeventbus.CloudEventBusException;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -9,6 +13,8 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.GeneralSecurityException;
+import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -246,4 +252,35 @@ public class Certificate {
 		result = 31 * result + (signature != null ? Arrays.hashCode(signature) : 0);
 		return result;
 	}
+
+	/**
+	 * Validates that {@code certificate} was signed using this certificate's private key.
+	 *
+	 * @param certificate the certificate to validate.
+	 * @throws CertificateIssuerMismatchException if {@code certificate.getIssuer()} doesn't match this certificates
+	 *                                            serial number.
+	 * @throws CertificateSecurityException if a {@link GeneralSecurityException} occurs attempting to validate
+	 *                                      {@code certificate}'s signature.
+	 * @throws InvalidCertificateSignatureException if {@code certificate}'s signature is invalid.
+	 */
+	public void validateSignature(Certificate certificate) {
+		if (certificate.getIssuer() != serialNumber) {
+			throw new CertificateIssuerMismatchException("The issuer of certificate " + certificate.getSerialNumber() + " does not match this certificate.");
+		}
+		try {
+			Cipher cipher = Cipher.getInstance("RSA");
+			cipher.init(Cipher.DECRYPT_MODE, publicKey);
+			final byte[] decryptedSignature = cipher.doFinal(certificate.getSignature());
+
+			if (!Arrays.equals(certificate.hash(), decryptedSignature)) {
+				throw new InvalidCertificateSignatureException("The signature on certificate " + certificate.getSerialNumber() + " is not valid.");
+			}
+			if (type != Type.AUTHORITY && type != certificate.type) {
+				throw new InvalidCertificateException("Certificates of type " + type + " cannot sign certificates of type " + certificate.getType());
+			}
+		} catch (GeneralSecurityException e) {
+			throw new CertificateSecurityException(e);
+		}
+	}
+
 }
