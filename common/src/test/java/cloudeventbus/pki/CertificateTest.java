@@ -68,4 +68,51 @@ public class CertificateTest {
 		final Certificate secondIssuerCertificate = TrustStore.generateSelfSignedCertificate(issuerKeyPair, -1, "Issuer");
 		secondIssuerCertificate.validateSignature(certificate);
 	}
+
+	@Test(expectedExceptions = CertificateSecurityException.class)
+	public void invalidSignature() {
+		final KeyPair issuerKeyPair = TrustStore.generateKeyPair();
+		final KeyPair certificateKeyPair = TrustStore.generateKeyPair();
+
+		final Certificate issuerCertificate = TrustStore.generateSelfSignedCertificate(issuerKeyPair, -1, "Issuer");
+		final Certificate certificate = new Certificate(
+				Certificate.Type.CLIENT,
+				1,
+				issuerCertificate.getSerialNumber(),
+				-1,
+				certificateKeyPair.getPublic(),
+				Arrays.asList("*"),
+				Arrays.asList("*"),
+				"This is a bad signature",
+				new byte[Certificate.SIGNATURE_LENGTH]);
+		issuerCertificate.validateSignature(certificate);
+	}
+
+	@Test(expectedExceptions = InvalidCertificateSignatureException.class)
+	public void modifiedCertificate() {
+		final KeyPair issuerKeyPair = TrustStore.generateKeyPair();
+		final KeyPair certificateKeyPair = TrustStore.generateKeyPair();
+
+		final Certificate issuerCertificate = TrustStore.generateSelfSignedCertificate(issuerKeyPair, -1, "Issuer");
+		final Certificate validCertificate = TrustStore.generateSignedCertificate(
+				issuerCertificate,
+				issuerKeyPair.getPrivate(),
+				certificateKeyPair.getPublic(),
+				Certificate.Type.CLIENT,
+				-1,
+				Arrays.asList("*"),
+				Arrays.asList("*"),
+				"Client certificate");
+		final Certificate certificate = new Certificate(
+				validCertificate.getType(),
+				2l,
+				validCertificate.getIssuer(),
+				validCertificate.getExpirationDate(),
+				validCertificate.getPublicKey(),
+				validCertificate.getSubscribePermissions(),
+				validCertificate.getPublishPermissions(),
+				validCertificate.getComment(),
+				validCertificate.getSignature());
+		issuerCertificate.validateSignature(certificate);
+	}
 }
