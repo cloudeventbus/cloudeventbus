@@ -1,5 +1,7 @@
 - Build simple PKI
 - Build simple PKI command-line tools
+- Fix all e-mail addresses. Add copyright headers.
+- Add license file
 X Design protocol
 - Design client interface
 - Build codec
