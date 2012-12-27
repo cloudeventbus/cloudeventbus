@@ -1,13 +1,13 @@
-- Build simple PKI
-- Build simple PKI command-line tools
-- Fix all e-mail addresses. Add copyright headers.
-- Add license file
-X Design protocol
-- Design client interface
 - Build codec
+- Figure out how to validate permissions going down a certificate chain.
+- Design client interface
 - Implement server
 - Implement client
 - Implement a VCAP service gateway
 - Create a BOSH release
 - Browser client/server (websocket based)
 - Build a Node.js client
+- Build simple PKI command-line tools
+- Build simple event bus command-line clients
+- Performance test
+- Experiment with how much direct buffers will really give us
