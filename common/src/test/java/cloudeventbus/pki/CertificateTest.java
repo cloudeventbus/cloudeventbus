@@ -6,7 +6,6 @@ import org.testng.annotations.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.util.Arrays;
 import java.util.List;
 
@@ -17,9 +16,7 @@ public class CertificateTest {
 
 	@Test
 	public void createSerializeDeserializeHash() throws Exception {
-		final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-		keyPairGenerator.initialize(2048);
-		KeyPair keyPair = keyPairGenerator.generateKeyPair();
+		final KeyPair keyPair = TrustStore.generateKeyPair();
 
 		final Certificate.Type type = Certificate.Type.AUTHORITY;
 		final long serialNumber = 1234l;
@@ -53,4 +50,22 @@ public class CertificateTest {
 		assertTrue(Arrays.equals(signature, copy.getSignature()));
 	}
 
+	@Test(expectedExceptions = CertificateIssuerMismatchException.class)
+	public void mismatchedIssuer() throws Exception {
+		final KeyPair issuerKeyPair = TrustStore.generateKeyPair();
+		final KeyPair certificateKeyPair = TrustStore.generateKeyPair();
+
+		final Certificate issuerCertificate = TrustStore.generateSelfSignedCertificate(issuerKeyPair, -1, "Issuer");
+		final Certificate certificate = TrustStore.generateSignedCertificate(
+				issuerCertificate,
+				issuerKeyPair.getPrivate(),
+				certificateKeyPair.getPublic(),
+				Certificate.Type.CLIENT,
+				-1,
+				Arrays.asList("*"),
+				Arrays.asList("*"),
+				"Client certificate");
+		final Certificate secondIssuerCertificate = TrustStore.generateSelfSignedCertificate(issuerKeyPair, -1, "Issuer");
+		secondIssuerCertificate.validateSignature(certificate);
+	}
 }
