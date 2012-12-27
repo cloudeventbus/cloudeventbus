@@ -38,7 +38,7 @@ import java.security.cert.X509Certificate;
 import java.util.Date;
 
 /**
- * @author Mike Heath <heathma@ldschurch.org>
+ * @author Mike Heath <elcapo@gmail.com>
  */
 public class CertificateAuthAndAuthorizationSpike {
 

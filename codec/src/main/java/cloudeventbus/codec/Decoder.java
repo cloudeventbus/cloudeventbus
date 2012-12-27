@@ -24,7 +24,7 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.util.CharsetUtil;
 
 /**
- * @author Mike Heath <heathma@ldschurch.org>
+ * @author Mike Heath <elcapo@gmail.com>
  */
 public class Decoder extends ByteToMessageDecoder<Frame> {
 

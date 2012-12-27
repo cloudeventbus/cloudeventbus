@@ -25,7 +25,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 
 /**
- * @author Mike Heath <heathma@ldschurch.org>
+ * @author Mike Heath <elcapo@gmail.com>
  */
 public class SimpleCertSpike {
 	public static void main(String[] args) throws Exception {

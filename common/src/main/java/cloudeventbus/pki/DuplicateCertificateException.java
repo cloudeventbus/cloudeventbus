@@ -17,7 +17,7 @@
 package cloudeventbus.pki;
 
 /**
- * @author Mike Heath <heathma@ldschurch.org>
+ * @author Mike Heath <elcapo@gmail.com>
  */
 public class DuplicateCertificateException extends CertificateException {
 	public DuplicateCertificateException(String message) {

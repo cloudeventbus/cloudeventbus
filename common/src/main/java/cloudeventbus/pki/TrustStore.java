@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author Mike Heath <heathma@ldschurch.org>
+ * @author Mike Heath <elcapo@gmail.com>
  */
 public class TrustStore extends AbstractSet<Certificate> {
 

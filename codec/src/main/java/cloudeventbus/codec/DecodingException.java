@@ -19,7 +19,7 @@ package cloudeventbus.codec;
 import cloudeventbus.CloudEventBusException;
 
 /**
- * @author Mike Heath <heathma@ldschurch.org>
+ * @author Mike Heath <elcapo@gmail.com>
  */
 public class DecodingException extends CloudEventBusException {
 	public DecodingException(String message) {

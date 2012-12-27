@@ -19,7 +19,7 @@ package cloudeventbus.pki;
 import cloudeventbus.CloudEventBusException;
 
 /**
- * @author Mike Heath <heathma@ldschurch.org>
+ * @author Mike Heath <elcapo@gmail.com>
  */
 public class CertificateException extends CloudEventBusException {
 	public CertificateException(String message) {

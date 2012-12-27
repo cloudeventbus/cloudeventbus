@@ -24,7 +24,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 /**
- * @author Mike Heath <heathma@ldschurch.org>
+ * @author Mike Heath <elcapo@gmail.com>
  */
 public class CertificateChainTest {
 

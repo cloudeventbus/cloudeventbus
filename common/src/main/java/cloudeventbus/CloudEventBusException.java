@@ -17,7 +17,7 @@
 package cloudeventbus;
 
 /**
- * @author Mike Heath <heathma@ldschurch.org>
+ * @author Mike Heath <elcapo@gmail.com>
  */
 public class CloudEventBusException extends RuntimeException {
 	public CloudEventBusException(String message) {

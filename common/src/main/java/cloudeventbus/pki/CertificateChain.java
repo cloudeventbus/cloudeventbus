@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author Mike Heath <heathma@ldschurch.org>
+ * @author Mike Heath <elcapo@gmail.com>
  */
 public class CertificateChain extends AbstractList<Certificate> {
 

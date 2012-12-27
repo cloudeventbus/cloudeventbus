@@ -19,7 +19,7 @@ package cloudeventbus.pki;
 import java.security.GeneralSecurityException;
 
 /**
- * @author Mike Heath <heathma@ldschurch.org>
+ * @author Mike Heath <elcapo@gmail.com>
  */
 public class CertificateSecurityException extends CertificateException {
 	public CertificateSecurityException(GeneralSecurityException e) {

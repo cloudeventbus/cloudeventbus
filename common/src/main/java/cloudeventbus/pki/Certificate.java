@@ -43,7 +43,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * @author Mike Heath <heathma@ldschurch.org>
+ * @author Mike Heath <elcapo@gmail.com>
  */
 public class Certificate {
 
