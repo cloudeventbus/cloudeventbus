@@ -1,7 +1,6 @@
 package cloudeventbus.codec;
 
 import cloudeventbus.Constants;
-import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -54,6 +53,7 @@ public class Decoder extends ByteToMessageDecoder<Frame> {
 				final String challenge = parts[1];
 				return new AuthenticationRequestFrame(challenge);
 		}
+		return null; // TODO Complete this
 	}
 
 	private void assertArguments(int expectedArguments, int framePartsLenth, String frameName) {
