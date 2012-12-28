@@ -42,7 +42,9 @@ public abstract class CertificateStoreLoader {
 			try {
 				size = data.readInt();
 			} catch (EOFException e) {
-				// Break out of loop if we've reached the end of the stream
+				break;
+			}
+			if (size == 0) {
 				break;
 			}
 			final byte[] rawCertificate = new byte[size];
@@ -63,6 +65,8 @@ public abstract class CertificateStoreLoader {
 			data.writeInt(rawCertificate.length);
 			data.write(rawCertificate);
 		}
+		data.writeInt(0);
+		data.flush();
 	}
 
 }
