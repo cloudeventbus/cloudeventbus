@@ -101,8 +101,6 @@ public class Decoder extends ByteToMessageDecoder<Frame> {
 				assertArgumentsLength(1, argumentsLength, "greeting");
 				final String version = parts[1];
 				return new GreetingFrame(version);
-			case FrameTypes.OK:
-				return OkFrame.OK;
 			case FrameTypes.PING:
 				return PingFrame.PING;
 			case FrameTypes.PONG:

@@ -97,11 +97,6 @@ public class EncoderDecoderTest {
 	}
 
 	@Test
-	public void okFrame() {
-		recode(OkFrame.OK);
-	}
-
-	@Test
 	public void pingFrame() {
 		recode(PingFrame.PING);
 	}

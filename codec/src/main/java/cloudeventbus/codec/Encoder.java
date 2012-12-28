@@ -32,7 +32,6 @@ import java.io.OutputStream;
  */
 public class Encoder extends MessageToByteEncoder<Frame> {
 
-	private static final byte[] OK = ("" + FrameTypes.OK + "\r\n").getBytes(CharsetUtil.UTF_8);
 	private static final byte[] PING = ("" + FrameTypes.PING + "\r\n").getBytes(CharsetUtil.UTF_8);
 	private static final byte[] PONG = ("" + FrameTypes.PONG + "\r\n").getBytes(CharsetUtil.UTF_8);
 	private static final byte[] SERVER_READY = ("" + FrameTypes.SERVER_READY + "\r\n").getBytes(CharsetUtil.UTF_8);
@@ -79,8 +78,6 @@ public class Encoder extends MessageToByteEncoder<Frame> {
 			out.writeByte(FrameTypes.GREETING);
 			out.writeByte(' ');
 			writeString(out, greetingFrame.getServerVersion());
-		} else if (frame instanceof OkFrame) {
-			out.writeBytes(OK);
 		} else if (frame instanceof PingFrame) {
 			out.writeBytes(PING);
 		} else if (frame instanceof PongFrame) {

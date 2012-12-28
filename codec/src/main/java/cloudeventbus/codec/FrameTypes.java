@@ -28,7 +28,6 @@ class FrameTypes {
 	public static final char GREETING =      'G';
 	public static final char PING =          'I';
 	public static final char PONG =          'J';
-	public static final char OK =            'O';
 	public static final char PUBLISH =       'P';
 	public static final char AUTH_RESPONSE = 'R';
 	public static final char SUBSCRIBE =     'S';
