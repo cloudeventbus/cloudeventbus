@@ -8,8 +8,9 @@
 	<artifactId>cloudeventbus</artifactId>
 	<version>0.1-SNAPSHOT</version>
 	<modules>
-		<module>codec</module>
 		<module>common</module>
+		<module>codec</module>
+		<module>client</module>
 		<module>spike</module>
 	</modules>
 
