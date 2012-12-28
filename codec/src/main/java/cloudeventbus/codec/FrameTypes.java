@@ -19,19 +19,20 @@ package cloudeventbus.codec;
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
+// TODO Convert to enum
 class FrameTypes {
 
-	public static final String AUTHENTICATE  = "A";
-	public static final String SEND =          "D";
-	public static final String ERROR =         "E";
-	public static final String GREETING =      "G";
-	public static final String PING =          "I";
-	public static final String PONG =          "J";
-	public static final String OK =            "O";
-	public static final String PUBLISH =       "P";
-	public static final String AUTH_RESPONSE = "R";
-	public static final String SUBSCRIBE =     "S";
-	public static final String UNSUBSCRIBE =   "U";
-	public static final String SERVER_READY =  "Y";
+	public static final char AUTHENTICATE  = 'A';
+	public static final char SEND =          'D';
+	public static final char ERROR =         'E';
+	public static final char GREETING =      'G';
+	public static final char PING =          'I';
+	public static final char PONG =          'J';
+	public static final char OK =            'O';
+	public static final char PUBLISH =       'P';
+	public static final char AUTH_RESPONSE = 'R';
+	public static final char SUBSCRIBE =     'S';
+	public static final char UNSUBSCRIBE =   'U';
+	public static final char SERVER_READY =  'Y';
 
 }

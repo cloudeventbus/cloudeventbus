@@ -20,12 +20,11 @@ import cloudeventbus.Constants;
 import cloudeventbus.pki.CertificateChain;
 import cloudeventbus.pki.CertificateStoreLoader;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
+import io.netty.handler.codec.TooLongFrameException;
 import io.netty.util.CharsetUtil;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.binary.Base64InputStream;
 
 import java.io.ByteArrayInputStream;
 
@@ -33,8 +32,6 @@ import java.io.ByteArrayInputStream;
  * @author Mike Heath <elcapo@gmail.com>
  */
 public class Decoder extends ByteToMessageDecoder<Frame> {
-
-	private static final ByteBuf DELIMITER = Unpooled.copiedBuffer(new byte[]{'\r', '\n'});
 
 	private final int maxMessageSize;
 
@@ -48,27 +45,33 @@ public class Decoder extends ByteToMessageDecoder<Frame> {
 
 	@Override
 	public Frame decode(ChannelHandlerContext ctx, ByteBuf in) throws Exception {
-		final int frameLength = indexOf(in, DELIMITER);
+		final int frameLength = indexOf(in, Codec.DELIMITER);
 		// Frame hasn't been fully read yet.
 		if (frameLength < 0) {
+			if (in.readableBytes() > maxMessageSize) {
+				throw new TooLongFrameException("Frame exceeds maximum size");
+			}
 			return null;
 		}
 		// Empty frame, discard and continue decoding
 		if (frameLength == 0) {
-			in.skipBytes(DELIMITER.capacity());
+			in.skipBytes(Codec.DELIMITER.length);
 			return decode(ctx, in);
 		}
+		if (frameLength > maxMessageSize) {
+			throw new TooLongFrameException("Frame exceeds maximum size");
+		}
 		final String command = in.readBytes(frameLength).toString(CharsetUtil.UTF_8);
-		in.skipBytes(DELIMITER.capacity());
+		in.skipBytes(Codec.DELIMITER.length);
 		final String[] parts = command.split("\\s+");
-		final String frameType = parts[0];
+		final char frameType = parts[0].charAt(0);
 		final int argumentsLength = parts.length - 1;
 		switch (frameType) {
 			case FrameTypes.AUTH_RESPONSE:
 				assertArgumentsLength(3, argumentsLength, "authentication response");
 				final CertificateChain certificates = new CertificateChain();
-				final ByteArrayInputStream certificateChainIn = new ByteArrayInputStream(parts[1].getBytes());
-				CertificateStoreLoader.load(new Base64InputStream(certificateChainIn), certificates);
+				final byte[] rawCertificates = Base64.decodeBase64(parts[1].getBytes());
+				CertificateStoreLoader.load(new ByteArrayInputStream(rawCertificates), certificates);
 				final byte[] salt = Base64.decodeBase64(parts[2]);
 				final byte[] digitalSignature = Base64.decodeBase64(parts[3]);
 				return new AuthenticationResponseFrame(certificates, salt, digitalSignature);
@@ -80,11 +83,11 @@ public class Decoder extends ByteToMessageDecoder<Frame> {
 				if (parts.length == 0) {
 					throw new DecodingException("Error is missing error code");
 				}
-				final Integer errorIndex = Integer.valueOf(parts[1]);
-				final ErrorFrame.Code errorCode = ErrorFrame.Code.values()[errorIndex];
+				final Integer errorNumber = Integer.valueOf(parts[1]);
+				final ErrorFrame.Code errorCode = ErrorFrame.Code.lookupCode(errorNumber);
 				int messageIndex = 1;
 				messageIndex = skipWhiteSpace(messageIndex, command);
-				while (Character.isDigit(command.charAt(messageIndex))) {
+				while (messageIndex < command.length() && Character.isDigit(command.charAt(messageIndex))) {
 					messageIndex++;
 				}
 				messageIndex = skipWhiteSpace(messageIndex, command);
@@ -119,10 +122,12 @@ public class Decoder extends ByteToMessageDecoder<Frame> {
 					replySubject = parts[2];
 					messageLength = Integer.valueOf(parts[3]);
 				}
-				if (in.readableBytes() < messageLength) {
+				if (in.readableBytes() < messageLength + Codec.DELIMITER.length) {
+					// If we haven't received the entire message body (plus the CRLF), wait until it arrives.
 					return null;
 				}
 				final ByteBuf messageBody = in.readBytes(messageLength);
+				in.skipBytes(Codec.DELIMITER.length); // Ignore the CRLF after the message body.
 				if (frameType == FrameTypes.PUBLISH) {
 					return new PublishFrame(messageSubject, replySubject, messageBody);
 				} else {
@@ -142,7 +147,7 @@ public class Decoder extends ByteToMessageDecoder<Frame> {
 	}
 
 	private int skipWhiteSpace(int messageIndex, String command) {
-		while (Character.isWhitespace(command.charAt(messageIndex))) {
+		while (messageIndex < command.length() && Character.isWhitespace(command.charAt(messageIndex))) {
 			messageIndex++;
 		}
 		return messageIndex;
@@ -161,23 +166,23 @@ public class Decoder extends ByteToMessageDecoder<Frame> {
 	 * <p/>
 	 * Copied from {@link io.netty.handler.codec.DelimiterBasedFrameDecoder}.
 	 */
-	private int indexOf(ByteBuf haystack, ByteBuf needle) {
+	private int indexOf(ByteBuf haystack, byte[] needle) {
 		for (int i = haystack.readerIndex(); i < haystack.writerIndex(); i++) {
 			int haystackIndex = i;
 			int needleIndex;
-			for (needleIndex = 0; needleIndex < needle.capacity(); needleIndex++) {
-				if (haystack.getByte(haystackIndex) != needle.getByte(needleIndex)) {
+			for (needleIndex = 0; needleIndex < needle.length; needleIndex++) {
+				if (haystack.getByte(haystackIndex) != needle[needleIndex]) {
 					break;
 				} else {
 					haystackIndex++;
 					if (haystackIndex == haystack.writerIndex() &&
-							needleIndex != needle.capacity() - 1) {
+							needleIndex != needle.length - 1) {
 						return -1;
 					}
 				}
 			}
 
-			if (needleIndex == needle.capacity()) {
+			if (needleIndex == needle.length) {
 				// Found the needle from the haystack!
 				return i - haystack.readerIndex();
 			}

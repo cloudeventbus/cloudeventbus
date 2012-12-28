@@ -20,4 +20,7 @@ package cloudeventbus.codec;
  * @author Mike Heath <elcapo@gmail.com>
  */
 public class Codec {
+
+	public static final byte[] DELIMITER = new byte[]{'\r', '\n'};
+
 }
