@@ -16,11 +16,19 @@
  */
 package cloudeventbus.codec;
 
+import io.netty.channel.ChannelInboundHandler;
+import io.netty.channel.ChannelOutboundHandler;
+import io.netty.channel.CombinedChannelHandler;
+
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-public class Codec {
+public class Codec extends CombinedChannelHandler {
 
 	public static final byte[] DELIMITER = new byte[] {'\r', '\n'};
 
+	@Override
+	protected void init(ChannelInboundHandler inboundHandler, ChannelOutboundHandler outboundHandler) {
+		super.init(new Decoder(), outboundHandler);
+	}
 }
