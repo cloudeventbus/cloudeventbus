@@ -25,7 +25,9 @@ import java.util.Map;
 public class ErrorFrame implements Frame {
 
 	public enum Code {
-		SERVER_NOT_READY(100);
+		SERVER_ERROR(100),
+		MALFORMED_REQUEST(101),
+		SERVER_NOT_READY(102);
 
 		private static final Map<Integer, Code> codesMap = new HashMap<>();
 
