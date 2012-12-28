@@ -26,6 +26,11 @@ public class Constants {
 	 */
 	public static final int DEFAULT_MAX_MESSAGE_SIZE = 4096;
 
+	/**
+	 * The default port for Cloud Event Bus.
+	 */
+	public static final int DEFAULT_PORT = 4223;
+
 	private Constants() {
 		// Don't instantiate this class.
 	}
