@@ -185,16 +185,21 @@ public class EncoderDecoderTest {
 	}
 
 	private <T extends Frame> T recode(T frame) {
-		final EmbeddedByteChannel encodeChannel = new EmbeddedByteChannel(new Encoder(), new Decoder());
-		final EmbeddedByteChannel decodeChannel = new EmbeddedByteChannel(new Decoder(), new Encoder());
+		final EmbeddedByteChannel channel = new EmbeddedByteChannel(new Codec());
 
-		encodeChannel.write(frame);
-		encodeChannel.checkException();
-		final ByteBuf data = encodeChannel.readOutbound();
-		decodeChannel.writeInbound(data);
-		decodeChannel.checkException();
-		final T recodedFrame = (T) decodeChannel.readInbound();
+		// Encode
+		channel.write(frame);
+		channel.checkException();
+		final ByteBuf data = channel.readOutbound();
+
+		// Decode
+		channel.writeInbound(data);
+		channel.checkException();
+		final T recodedFrame = (T) channel.readInbound();
+
+		// Ensure we got a frame
 		assertNotNull(recodedFrame);
+
 		return recodedFrame;
 	}
 
