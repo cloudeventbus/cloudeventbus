@@ -127,25 +127,24 @@ public class CertificateUtils {
 		}
 	}
 
-	public static boolean isValidChallenge(PublicKey key, byte[] challenge, byte[] salt, byte[] signature) {
+	public static void validateSignature(PublicKey key, byte[] challenge, byte[] salt, byte[] signature) {
 		try {
 			Cipher cipher = Cipher.getInstance("RSA");
 			cipher.init(Cipher.DECRYPT_MODE, key);
 			final byte[] decryptedSignature = cipher.doFinal(signature);
 			if (decryptedSignature.length != challenge.length + salt.length) {
-				return false;
+				throw new InvalidSignatureException("Signature doesn't match challenge");
 			}
 			for (int i = 0; i < challenge.length; i++) {
 				if (decryptedSignature[i] != challenge[i]) {
-					return false;
+					throw new InvalidSignatureException("Signature doesn't match challenge");
 				}
 			}
 			for (int i = 0; i < salt.length; i++) {
 				if (decryptedSignature[challenge.length + i] != salt[i]) {
-					return false;
+					throw new InvalidSignatureException("Signature doesn't match challenge");
 				}
 			}
-			return true;
 		} catch (GeneralSecurityException e) {
 			throw new CertificateSecurityException(e);
 		}

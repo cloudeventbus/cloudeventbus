@@ -16,7 +16,6 @@
  */
 package cloudeventbus.pki;
 
-import junit.framework.Assert;
 import org.testng.annotations.Test;
 
 import java.security.KeyPair;
@@ -34,10 +33,10 @@ public class CertificateUtilTest {
 
 		final byte[] signature = CertificateUtils.signChallenge(keyPair.getPrivate(), challenge, salt);
 
-		Assert.assertTrue(CertificateUtils.isValidChallenge(keyPair.getPublic(), challenge, salt, signature));
+		CertificateUtils.validateSignature(keyPair.getPublic(), challenge, salt, signature);
 	}
 
-	@Test
+	@Test(expectedExceptions = InvalidSignatureException.class)
 	public void invalidSignature() {
 		final KeyPair keyPair = CertificateUtils.generateKeyPair();
 		final byte[] challenge = CertificateUtils.generateChallenge();
@@ -46,7 +45,7 @@ public class CertificateUtilTest {
 		final byte[] signature = CertificateUtils.signChallenge(keyPair.getPrivate(), challenge, salt);
 
 		salt[0]++;
-		Assert.assertFalse(CertificateUtils.isValidChallenge(keyPair.getPublic(), challenge, salt, signature));
+		CertificateUtils.validateSignature(keyPair.getPublic(), challenge, salt, signature);
 	}
 
 }
