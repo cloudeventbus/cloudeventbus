@@ -32,10 +32,6 @@ import java.io.OutputStream;
  */
 public class Encoder extends MessageToByteEncoder<Frame> {
 
-	private static final byte[] PING = ("" + FrameTypes.PING + "\r\n").getBytes(CharsetUtil.UTF_8);
-	private static final byte[] PONG = ("" + FrameTypes.PONG + "\r\n").getBytes(CharsetUtil.UTF_8);
-	private static final byte[] SERVER_READY = ("" + FrameTypes.SERVER_READY + "\r\n").getBytes(CharsetUtil.UTF_8);
-
 	@Override
 	public void encode(ChannelHandlerContext ctx, Frame frame, ByteBuf out) throws Exception {
 		if (frame instanceof AuthenticationRequestFrame) {
@@ -79,9 +75,9 @@ public class Encoder extends MessageToByteEncoder<Frame> {
 			out.writeByte(' ');
 			writeString(out, greetingFrame.getServerVersion());
 		} else if (frame instanceof PingFrame) {
-			out.writeBytes(PING);
+			out.writeByte(FrameTypes.PING);
 		} else if (frame instanceof PongFrame) {
-			out.writeBytes(PONG);
+			out.writeByte(FrameTypes.PONG);
 		} else if (frame instanceof PublishFrame) {
 			final PublishFrame publishFrame = (PublishFrame) frame;
 			out.writeByte(FrameTypes.PUBLISH);
@@ -91,7 +87,7 @@ public class Encoder extends MessageToByteEncoder<Frame> {
 			out.writeByte(FrameTypes.SEND);
 			writeMessageFrame(out, sendFrame);
 		} else if (frame instanceof ServerReadyFrame) {
-			out.writeBytes(SERVER_READY);
+			out.writeByte(FrameTypes.SERVER_READY);
 		} else if (frame instanceof SubscribeFrame) {
 			final SubscribeFrame subscribeFrame = (SubscribeFrame) frame;
 			out.writeByte(FrameTypes.SUBSCRIBE);
