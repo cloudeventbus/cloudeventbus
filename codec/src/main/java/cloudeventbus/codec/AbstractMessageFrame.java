@@ -19,7 +19,7 @@ package cloudeventbus.codec;
 import io.netty.buffer.ByteBuf;
 
 /**
- * @author Mike Heath <heathma@ldschurch.org>
+ * @author Mike Heath <elcapo@gmail.com>
  */
 public class AbstractMessageFrame implements Frame {
 	private final String subject;
