@@ -30,7 +30,6 @@ import java.util.List;
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-// TODO Move static methods in TrustStore here.
 public class CertificateUtils {
 
 	public static final int KEY_SIZE = 2048;
