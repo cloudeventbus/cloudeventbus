@@ -1,12 +1,11 @@
-- Design client interface
-- Figure out how to validate permissions going down a certificate chain.
 - Implement server
 - Implement client
-- Implement a VCAP service gateway
-- Create a BOSH release
-- Browser client/server (websocket based)
-- Build a Node.js client
+- Figure out how to validate permissions going down a certificate chain.
 - Build simple PKI command-line tools
 - Build simple event bus command-line clients
 - Performance test
 - Experiment with how much direct buffers will really give us
+- Implement a VCAP service gateway
+- Create a BOSH release
+- Browser client/server (websocket based)
+- Build a Node.js client
