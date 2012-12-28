@@ -29,6 +29,12 @@ public class TrustStore extends AbstractSet<Certificate> {
 
 	private final Map<Long, Certificate> certificates = Collections.synchronizedMap(new HashMap<Long, Certificate>());
 
+	public TrustStore(Certificate... certs) {
+		for (Certificate certificate : certs) {
+			add(certificate);
+		}
+	}
+
 	@Override
 	public Iterator<Certificate> iterator() {
 		return certificates.values().iterator();
