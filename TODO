@@ -1,6 +1,5 @@
-- Build codec
-- Figure out how to validate permissions going down a certificate chain.
 - Design client interface
+- Figure out how to validate permissions going down a certificate chain.
 - Implement server
 - Implement client
 - Implement a VCAP service gateway
