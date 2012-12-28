@@ -9,12 +9,17 @@
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>spike</artifactId>
+	<artifactId>server-core</artifactId>
 
 	<dependencies>
 		<dependency>
-			<groupId>com.github.cloudeventbus</groupId>
-			<artifactId>server-core</artifactId>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>codec</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.testng</groupId>
+			<artifactId>testng</artifactId>
 		</dependency>
 	</dependencies>
 
