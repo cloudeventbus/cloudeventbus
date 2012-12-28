@@ -18,6 +18,7 @@ package cloudeventbus.pki;
 
 import java.util.AbstractList;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -26,6 +27,13 @@ import java.util.List;
 public class CertificateChain extends AbstractList<Certificate> {
 
 	private final List<Certificate> internalList = new ArrayList<>();
+
+	public CertificateChain() {
+	}
+
+	public CertificateChain(Certificate... certificates) {
+		internalList.addAll(Arrays.asList(certificates));
+	}
 
 	@Override
 	public boolean add(Certificate certificate) {
