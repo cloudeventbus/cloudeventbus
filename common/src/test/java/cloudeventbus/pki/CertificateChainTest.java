@@ -30,11 +30,11 @@ public class CertificateChainTest {
 
 	@Test
 	public void validIssuerAndCertificate() {
-		final KeyPair issuerKeyPair = TrustStore.generateKeyPair();
-		final KeyPair certificateKeyPair = TrustStore.generateKeyPair();
+		final KeyPair issuerKeyPair = CertificateUtils.generateKeyPair();
+		final KeyPair certificateKeyPair = CertificateUtils.generateKeyPair();
 
-		final Certificate issuerCertificate = TrustStore.generateSelfSignedCertificate(issuerKeyPair, -1, "Issuer");
-		final Certificate certificate = TrustStore.generateSignedCertificate(
+		final Certificate issuerCertificate = CertificateUtils.generateSelfSignedCertificate(issuerKeyPair, -1, "Issuer");
+		final Certificate certificate = CertificateUtils.generateSignedCertificate(
 				issuerCertificate,
 				issuerKeyPair.getPrivate(),
 				certificateKeyPair.getPublic(),
@@ -57,8 +57,8 @@ public class CertificateChainTest {
 
 	@Test(expectedExceptions = DuplicateCertificateException.class)
 	public void issuerInChainTwice() {
-		final KeyPair issuerKeyPair = TrustStore.generateKeyPair();
-		final Certificate issuerCertificate = TrustStore.generateSelfSignedCertificate(issuerKeyPair, -1, "Issuer");
+		final KeyPair issuerKeyPair = CertificateUtils.generateKeyPair();
+		final Certificate issuerCertificate = CertificateUtils.generateSelfSignedCertificate(issuerKeyPair, -1, "Issuer");
 		final CertificateChain certificates = new CertificateChain();
 		certificates.add(issuerCertificate);
 		certificates.add(issuerCertificate);

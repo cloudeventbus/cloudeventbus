@@ -28,11 +28,11 @@ import java.util.Iterator;
  */
 public class TrustStoreTest {
 
-	final KeyPair issuerKeyPair = TrustStore.generateKeyPair();
-	final KeyPair certificateKeyPair = TrustStore.generateKeyPair();
+	final KeyPair issuerKeyPair = CertificateUtils.generateKeyPair();
+	final KeyPair certificateKeyPair = CertificateUtils.generateKeyPair();
 
-	final Certificate issuerCertificate = TrustStore.generateSelfSignedCertificate(issuerKeyPair, -1, "Issuer");
-	final Certificate certificate = TrustStore.generateSignedCertificate(
+	final Certificate issuerCertificate = CertificateUtils.generateSelfSignedCertificate(issuerKeyPair, -1, "Issuer");
+	final Certificate certificate = CertificateUtils.generateSignedCertificate(
 			issuerCertificate,
 			issuerKeyPair.getPrivate(),
 			certificateKeyPair.getPublic(),

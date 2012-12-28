@@ -32,7 +32,7 @@ public class CertificateTest {
 
 	@Test
 	public void createSerializeDeserializeHash() throws Exception {
-		final KeyPair keyPair = TrustStore.generateKeyPair();
+		final KeyPair keyPair = CertificateUtils.generateKeyPair();
 
 		final Certificate.Type type = Certificate.Type.AUTHORITY;
 		final long serialNumber = 1234l;
@@ -68,11 +68,11 @@ public class CertificateTest {
 
 	@Test(expectedExceptions = CertificateIssuerMismatchException.class)
 	public void mismatchedIssuer() throws Exception {
-		final KeyPair issuerKeyPair = TrustStore.generateKeyPair();
-		final KeyPair certificateKeyPair = TrustStore.generateKeyPair();
+		final KeyPair issuerKeyPair = CertificateUtils.generateKeyPair();
+		final KeyPair certificateKeyPair = CertificateUtils.generateKeyPair();
 
-		final Certificate issuerCertificate = TrustStore.generateSelfSignedCertificate(issuerKeyPair, -1, "Issuer");
-		final Certificate certificate = TrustStore.generateSignedCertificate(
+		final Certificate issuerCertificate = CertificateUtils.generateSelfSignedCertificate(issuerKeyPair, -1, "Issuer");
+		final Certificate certificate = CertificateUtils.generateSignedCertificate(
 				issuerCertificate,
 				issuerKeyPair.getPrivate(),
 				certificateKeyPair.getPublic(),
@@ -81,16 +81,16 @@ public class CertificateTest {
 				Arrays.asList("*"),
 				Arrays.asList("*"),
 				"Client certificate");
-		final Certificate secondIssuerCertificate = TrustStore.generateSelfSignedCertificate(issuerKeyPair, -1, "Issuer");
+		final Certificate secondIssuerCertificate = CertificateUtils.generateSelfSignedCertificate(issuerKeyPair, -1, "Issuer");
 		secondIssuerCertificate.validateSignature(certificate);
 	}
 
 	@Test(expectedExceptions = CertificateSecurityException.class)
 	public void invalidSignature() {
-		final KeyPair issuerKeyPair = TrustStore.generateKeyPair();
-		final KeyPair certificateKeyPair = TrustStore.generateKeyPair();
+		final KeyPair issuerKeyPair = CertificateUtils.generateKeyPair();
+		final KeyPair certificateKeyPair = CertificateUtils.generateKeyPair();
 
-		final Certificate issuerCertificate = TrustStore.generateSelfSignedCertificate(issuerKeyPair, -1, "Issuer");
+		final Certificate issuerCertificate = CertificateUtils.generateSelfSignedCertificate(issuerKeyPair, -1, "Issuer");
 		final Certificate certificate = new Certificate(
 				Certificate.Type.CLIENT,
 				1,
@@ -106,11 +106,11 @@ public class CertificateTest {
 
 	@Test(expectedExceptions = InvalidCertificateSignatureException.class)
 	public void modifiedCertificate() {
-		final KeyPair issuerKeyPair = TrustStore.generateKeyPair();
-		final KeyPair certificateKeyPair = TrustStore.generateKeyPair();
+		final KeyPair issuerKeyPair = CertificateUtils.generateKeyPair();
+		final KeyPair certificateKeyPair = CertificateUtils.generateKeyPair();
 
-		final Certificate issuerCertificate = TrustStore.generateSelfSignedCertificate(issuerKeyPair, -1, "Issuer");
-		final Certificate validCertificate = TrustStore.generateSignedCertificate(
+		final Certificate issuerCertificate = CertificateUtils.generateSelfSignedCertificate(issuerKeyPair, -1, "Issuer");
+		final Certificate validCertificate = CertificateUtils.generateSignedCertificate(
 				issuerCertificate,
 				issuerKeyPair.getPrivate(),
 				certificateKeyPair.getPublic(),
