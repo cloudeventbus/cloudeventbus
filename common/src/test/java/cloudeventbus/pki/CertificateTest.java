@@ -16,7 +16,7 @@
  */
 package cloudeventbus.pki;
 
-import static junit.framework.Assert.*;
+import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
@@ -51,19 +51,19 @@ public class CertificateTest {
 
 		final Certificate copy = new Certificate(new ByteArrayInputStream(out.toByteArray()));
 
-		assertEquals(certificate, copy);
-		assertEquals(certificate.hashCode(), copy.hashCode());
-		assertTrue(Arrays.equals(firstHash, copy.hash()));
+		assertEquals(copy, certificate);
+		assertEquals(copy.hashCode(), certificate.hashCode());
+		assertEquals(copy.hash(), firstHash);
 
 		assertEquals(type, copy.getType());
-		assertEquals(serialNumber, copy.getSerialNumber());
-		assertEquals(issuer, copy.getIssuer());
-		assertEquals(expirationDate, copy.getExpirationDate());
-		assertEquals(keyPair.getPublic(), copy.getPublicKey());
-		assertEquals(subscribe, copy.getSubscribePermissions());
-		assertEquals(publish, copy.getPublishPermissions());
-		assertEquals(comment, copy.getComment());
-		assertTrue(Arrays.equals(signature, copy.getSignature()));
+		assertEquals(copy.getSerialNumber(), serialNumber);
+		assertEquals(copy.getIssuer(), issuer);
+		assertEquals(copy.getExpirationDate(), expirationDate);
+		assertEquals(copy.getPublicKey(), keyPair.getPublic());
+		assertEquals(copy.getSubscribePermissions(), subscribe);
+		assertEquals(copy.getPublishPermissions(), publish);
+		assertEquals(copy.getComment(), comment);
+		assertEquals(copy.getSignature(), signature);
 	}
 
 	@Test(expectedExceptions = CertificateIssuerMismatchException.class)

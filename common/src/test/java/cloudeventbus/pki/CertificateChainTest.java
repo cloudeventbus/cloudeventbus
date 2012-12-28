@@ -16,7 +16,7 @@
  */
 package cloudeventbus.pki;
 
-import static junit.framework.Assert.*;
+import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
 import java.security.KeyPair;

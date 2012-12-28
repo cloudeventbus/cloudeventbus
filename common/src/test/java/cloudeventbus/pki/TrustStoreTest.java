@@ -16,7 +16,7 @@
  */
 package cloudeventbus.pki;
 
-import static junit.framework.Assert.*;
+import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
 import java.security.KeyPair;
@@ -89,9 +89,9 @@ public class TrustStoreTest {
 	@Test
 	public void size() {
 		final TrustStore trustStore = new TrustStore();
-		assertEquals(0, trustStore.size());
+		assertEquals(trustStore.size(), 0);
 		trustStore.add(issuerCertificate);
-		assertEquals(1, trustStore.size());
+		assertEquals(trustStore.size(), 1);
 	}
 
 	@Test
@@ -102,7 +102,7 @@ public class TrustStoreTest {
 		trustStore.add(issuerCertificate);
 		iterator = trustStore.iterator();
 		assertTrue(iterator.hasNext());
-		assertEquals(issuerCertificate, iterator.next());
+		assertEquals(iterator.next(), issuerCertificate);
 		assertFalse(iterator.hasNext());
 	}
 }
