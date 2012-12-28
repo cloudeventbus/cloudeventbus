@@ -147,6 +147,7 @@ public class Certificate {
 		if (writeSignature && signature != null) {
 			data.write(signature);
 		}
+		data.flush();
 	}
 
 	public byte[] hash() {
