@@ -21,6 +21,6 @@ package cloudeventbus.codec;
  */
 public class Codec {
 
-	public static final byte[] DELIMITER = new byte[]{'\r', '\n'};
+	public static final byte[] DELIMITER = new byte[] {'\r', '\n'};
 
 }
