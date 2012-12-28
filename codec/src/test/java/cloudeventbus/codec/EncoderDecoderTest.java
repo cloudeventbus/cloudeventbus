@@ -18,7 +18,7 @@ package cloudeventbus.codec;
 
 import cloudeventbus.pki.Certificate;
 import cloudeventbus.pki.CertificateChain;
-import cloudeventbus.pki.TrustStore;
+import cloudeventbus.pki.CertificateUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedByteChannel;
@@ -48,8 +48,8 @@ public class EncoderDecoderTest {
 
 	@Test
 	public void authenticationResponse() {
-		final KeyPair keyPair = TrustStore.generateKeyPair();
-		final Certificate certificate = TrustStore.generateSelfSignedCertificate(keyPair, -1, "Test Certificate");
+		final KeyPair keyPair = CertificateUtils.generateKeyPair();
+		final Certificate certificate = CertificateUtils.generateSelfSignedCertificate(keyPair, -1, "Test Certificate");
 		final CertificateChain certificates = new CertificateChain(certificate);
 		final byte[] salt = "some salt".getBytes();
 		final byte[] signature = "a signature".getBytes();
