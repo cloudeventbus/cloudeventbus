@@ -93,7 +93,7 @@ public class EncoderDecoderTest {
 		final GreetingFrame frame = new GreetingFrame(version);
 		final GreetingFrame recodedFrame = recode(frame);
 
-		assertEquals(recodedFrame.getServerVersion(), version);
+		assertEquals(recodedFrame.getVersion(), version);
 	}
 
 	@Test

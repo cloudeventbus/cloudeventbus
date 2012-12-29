@@ -52,7 +52,7 @@ public class ServerHandlerTest {
 		// Validate greeting
 		final GreetingFrame greeting = (GreetingFrame) clientChannel.readInbound();
 		assertNotNull(greeting);
-		assertEquals(greeting.getServerVersion(), version);
+		assertEquals(greeting.getVersion(), version);
 
 		// Validate server ready
 		final ServerReadyFrame ready = (ServerReadyFrame) clientChannel.readInbound();
@@ -88,7 +88,7 @@ public class ServerHandlerTest {
 		// Validate greeting
 		final GreetingFrame greeting = (GreetingFrame) clientChannel.readInbound();
 		assertNotNull(greeting);
-		assertEquals(greeting.getServerVersion(), version);
+		assertEquals(greeting.getVersion(), version);
 
 		// Get authentication request
 		final AuthenticationRequestFrame authenticationRequest = (AuthenticationRequestFrame) clientChannel.readInbound();
@@ -138,7 +138,7 @@ public class ServerHandlerTest {
 		// Validate greeting
 		final GreetingFrame greeting = (GreetingFrame) clientChannel.readInbound();
 		assertNotNull(greeting);
-		assertEquals(greeting.getServerVersion(), version);
+		assertEquals(greeting.getVersion(), version);
 
 		// Get authentication request
 		final AuthenticationRequestFrame authenticationRequest = (AuthenticationRequestFrame) clientChannel.readInbound();

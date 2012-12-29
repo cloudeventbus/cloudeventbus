@@ -73,7 +73,7 @@ public class Encoder extends MessageToByteEncoder<Frame> {
 			final GreetingFrame greetingFrame = (GreetingFrame) frame;
 			out.writeByte(FrameTypes.GREETING);
 			out.writeByte(' ');
-			writeString(out, greetingFrame.getServerVersion());
+			writeString(out, greetingFrame.getVersion());
 		} else if (frame instanceof PingFrame) {
 			out.writeByte(FrameTypes.PING);
 		} else if (frame instanceof PongFrame) {

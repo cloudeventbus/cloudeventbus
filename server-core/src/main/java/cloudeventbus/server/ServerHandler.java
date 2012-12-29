@@ -22,7 +22,13 @@ import cloudeventbus.codec.DecodingException;
 import cloudeventbus.codec.ErrorFrame;
 import cloudeventbus.codec.Frame;
 import cloudeventbus.codec.GreetingFrame;
+import cloudeventbus.codec.PingFrame;
+import cloudeventbus.codec.PongFrame;
+import cloudeventbus.codec.PublishFrame;
+import cloudeventbus.codec.SendFrame;
 import cloudeventbus.codec.ServerReadyFrame;
+import cloudeventbus.codec.SubscribeFrame;
+import cloudeventbus.codec.UnsubscribeFrame;
 import cloudeventbus.pki.CertificateChain;
 import cloudeventbus.pki.CertificateUtils;
 import cloudeventbus.pki.InvalidSignatureException;
@@ -35,6 +41,7 @@ import io.netty.handler.codec.DecoderException;
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
+// TODO Send ping frame very 30 seconds. Close socket after 1 minute of inactivity.
 public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 
 	private final String versionString;
@@ -43,6 +50,7 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 	private byte[] challenge;
 	private boolean serverReady = false;
 	private CertificateChain clientCertificates;
+	private String clientVersion;
 
 	public ServerHandler(String versionString, TrustStore trustStore) {
 		this.versionString = versionString;
@@ -65,6 +73,26 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 			ctx.write(ServerReadyFrame.SERVER_READY);
 		} else if (!serverReady) {
 			throw new ServerNotReadyException("This server requires authentication.");
+		} else if (frame instanceof PublishFrame) {
+			final PublishFrame publishFrame = (PublishFrame) frame;
+			// TODO Implement publish
+		} else if (frame instanceof SendFrame) {
+			final SendFrame sendFrame = (SendFrame) frame;
+			// TODO Implement send
+		} else if (frame instanceof AuthenticationRequestFrame) {
+			// TODO Implement support for the client request authentication
+			throw new CloudEventBusServerException("Client to server authentication not yet supported");
+		} else if (frame instanceof SubscribeFrame) {
+			final SubscribeFrame subscribeFrame = (SubscribeFrame) frame;
+			// TODO Implement subscribe
+		} else if (frame instanceof UnsubscribeFrame) {
+			final UnsubscribeFrame unsubscribeFrame = (UnsubscribeFrame) frame;
+			// TODO Implement unsubscribe
+		} else if (frame instanceof GreetingFrame) {
+			final GreetingFrame greetingFrame = (GreetingFrame) frame;
+			clientVersion = greetingFrame.getVersion();
+		} else if (frame instanceof PingFrame) {
+			ctx.write(PongFrame.PONG);
 		}
 		throw new CloudEventBusServerException("Unable to handle frame of type " + frame.getClass().getName());
 	}
