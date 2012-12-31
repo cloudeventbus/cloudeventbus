@@ -1,9 +1,9 @@
 - Implement server
 - Implement client
 - Build simple PKI command-line tools
-- Build simple event bus command-line clients
+- Build simple event bus client command-line clients
 - Performance test
-- Experiment with how much direct buffers will really give us
+- Experiment with how much performance/memory benefit direct buffers will really give us
 - Implement a VCAP service gateway
 - Create a BOSH release
 - Browser client/server (websocket based)
