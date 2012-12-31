@@ -8,3 +8,4 @@
 - Create a BOSH release
 - Browser client/server (websocket based)
 - Build a Node.js client
+- Build a NATS/Cloud Event Bus gateway - This will allow applications to safely subscribe to NATS messages.
