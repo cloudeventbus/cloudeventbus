@@ -19,6 +19,7 @@ package cloudeventbus.codec;
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
+// TODO Make version the protocol version and a second field for the agent version
 public class GreetingFrame implements Frame {
 	final String version;
 
