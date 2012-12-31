@@ -29,7 +29,9 @@ public class ErrorFrame implements Frame {
 		MALFORMED_REQUEST(101),
 		SERVER_NOT_READY(102),
 		UNSUPPORTED_PROTOCOL_VERSION(103),
-		INVALID_SIGNATURE(200);
+		INVALID_SIGNATURE(200),
+		DUPLICATE_SUBSCRIPTION(300),
+		NOT_SUBSCRIBED(301);
 
 		private static final Map<Integer, Code> codesMap = new HashMap<>();
 

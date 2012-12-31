@@ -17,7 +17,6 @@
 package cloudeventbus.codec;
 
 import cloudeventbus.Subject;
-import io.netty.buffer.ByteBuf;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
@@ -25,9 +24,9 @@ import io.netty.buffer.ByteBuf;
 public class AbstractMessageFrame implements Frame {
 	private final Subject subject;
 	private final Subject replySubject;
-	private final ByteBuf body;
+	private final String body;
 
-	public AbstractMessageFrame(Subject subject, Subject replySubject, ByteBuf body) {
+	public AbstractMessageFrame(Subject subject, Subject replySubject, String body) {
 		this.subject = subject;
 		this.replySubject = replySubject;
 		this.body = body;
@@ -41,7 +40,7 @@ public class AbstractMessageFrame implements Frame {
 		return replySubject;
 	}
 
-	public ByteBuf getBody() {
+	public String getBody() {
 		return body;
 	}
 }

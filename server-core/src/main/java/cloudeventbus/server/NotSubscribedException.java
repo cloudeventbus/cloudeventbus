@@ -14,16 +14,13 @@
  *   limitations under the License.
  *
  */
-package cloudeventbus.codec;
-
-import cloudeventbus.Subject;
+package cloudeventbus.server;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-public class PublishFrame extends AbstractMessageFrame {
-
-	public PublishFrame(Subject subject, Subject replySubject, String body) {
-		super(subject, replySubject, body);
+public class NotSubscribedException extends CloudEventBusServerException {
+	public NotSubscribedException(String message) {
+		super(message);
 	}
 }

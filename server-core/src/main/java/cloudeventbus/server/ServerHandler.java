@@ -16,6 +16,7 @@
  */
 package cloudeventbus.server;
 
+import cloudeventbus.Subject;
 import cloudeventbus.codec.AuthenticationRequestFrame;
 import cloudeventbus.codec.AuthenticationResponseFrame;
 import cloudeventbus.codec.DecodingException;
@@ -29,6 +30,8 @@ import cloudeventbus.codec.SendFrame;
 import cloudeventbus.codec.ServerReadyFrame;
 import cloudeventbus.codec.SubscribeFrame;
 import cloudeventbus.codec.UnsubscribeFrame;
+import cloudeventbus.hub.Hub;
+import cloudeventbus.hub.SubscriptionHandle;
 import cloudeventbus.pki.CertificateChain;
 import cloudeventbus.pki.CertificateUtils;
 import cloudeventbus.pki.InvalidSignatureException;
@@ -39,6 +42,9 @@ import io.netty.channel.ChannelInboundMessageHandlerAdapter;
 import io.netty.handler.codec.DecoderException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
@@ -51,15 +57,19 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 	private static final int SUPPORTED_VERSION = 1;
 
 	private final String agentString;
+	private final Hub<PublishFrame> hub; // TODO How to publish to WebSocket hub, etc.
 	private final TrustStore trustStore;
 
 	private byte[] challenge;
 	private boolean serverReady = false;
 	private CertificateChain clientCertificates;
 	private String clientAgent;
+	private NettyHandler handler;
+	private final Map<Subject, SubscriptionHandle> subscriptionHandles = new HashMap<>();
 
-	public ServerHandler(String agentString, TrustStore trustStore) {
+	public ServerHandler(String agentString, Hub<PublishFrame> hub, TrustStore trustStore) {
 		this.agentString = agentString;
+		this.hub = hub;
 		this.trustStore = trustStore;
 	}
 
@@ -85,25 +95,38 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 			if (greetingFrame.getVersion() != SUPPORTED_VERSION) {
 				throw new InvalidProtocolVersionException("This server doesn't support protocol version " + greetingFrame.getVersion());
 			}
+		} else if (frame instanceof AuthenticationRequestFrame) {
+			// TODO Implement support for the client request authentication
+			throw new CloudEventBusServerException("Client to server authentication not yet supported");
 		}
 		// The server has to be "ready" to process frames below this point.
 		else if (!serverReady) {
 			throw new ServerNotReadyException("This server requires authentication.");
 		} else if (frame instanceof PublishFrame) {
 			final PublishFrame publishFrame = (PublishFrame) frame;
-			// TODO Implement publish
+			hub.publish(publishFrame.getSubject(), publishFrame.getReplySubject(), publishFrame.getBody());
 		} else if (frame instanceof SendFrame) {
 			final SendFrame sendFrame = (SendFrame) frame;
-			// TODO Implement send
-		} else if (frame instanceof AuthenticationRequestFrame) {
-			// TODO Implement support for the client request authentication
-			throw new CloudEventBusServerException("Client to server authentication not yet supported");
+			if (!hub.send(sendFrame.getSubject(), sendFrame.getReplySubject(), sendFrame.getBody())) {
+				// If we can't send the message locally, try sending it to a peer server.
+				// TODO Figure out peer servers.
+				throw new UnsupportedOperationException("We need to figure out peer servers and how to do a SEND with them.");
+			}
 		} else if (frame instanceof SubscribeFrame) {
 			final SubscribeFrame subscribeFrame = (SubscribeFrame) frame;
-			// TODO Implement subscribe
+			final Subject subject = subscribeFrame.getSubject();
+			if (subscriptionHandles.containsKey(subject)) {
+				throw new DuplicateSubscriptionException("Already subscribed to subject " + subject);
+			}
+			hub.subscribe(subject, handler);
 		} else if (frame instanceof UnsubscribeFrame) {
 			final UnsubscribeFrame unsubscribeFrame = (UnsubscribeFrame) frame;
-			// TODO Implement unsubscribe
+			final Subject subject = unsubscribeFrame.getSubject();
+			final SubscriptionHandle subscriptionHandle = subscriptionHandles.get(subject);
+			if (subscriptionHandle == null) {
+				throw new NotSubscribedException("Not subscribed to subject " + subject);
+			}
+			subscriptionHandle.remove();
 		} else if (frame instanceof PingFrame) {
 			ctx.write(PongFrame.PONG);
 		} else {
@@ -120,6 +143,15 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 		} else {
 			challenge = CertificateUtils.generateChallenge();
 			ctx.write(new AuthenticationRequestFrame(challenge));
+		}
+		handler = new NettyHandler(ctx);
+	}
+
+	@Override
+	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+		// Cleanup subscripts in hub
+		for (SubscriptionHandle handle : subscriptionHandles.values()) {
+			handle.remove();
 		}
 	}
 
@@ -140,6 +172,10 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 			errorCode = ErrorFrame.Code.SERVER_NOT_READY;
 		} else if (cause instanceof InvalidProtocolVersionException) {
 			errorCode = ErrorFrame.Code.UNSUPPORTED_PROTOCOL_VERSION;
+		} else if (cause instanceof DuplicateSubscriptionException) {
+			errorCode = ErrorFrame.Code.DUPLICATE_SUBSCRIPTION;
+		} else if (cause instanceof NotSubscribedException) {
+			errorCode = ErrorFrame.Code.NOT_SUBSCRIBED;
 		} else {
 			errorCode = ErrorFrame.Code.SERVER_ERROR;
 		}

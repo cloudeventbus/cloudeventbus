@@ -18,6 +18,7 @@ package cloudeventbus.codec;
 
 import cloudeventbus.pki.CertificateStoreLoader;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.util.CharsetUtil;
@@ -114,11 +115,10 @@ public class Encoder extends MessageToByteEncoder<Frame> {
 			writeString(out, publishFrame.getReplySubject().toString());
 		}
 		out.writeByte(' ');
-		final ByteBuf body = publishFrame.getBody();
+		final ByteBuf body = Unpooled.wrappedBuffer(publishFrame.getBody().getBytes(CharsetUtil.UTF_8));
 		writeString(out, Integer.toString(body.readableBytes()));
 		out.writeBytes(Codec.DELIMITER);
 		out.writeBytes(body);
-		out.writeBytes(Codec.DELIMITER);
 	}
 
 	private void writeString(ByteBuf out, String string) {

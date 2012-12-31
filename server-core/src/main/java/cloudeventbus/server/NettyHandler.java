@@ -14,16 +14,25 @@
  *   limitations under the License.
  *
  */
-package cloudeventbus.codec;
+package cloudeventbus.server;
 
-import cloudeventbus.Subject;
+import cloudeventbus.codec.PublishFrame;
+import cloudeventbus.hub.Handler;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-public class PublishFrame extends AbstractMessageFrame {
+public class NettyHandler implements Handler<PublishFrame> {
 
-	public PublishFrame(Subject subject, Subject replySubject, String body) {
-		super(subject, replySubject, body);
+	public NettyHandler(ChannelHandlerContext context) {
+		this.context = context;
+	}
+
+	private final ChannelHandlerContext context;
+
+	@Override
+	public void publish(PublishFrame message) {
+		context.write(message);
 	}
 }

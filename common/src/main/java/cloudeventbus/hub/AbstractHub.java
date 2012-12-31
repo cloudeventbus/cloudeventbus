@@ -28,7 +28,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-// TODO Implement send (single receiver)
 public abstract class AbstractHub<T> implements Hub<T> {
 
 	private final WildCardNode wildcardSubscriptions = new WildCardNode();
@@ -107,6 +106,12 @@ public abstract class AbstractHub<T> implements Hub<T> {
 				handler.publish(message);
 			}
 		}
+	}
+
+	@Override
+	public boolean send(Subject subject, Subject replySubject, String body) {
+		//TODO Implement send.
+		throw new UnsupportedOperationException("We need to implement send");
 	}
 
 	protected abstract T encode(Subject subject, Subject replySubject, String body, int recipientCount);

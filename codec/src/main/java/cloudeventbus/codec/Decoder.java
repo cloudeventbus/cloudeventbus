@@ -46,12 +46,14 @@ public class Decoder extends ByteToMessageDecoder<Frame> {
 
 	@Override
 	public Frame decode(ChannelHandlerContext ctx, ByteBuf in) throws Exception {
+		in.markReaderIndex();
 		final int frameLength = indexOf(in, Codec.DELIMITER);
 		// Frame hasn't been fully read yet.
 		if (frameLength < 0) {
 			if (in.readableBytes() > maxMessageSize) {
 				throw new TooLongFrameException("Frame exceeds maximum size");
 			}
+			in.resetReaderIndex();
 			return null;
 		}
 		// Empty frame, discard and continue decoding
@@ -124,9 +126,11 @@ public class Decoder extends ByteToMessageDecoder<Frame> {
 				}
 				if (in.readableBytes() < messageLength + Codec.DELIMITER.length) {
 					// If we haven't received the entire message body (plus the CRLF), wait until it arrives.
+					in.resetReaderIndex();
 					return null;
 				}
-				final ByteBuf messageBody = in.readBytes(messageLength);
+				final ByteBuf messageBytes = in.readBytes(messageLength);
+				final String messageBody = new String(messageBytes.array(), CharsetUtil.UTF_8);
 				in.skipBytes(Codec.DELIMITER.length); // Ignore the CRLF after the message body.
 				if (frameType == FrameTypes.PUBLISH) {
 					return new PublishFrame(new Subject(messageSubject), replySubject == null ? null : new Subject(replySubject), messageBody);

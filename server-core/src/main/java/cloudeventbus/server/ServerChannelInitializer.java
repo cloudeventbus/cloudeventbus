@@ -16,7 +16,11 @@
  */
 package cloudeventbus.server;
 
+import cloudeventbus.Subject;
 import cloudeventbus.codec.Codec;
+import cloudeventbus.codec.PublishFrame;
+import cloudeventbus.hub.AbstractHub;
+import cloudeventbus.hub.Hub;
 import cloudeventbus.pki.TrustStore;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -29,6 +33,13 @@ public class ServerChannelInitializer extends ChannelInitializer<SocketChannel> 
 
 	private final String versionString;
 	private final TrustStore trustStore;
+	// TODO Move initialization of Hub out of initializer
+	private final Hub<PublishFrame> hub = new AbstractHub<PublishFrame>() {
+		@Override
+		protected PublishFrame encode(Subject subject, Subject replySubject, String body, int recipientCount) {
+			return new PublishFrame(subject, replySubject, body);
+		}
+	};
 
 	public ServerChannelInitializer(String versionString, TrustStore trustStore) {
 		this.versionString = versionString;
@@ -39,7 +50,7 @@ public class ServerChannelInitializer extends ChannelInitializer<SocketChannel> 
 	public void initChannel(SocketChannel ch) throws Exception {
 		final ChannelPipeline pipeline = ch.pipeline();
 		pipeline.addLast(new Codec());
-		pipeline.addLast(new ServerHandler(versionString, trustStore));
+		pipeline.addLast(new ServerHandler(versionString, hub, trustStore));
 	}
 
 }

@@ -25,4 +25,6 @@ public interface Hub<T> {
 	SubscriptionHandle subscribe(Subject subject, Handler<T> handler);
 
 	void publish(Subject subject, Subject replySubject, String body);
+
+	boolean send(Subject subject, Subject replySubject, String body);
 }

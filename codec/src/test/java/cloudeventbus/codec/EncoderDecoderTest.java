@@ -21,7 +21,6 @@ import cloudeventbus.pki.Certificate;
 import cloudeventbus.pki.CertificateChain;
 import cloudeventbus.pki.CertificateUtils;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedByteChannel;
 import io.netty.handler.codec.EncoderException;
 import org.testng.annotations.Test;
@@ -118,8 +117,8 @@ public class EncoderDecoderTest {
 	public void publishFrame() {
 		final Subject subject = new Subject("test");
 		final Subject replySubject = new Subject("_test");
-		final ByteBuf body = Unpooled.wrappedBuffer("Testing".getBytes());
-		final PublishFrame frame = new PublishFrame(subject, replySubject, body.duplicate());
+		final String body = "Testing";
+		final PublishFrame frame = new PublishFrame(subject, replySubject, body);
 		final PublishFrame recodedFrame = recode(frame);
 
 		assertEquals(recodedFrame.getSubject(), subject);
@@ -130,8 +129,8 @@ public class EncoderDecoderTest {
 	@Test
 	public void publishFrameNoReply() {
 		final Subject subject = new Subject("testing.with.no.reply");
-		final ByteBuf body = Unpooled.wrappedBuffer("I like this body.".getBytes());
-		final PublishFrame frame = new PublishFrame(subject, null, body.duplicate());
+		final String body = "I like this body.";
+		final PublishFrame frame = new PublishFrame(subject, null, body);
 		final PublishFrame recodedFrame = recode(frame);
 
 		assertEquals(recodedFrame.getSubject(), subject);
@@ -143,8 +142,8 @@ public class EncoderDecoderTest {
 	public void sendFrame() {
 		final Subject subject = new Subject("test");
 		final Subject replySubject = new Subject("_test");
-		final ByteBuf body = Unpooled.wrappedBuffer("Testing".getBytes());
-		final SendFrame frame = new SendFrame(subject, replySubject, body.duplicate());
+		final String body = "Testing";
+		final SendFrame frame = new SendFrame(subject, replySubject, body);
 		final SendFrame recodedFrame = recode(frame);
 
 		assertEquals(recodedFrame.getSubject(), subject);
@@ -155,8 +154,8 @@ public class EncoderDecoderTest {
 	@Test
 	public void sendFrameNoReply() {
 		final Subject subject = new Subject("testing.with.no.reply");
-		final ByteBuf body = Unpooled.wrappedBuffer("I like this body.".getBytes());
-		final SendFrame frame = new SendFrame(subject, null, body.duplicate());
+		final String body = "I like this body.";
+		final SendFrame frame = new SendFrame(subject, null, body);
 		final SendFrame recodedFrame = recode(frame);
 
 		assertEquals(recodedFrame.getSubject(), subject);

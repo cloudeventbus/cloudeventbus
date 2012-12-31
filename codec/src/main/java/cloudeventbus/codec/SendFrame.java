@@ -17,13 +17,12 @@
 package cloudeventbus.codec;
 
 import cloudeventbus.Subject;
-import io.netty.buffer.ByteBuf;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
 public class SendFrame extends AbstractMessageFrame {
-	public SendFrame(Subject subject, Subject replySubject, ByteBuf body) {
+	public SendFrame(Subject subject, Subject replySubject, String body) {
 		super(subject, replySubject, body);
 	}
 }
