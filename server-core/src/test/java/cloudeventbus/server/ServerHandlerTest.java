@@ -43,8 +43,8 @@ public class ServerHandlerTest {
 
 	@Test
 	public void greeting() {
-		final String version = "unit-test-server-1.0";
-		final EmbeddedByteChannel serverChannel = new EmbeddedByteChannel(new Codec(), new ServerHandler(version, null));
+		final String agent = "unit-test-server-1.0";
+		final EmbeddedByteChannel serverChannel = new EmbeddedByteChannel(new Codec(), new ServerHandler(agent, null));
 		final EmbeddedByteChannel clientChannel = new EmbeddedByteChannel(new Codec());
 		final ByteBuf byteBuf = serverChannel.readOutbound();
 		clientChannel.writeInbound(byteBuf);
@@ -52,7 +52,7 @@ public class ServerHandlerTest {
 		// Validate greeting
 		final GreetingFrame greeting = (GreetingFrame) clientChannel.readInbound();
 		assertNotNull(greeting);
-		assertEquals(greeting.getVersion(), version);
+		assertEquals(greeting.getAgent(), agent);
 
 		// Validate server ready
 		final ServerReadyFrame ready = (ServerReadyFrame) clientChannel.readInbound();
@@ -61,7 +61,7 @@ public class ServerHandlerTest {
 
 	@Test
 	public void authentication() {
-		final String version = "test-authentication-server-1.0";
+		final String agent = "test-authentication-server-1.0";
 
 		final KeyPair keyPair = CertificateUtils.generateKeyPair();
 		final Certificate certificate = CertificateUtils.generateSelfSignedCertificate(keyPair, -1, "Trusted certificate");
@@ -80,7 +80,7 @@ public class ServerHandlerTest {
 		);
 		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);
 
-		final EmbeddedByteChannel serverChannel = new EmbeddedByteChannel(new Codec(), new ServerHandler(version, trustStore));
+		final EmbeddedByteChannel serverChannel = new EmbeddedByteChannel(new Codec(), new ServerHandler(agent, trustStore));
 		final EmbeddedByteChannel clientChannel = new EmbeddedByteChannel(new Codec());
 		ByteBuf byteBuf = serverChannel.readOutbound();
 		clientChannel.writeInbound(byteBuf);
@@ -88,7 +88,7 @@ public class ServerHandlerTest {
 		// Validate greeting
 		final GreetingFrame greeting = (GreetingFrame) clientChannel.readInbound();
 		assertNotNull(greeting);
-		assertEquals(greeting.getVersion(), version);
+		assertEquals(greeting.getAgent(), agent);
 
 		// Get authentication request
 		final AuthenticationRequestFrame authenticationRequest = (AuthenticationRequestFrame) clientChannel.readInbound();
@@ -111,7 +111,7 @@ public class ServerHandlerTest {
 
 	@Test
 	public void badAuthentication() {
-		final String version = "test-authentication-server-1.0";
+		final String agent = "test-bad-authentication-server-1.0";
 
 		final KeyPair keyPair = CertificateUtils.generateKeyPair();
 		final Certificate certificate = CertificateUtils.generateSelfSignedCertificate(keyPair, -1, "Trusted certificate");
@@ -130,7 +130,7 @@ public class ServerHandlerTest {
 		);
 		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);
 
-		final EmbeddedByteChannel serverChannel = new EmbeddedByteChannel(new Codec(), new ServerHandler(version, trustStore));
+		final EmbeddedByteChannel serverChannel = new EmbeddedByteChannel(new Codec(), new ServerHandler(agent, trustStore));
 		final EmbeddedByteChannel clientChannel = new EmbeddedByteChannel(new Codec());
 		ByteBuf byteBuf = serverChannel.readOutbound();
 		clientChannel.writeInbound(byteBuf);
@@ -138,7 +138,7 @@ public class ServerHandlerTest {
 		// Validate greeting
 		final GreetingFrame greeting = (GreetingFrame) clientChannel.readInbound();
 		assertNotNull(greeting);
-		assertEquals(greeting.getVersion(), version);
+		assertEquals(greeting.getAgent(), agent);
 
 		// Get authentication request
 		final AuthenticationRequestFrame authenticationRequest = (AuthenticationRequestFrame) clientChannel.readInbound();

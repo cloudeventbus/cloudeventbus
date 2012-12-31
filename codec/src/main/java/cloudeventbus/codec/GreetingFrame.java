@@ -16,18 +16,31 @@
  */
 package cloudeventbus.codec;
 
+import java.util.regex.Pattern;
+
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-// TODO Make version the protocol version and a second field for the agent version
 public class GreetingFrame implements Frame {
-	final String version;
+	private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s");
 
-	public GreetingFrame(String version) {
+	private final int version;
+	private final String agent;
+
+	public GreetingFrame(int version, String agent) {
+		if (WHITESPACE_PATTERN.matcher(agent).find()) {
+			throw new IllegalArgumentException("agent cannot contain whitespace.");
+		}
 		this.version = version;
+		this.agent = agent;
 	}
 
-	public String getVersion() {
+	public String getAgent() {
+		return agent;
+	}
+
+	public int getVersion() {
 		return version;
 	}
+
 }

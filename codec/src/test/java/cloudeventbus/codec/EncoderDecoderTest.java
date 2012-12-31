@@ -90,11 +90,13 @@ public class EncoderDecoderTest {
 
 	@Test
 	public void greetingFrame() {
-		final String version = "0.1-SNAPSHOT";
-		final GreetingFrame frame = new GreetingFrame(version);
+		final int version = 1;
+		final String agent = "test-0.1-SNAPSHOT";
+		final GreetingFrame frame = new GreetingFrame(version, agent);
 		final GreetingFrame recodedFrame = recode(frame);
 
 		assertEquals(recodedFrame.getVersion(), version);
+		assertEquals(recodedFrame.getAgent(), agent);
 	}
 
 	@Test

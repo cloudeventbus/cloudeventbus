@@ -99,9 +99,10 @@ public class Decoder extends ByteToMessageDecoder<Frame> {
 					return new ErrorFrame(errorCode);
 				}
 			case FrameTypes.GREETING:
-				assertArgumentsLength(1, argumentsLength, "greeting");
-				final String version = parts[1];
-				return new GreetingFrame(version);
+				assertArgumentsLength(2, argumentsLength, "greeting");
+				final int version = Integer.valueOf(parts[1]);
+				final String agent = parts[2];
+				return new GreetingFrame(version, agent);
 			case FrameTypes.PING:
 				return PingFrame.PING;
 			case FrameTypes.PONG:

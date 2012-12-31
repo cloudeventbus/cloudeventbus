@@ -44,16 +44,18 @@ import io.netty.handler.codec.DecoderException;
 // TODO Send ping frame very 30 seconds. Close socket after 1 minute of inactivity.
 public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 
-	private final String versionString;
+	private static final int SUPPORTED_VERSION = 1;
+
+	private final String agentString;
 	private final TrustStore trustStore;
 
 	private byte[] challenge;
 	private boolean serverReady = false;
 	private CertificateChain clientCertificates;
-	private String clientVersion;
+	private String clientAgent;
 
-	public ServerHandler(String versionString, TrustStore trustStore) {
-		this.versionString = versionString;
+	public ServerHandler(String agentString, TrustStore trustStore) {
+		this.agentString = agentString;
 		this.trustStore = trustStore;
 	}
 
@@ -71,7 +73,15 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 					authenticationResponse.getDigitalSignature());
 			serverReady = true;
 			ctx.write(ServerReadyFrame.SERVER_READY);
-		} else if (!serverReady) {
+		} else if (frame instanceof GreetingFrame) {
+			final GreetingFrame greetingFrame = (GreetingFrame) frame;
+			clientAgent = greetingFrame.getAgent();
+			if (greetingFrame.getVersion() != SUPPORTED_VERSION) {
+				throw new InvalidProtocolVersionException("This server doesn't support protocol version " + greetingFrame.getVersion());
+			}
+		}
+		// The server has to be "ready" to process frames below this point.
+		else if (!serverReady) {
 			throw new ServerNotReadyException("This server requires authentication.");
 		} else if (frame instanceof PublishFrame) {
 			final PublishFrame publishFrame = (PublishFrame) frame;
@@ -88,9 +98,6 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 		} else if (frame instanceof UnsubscribeFrame) {
 			final UnsubscribeFrame unsubscribeFrame = (UnsubscribeFrame) frame;
 			// TODO Implement unsubscribe
-		} else if (frame instanceof GreetingFrame) {
-			final GreetingFrame greetingFrame = (GreetingFrame) frame;
-			clientVersion = greetingFrame.getVersion();
 		} else if (frame instanceof PingFrame) {
 			ctx.write(PongFrame.PONG);
 		}
@@ -99,7 +106,7 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 
 	@Override
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {
-		ctx.write(new GreetingFrame(versionString));
+		ctx.write(new GreetingFrame(SUPPORTED_VERSION, agentString));
 		if (trustStore == null) {
 			serverReady = true;
 			ctx.write(ServerReadyFrame.SERVER_READY);
@@ -115,6 +122,7 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 		if (cause instanceof DecoderException) {
 			cause = cause.getCause();
 		}
+		//TODO Move error code to CloudEventBus exception
 		final ErrorFrame.Code errorCode;
 		if (cause instanceof DecodingException) {
 			errorCode = ErrorFrame.Code.MALFORMED_REQUEST;
@@ -122,6 +130,8 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 			errorCode = ErrorFrame.Code.INVALID_SIGNATURE;
 		} else if (cause instanceof ServerNotReadyException) {
 			errorCode = ErrorFrame.Code.SERVER_NOT_READY;
+		} else if (cause instanceof InvalidProtocolVersionException) {
+			errorCode = ErrorFrame.Code.UNSUPPORTED_PROTOCOL_VERSION;
 		} else {
 			errorCode = ErrorFrame.Code.SERVER_ERROR;
 		}
