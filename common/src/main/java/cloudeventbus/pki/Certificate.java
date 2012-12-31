@@ -17,11 +17,9 @@
 package cloudeventbus.pki;
 
 import cloudeventbus.CloudEventBusException;
+import cloudeventbus.Subject;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -30,7 +28,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.GeneralSecurityException;
-import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -62,14 +59,14 @@ public class Certificate {
 	private final long issuer;
 	private final long expirationDate;
 	private final PublicKey publicKey;
-	private final List<String> subscribePermissions;
-	private final List<String> publishPermissions;
+	private final List<Subject> subscribePermissions;
+	private final List<Subject> publishPermissions;
 	private final String comment;
 	private final byte[] signature;
 
 	private volatile byte[] hash;
 
-	public Certificate(Type type, long serialNumber, long issuer, long expirationDate, PublicKey publicKey, List<String> subscribePermissions, List<String> publishPermissions, String comment, byte[] signature) {
+	public Certificate(Type type, long serialNumber, long issuer, long expirationDate, PublicKey publicKey, List<Subject> subscribePermissions, List<Subject> publishPermissions, String comment, byte[] signature) {
 		if (type == null) {
 			throw new IllegalArgumentException("type cannot be null");
 		}
@@ -81,8 +78,8 @@ public class Certificate {
 			throw new IllegalArgumentException("public key cannot be null");
 		}
 		this.publicKey = publicKey;
-		this.subscribePermissions = copyListUnmodifably(subscribePermissions);
-		this.publishPermissions = copyListUnmodifably(publishPermissions);
+		this.subscribePermissions = Collections.unmodifiableList(new ArrayList<>(subscribePermissions));
+		this.publishPermissions = Collections.unmodifiableList(new ArrayList<>(publishPermissions));
 		this.comment = comment;
 		if (signature != null && signature.length != SIGNATURE_LENGTH) {
 			throw new InvalidCertificateException("Invalid signature, signature must be " + SIGNATURE_LENGTH + " bytes long.");
@@ -165,10 +162,10 @@ public class Certificate {
 		}
 	}
 
-	private String listToCommaSeparatedString(List<String> list) {
+	private String listToCommaSeparatedString(List<Subject> list) {
 		final StringBuilder buff = new StringBuilder();
 		String sep = "";
-		for (String s : list) {
+		for (Subject s : list) {
 		    buff.append(sep);
 		    buff.append(s);
 		    sep = ",";
@@ -176,9 +173,9 @@ public class Certificate {
 		return buff.toString();
 	}
 
-	private List<String> commaSeperateStringToList(String subscribe) {
+	private List<Subject> commaSeperateStringToList(String subscribe) {
 		final String[] parts = subscribe.split("\\s*,\\s*");
-		return copyListUnmodifably(Arrays.asList(parts));
+		return Subject.list(parts);
 	}
 
 	private String readString(DataInputStream data) throws IOException {
@@ -195,10 +192,6 @@ public class Certificate {
 		}
 		data.read(); // Throw away null terminating byte
 		return new String(string);
-	}
-
-	private List<String> copyListUnmodifably(List<String> subscribePermissions) {
-		return Collections.unmodifiableList(new ArrayList<>(subscribePermissions));
 	}
 
 	public Type getType() {
@@ -221,11 +214,11 @@ public class Certificate {
 		return publicKey;
 	}
 
-	public List<String> getSubscribePermissions() {
+	public List<Subject> getSubscribePermissions() {
 		return subscribePermissions;
 	}
 
-	public List<String> getPublishPermissions() {
+	public List<Subject> getPublishPermissions() {
 		return publishPermissions;
 	}
 

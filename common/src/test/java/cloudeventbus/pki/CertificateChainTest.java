@@ -16,12 +16,14 @@
  */
 package cloudeventbus.pki;
 
-import static org.testng.Assert.*;
+import cloudeventbus.Subject;
 import org.testng.annotations.Test;
 
 import java.security.KeyPair;
-import java.util.Arrays;
 import java.util.Iterator;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
@@ -40,8 +42,8 @@ public class CertificateChainTest {
 				certificateKeyPair.getPublic(),
 				Certificate.Type.CLIENT,
 				-1,
-				Arrays.asList("*"),
-				Arrays.asList("*"),
+				Subject.list("*"),
+				Subject.list("*"),
 				"Client certificate");
 
 		final CertificateChain certificates = new CertificateChain();

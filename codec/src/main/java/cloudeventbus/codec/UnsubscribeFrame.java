@@ -16,18 +16,20 @@
  */
 package cloudeventbus.codec;
 
+import cloudeventbus.Subject;
+
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
 public class UnsubscribeFrame implements Frame {
 
-	private final String subject;
+	private final Subject subject;
 
-	public UnsubscribeFrame(String subject) {
+	public UnsubscribeFrame(Subject subject) {
 		this.subject = subject;
 	}
 
-	public String getSubject() {
+	public Subject getSubject() {
 		return subject;
 	}
 }

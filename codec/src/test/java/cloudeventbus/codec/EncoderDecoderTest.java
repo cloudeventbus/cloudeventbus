@@ -16,6 +16,7 @@
  */
 package cloudeventbus.codec;
 
+import cloudeventbus.Subject;
 import cloudeventbus.pki.Certificate;
 import cloudeventbus.pki.CertificateChain;
 import cloudeventbus.pki.CertificateUtils;
@@ -113,8 +114,8 @@ public class EncoderDecoderTest {
 
 	@Test
 	public void publishFrame() {
-		final String subject = "test";
-		final String replySubject = "_test";
+		final Subject subject = new Subject("test");
+		final Subject replySubject = new Subject("_test");
 		final ByteBuf body = Unpooled.wrappedBuffer("Testing".getBytes());
 		final PublishFrame frame = new PublishFrame(subject, replySubject, body.duplicate());
 		final PublishFrame recodedFrame = recode(frame);
@@ -126,7 +127,7 @@ public class EncoderDecoderTest {
 
 	@Test
 	public void publishFrameNoReply() {
-		final String subject = "testing.with.no.reply";
+		final Subject subject = new Subject("testing.with.no.reply");
 		final ByteBuf body = Unpooled.wrappedBuffer("I like this body.".getBytes());
 		final PublishFrame frame = new PublishFrame(subject, null, body.duplicate());
 		final PublishFrame recodedFrame = recode(frame);
@@ -138,8 +139,8 @@ public class EncoderDecoderTest {
 
 	@Test
 	public void sendFrame() {
-		final String subject = "test";
-		final String replySubject = "_test";
+		final Subject subject = new Subject("test");
+		final Subject replySubject = new Subject("_test");
 		final ByteBuf body = Unpooled.wrappedBuffer("Testing".getBytes());
 		final SendFrame frame = new SendFrame(subject, replySubject, body.duplicate());
 		final SendFrame recodedFrame = recode(frame);
@@ -151,7 +152,7 @@ public class EncoderDecoderTest {
 
 	@Test
 	public void sendFrameNoReply() {
-		final String subject = "testing.with.no.reply";
+		final Subject subject = new Subject("testing.with.no.reply");
 		final ByteBuf body = Unpooled.wrappedBuffer("I like this body.".getBytes());
 		final SendFrame frame = new SendFrame(subject, null, body.duplicate());
 		final SendFrame recodedFrame = recode(frame);
@@ -163,7 +164,7 @@ public class EncoderDecoderTest {
 
 	@Test
 	public void subscribe() {
-		final String subject = "this.is.some.subject";
+		final Subject subject = new Subject("this.is.some.subject");
 		final SubscribeFrame frame = new SubscribeFrame(subject);
 		final SubscribeFrame recodedFrame = recode(frame);
 
@@ -172,7 +173,7 @@ public class EncoderDecoderTest {
 
 	@Test
 	public void unsubscribe() {
-		final String subject = "unsubscribe.test";
+		final Subject subject = new Subject("unsubscribe.test");
 		final UnsubscribeFrame frame = new UnsubscribeFrame(subject);
 		final UnsubscribeFrame recodedFrame = recode(frame);
 

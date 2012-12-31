@@ -17,6 +17,7 @@
 package cloudeventbus.codec;
 
 import cloudeventbus.Constants;
+import cloudeventbus.Subject;
 import cloudeventbus.pki.CertificateChain;
 import cloudeventbus.pki.CertificateStoreLoader;
 import io.netty.buffer.ByteBuf;
@@ -127,18 +128,18 @@ public class Decoder extends ByteToMessageDecoder<Frame> {
 				final ByteBuf messageBody = in.readBytes(messageLength);
 				in.skipBytes(Codec.DELIMITER.length); // Ignore the CRLF after the message body.
 				if (frameType == FrameTypes.PUBLISH) {
-					return new PublishFrame(messageSubject, replySubject, messageBody);
+					return new PublishFrame(new Subject(messageSubject), replySubject == null ? null : new Subject(replySubject), messageBody);
 				} else {
-					return new SendFrame(messageSubject, replySubject, messageBody);
+					return new SendFrame(new Subject(messageSubject), replySubject == null ? null : new Subject(replySubject), messageBody);
 				}
 			case FrameTypes.SERVER_READY:
 				return ServerReadyFrame.SERVER_READY;
 			case FrameTypes.SUBSCRIBE:
 				assertArgumentsLength(1, argumentsLength, "subscribe");
-				return new SubscribeFrame(parts[1]);
+				return new SubscribeFrame(new Subject(parts[1]));
 			case FrameTypes.UNSUBSCRIBE:
 				assertArgumentsLength(1, argumentsLength, "unsubscribe");
-				return new UnsubscribeFrame(parts[1]);
+				return new UnsubscribeFrame(new Subject(parts[1]));
 			default:
 				throw new DecodingException("Unknown frame type " + frameType);
 		}

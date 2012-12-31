@@ -16,6 +16,7 @@
  */
 package cloudeventbus.pki;
 
+import cloudeventbus.Subject;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
@@ -23,7 +24,6 @@ import java.io.ByteArrayOutputStream;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -41,8 +41,8 @@ public class CertificateStoreLoaderTest {
 		keyPairGenerator.initialize(2048);
 		KeyPair keyPair = keyPairGenerator.generateKeyPair();
 
-		final Certificate certificate1 = new Certificate(Certificate.Type.AUTHORITY, 1l, 2l, System.currentTimeMillis(), keyPair.getPublic(), Arrays.asList("foo.*"), Arrays.asList("bar.*"), null, null);
-		final Certificate certificate2 = new Certificate(Certificate.Type.SERVER, 3l, 4l, System.currentTimeMillis(), keyPair.getPublic(), Arrays.asList("foo2.*"), Arrays.asList("bar2.*"), "Certificate 2", null);
+		final Certificate certificate1 = new Certificate(Certificate.Type.AUTHORITY, 1l, 2l, System.currentTimeMillis(), keyPair.getPublic(), Subject.list("foo.*"), Subject.list("bar.*"), null, null);
+		final Certificate certificate2 = new Certificate(Certificate.Type.SERVER, 3l, 4l, System.currentTimeMillis(), keyPair.getPublic(), Subject.list("foo2.*"), Subject.list("bar2.*"), "Certificate 2", null);
 
 		final List<Certificate> certificates = new ArrayList<>();
 		certificates.add(certificate1);

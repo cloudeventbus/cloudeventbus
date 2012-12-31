@@ -16,18 +16,20 @@
  */
 package cloudeventbus.codec;
 
+import cloudeventbus.Subject;
+
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
 public class SubscribeFrame implements Frame {
 
-	private final String subject;
+	private final Subject subject;
 
-	public SubscribeFrame(String subject) {
+	public SubscribeFrame(Subject subject) {
 		this.subject = subject;
 	}
 
-	public String getSubject() {
+	public Subject getSubject() {
 		return subject;
 	}
 

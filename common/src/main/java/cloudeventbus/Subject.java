@@ -16,6 +16,9 @@
  */
 package cloudeventbus;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -26,7 +29,16 @@ import java.util.regex.Pattern;
 public class Subject {
 
 	public static final String WILD_CARD_TOKEN = "*";
+	public static final Subject ALL = new Subject("*");
 	private static final Pattern SUBJECT_PATTERN = Pattern.compile("[0-9a-zA-Z_-]+(\\.[0-9a-zA-Z_-]+)*(\\.\\*){0,1}");
+
+	public static List<Subject> list(String... subjects) {
+		final Subject[] list = new Subject[subjects.length];
+		for (int i = 0; i < subjects.length; i++) {
+			list[i] = new Subject(subjects[i]);
+		}
+		return Collections.unmodifiableList(Arrays.asList(list));
+	}
 
 	private final String subject;
 

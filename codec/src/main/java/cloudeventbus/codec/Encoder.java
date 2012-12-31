@@ -92,12 +92,12 @@ public class Encoder extends MessageToByteEncoder<Frame> {
 			final SubscribeFrame subscribeFrame = (SubscribeFrame) frame;
 			out.writeByte(FrameTypes.SUBSCRIBE);
 			out.writeByte(' ');
-			writeString(out, subscribeFrame.getSubject());
+			writeString(out, subscribeFrame.getSubject().toString());
 		} else if (frame instanceof UnsubscribeFrame) {
 			final UnsubscribeFrame unsubscribeFrame = (UnsubscribeFrame) frame;
 			out.writeByte(FrameTypes.UNSUBSCRIBE);
 			out.writeByte(' ');
-			writeString(out, unsubscribeFrame.getSubject());
+			writeString(out, unsubscribeFrame.getSubject().toString());
 		} else {
 			throw new EncodingException("Don't know how to encode message of type " + frame.getClass().getName());
 		}
@@ -106,10 +106,10 @@ public class Encoder extends MessageToByteEncoder<Frame> {
 
 	private void writeMessageFrame(ByteBuf out, AbstractMessageFrame publishFrame) {
 		out.writeByte(' ');
-		writeString(out, publishFrame.getSubject());
+		writeString(out, publishFrame.getSubject().toString());
 		if (publishFrame.getReplySubject() != null) {
 			out.writeByte(' ');
-			writeString(out, publishFrame.getReplySubject());
+			writeString(out, publishFrame.getReplySubject().toString());
 		}
 		out.writeByte(' ');
 		final ByteBuf body = publishFrame.getBody();

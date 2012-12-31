@@ -16,6 +16,7 @@
  */
 package cloudeventbus.codec;
 
+import cloudeventbus.Subject;
 import io.netty.buffer.ByteBuf;
 
 /**
@@ -23,7 +24,7 @@ import io.netty.buffer.ByteBuf;
  */
 public class PublishFrame extends AbstractMessageFrame {
 
-	public PublishFrame(String subject, String replySubject, ByteBuf body) {
+	public PublishFrame(Subject subject, Subject replySubject, ByteBuf body) {
 		super(subject, replySubject, body);
 	}
 }

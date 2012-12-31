@@ -16,6 +16,8 @@
  */
 package cloudeventbus.pki;
 
+import cloudeventbus.Subject;
+
 import javax.crypto.Cipher;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
@@ -61,14 +63,14 @@ public class CertificateUtils {
 				serialNumber,
 				expirationDate,
 				keyPair.getPublic(),
-				Arrays.asList("*"),
-				Arrays.asList("*"),
+				Arrays.asList(Subject.ALL),
+				Arrays.asList(Subject.ALL),
 				comment,
 				null);
 		return signCertificate(certificate, keyPair.getPrivate(), certificate);
 	}
 
-	public static Certificate generateSignedCertificate(Certificate issuer, PrivateKey issuerPrivateKey, PublicKey newCertificatePublicKey, Certificate.Type type, long expirationDate, List<String> subscribePermissions, List<String> publishPermissions, String comment) {
+	public static Certificate generateSignedCertificate(Certificate issuer, PrivateKey issuerPrivateKey, PublicKey newCertificatePublicKey, Certificate.Type type, long expirationDate, List<Subject> subscribePermissions, List<Subject> publishPermissions, String comment) {
 		final long serialNumber = secureRandom.get().nextLong();
 		final Certificate certificate = new Certificate(
 				type,

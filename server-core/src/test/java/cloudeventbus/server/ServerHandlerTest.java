@@ -16,6 +16,7 @@
  */
 package cloudeventbus.server;
 
+import cloudeventbus.Subject;
 import cloudeventbus.codec.AuthenticationRequestFrame;
 import cloudeventbus.codec.AuthenticationResponseFrame;
 import cloudeventbus.codec.Codec;
@@ -31,7 +32,6 @@ import io.netty.channel.embedded.EmbeddedByteChannel;
 import org.testng.annotations.Test;
 
 import java.security.KeyPair;
-import java.util.Arrays;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -74,8 +74,8 @@ public class ServerHandlerTest {
 				clientKeyPair.getPublic(),
 				Certificate.Type.CLIENT,
 				-1,
-				Arrays.asList("*"),
-				Arrays.asList("*"),
+				Subject.list("*"),
+				Subject.list("*"),
 				"Client certificate for testing"
 		);
 		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);
@@ -124,8 +124,8 @@ public class ServerHandlerTest {
 				clientKeyPair.getPublic(),
 				Certificate.Type.CLIENT,
 				-1,
-				Arrays.asList("*"),
-				Arrays.asList("*"),
+				Subject.list("*"),
+				Subject.list("*"),
 				"Client certificate for testing"
 		);
 		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);

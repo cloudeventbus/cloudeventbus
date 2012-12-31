@@ -16,14 +16,15 @@
  */
 package cloudeventbus.pki;
 
-import static org.testng.Assert.*;
+import cloudeventbus.Subject;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.security.KeyPair;
-import java.util.Arrays;
 import java.util.List;
+
+import static org.testng.Assert.assertEquals;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
@@ -38,8 +39,8 @@ public class CertificateTest {
 		final long serialNumber = 1234l;
 		final long issuer = 5678;
 		final long expirationDate = System.currentTimeMillis();
-		final List<String> subscribe = Arrays.asList("foo.bar", "test");
-		final List<String> publish = Arrays.asList("this", "that", "theOtherOne");
+		final List<Subject> subscribe = Subject.list("foo.bar", "test");
+		final List<Subject> publish = Subject.list("this", "that", "theOtherOne");
 		final String comment = "This is a comment.";
 		final byte[] signature = new byte[Certificate.SIGNATURE_LENGTH];
 
@@ -78,8 +79,8 @@ public class CertificateTest {
 				certificateKeyPair.getPublic(),
 				Certificate.Type.CLIENT,
 				-1,
-				Arrays.asList("*"),
-				Arrays.asList("*"),
+				Subject.list("*"),
+				Subject.list("*"),
 				"Client certificate");
 		final Certificate secondIssuerCertificate = CertificateUtils.generateSelfSignedCertificate(issuerKeyPair, -1, "Issuer");
 		secondIssuerCertificate.validateSignature(certificate);
@@ -97,8 +98,8 @@ public class CertificateTest {
 				issuerCertificate.getSerialNumber(),
 				-1,
 				certificateKeyPair.getPublic(),
-				Arrays.asList("*"),
-				Arrays.asList("*"),
+				Subject.list("*"),
+				Subject.list("*"),
 				"This is a bad signature",
 				new byte[Certificate.SIGNATURE_LENGTH]);
 		issuerCertificate.validateSignature(certificate);
@@ -116,8 +117,8 @@ public class CertificateTest {
 				certificateKeyPair.getPublic(),
 				Certificate.Type.CLIENT,
 				-1,
-				Arrays.asList("*"),
-				Arrays.asList("*"),
+				Subject.list("*"),
+				Subject.list("*"),
 				"Client certificate");
 		final Certificate certificate = new Certificate(
 				validCertificate.getType(),
