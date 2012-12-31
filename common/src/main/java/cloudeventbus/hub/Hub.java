@@ -19,36 +19,10 @@ package cloudeventbus.hub;
 import cloudeventbus.Subject;
 
 /**
- * @author Mike Heath <heathma@ldschurch.org>
+ * @author Mike Heath <elcapo@gmail.com>
  */
-class TestHub extends AbstractHub<TestHub.Message> {
+public interface Hub<T> {
+	SubscriptionHandle subscribe(Subject subject, Handler<T> handler);
 
-	static class Message {
-		final Subject subject;
-		final Subject replySubject;
-		final String body;
-
-		Message(Subject subject, Subject replySubject, String body) {
-			this.subject = subject;
-			this.replySubject = replySubject;
-			this.body = body;
-		}
-
-		public Subject getSubject() {
-			return subject;
-		}
-
-		public Subject getReplySubject() {
-			return replySubject;
-		}
-
-		public String getBody() {
-			return body;
-		}
-	}
-
-	@Override
-	protected TestHub.Message encode(Subject subject, Subject replySubject, String body, int recipientCount) {
-		return new Message(subject, replySubject, body);
-	}
+	void publish(Subject subject, Subject replySubject, String body);
 }

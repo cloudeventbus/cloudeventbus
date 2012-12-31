@@ -28,30 +28,29 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-// TODO Wild cards are a pain in the butt!
-// TODO Implement send
-public abstract class AbstractHub<T> {
+// TODO Implement send (single receiver)
+public abstract class AbstractHub<T> implements Hub<T> {
 
-	private final Collection<Handler<T>> allWildcardSubscriptions = new CopyOnWriteArrayList<>();
+	private final WildCardNode wildcardSubscriptions = new WildCardNode();
 	private final ConcurrentMap<Subject, Collection<Handler<T>>> subscriptions = new ConcurrentHashMap<>();
 
+	@Override
 	public SubscriptionHandle subscribe(Subject subject, final Handler<T> handler) {
 		if (subject.isWildCard()) {
-			if (subject.equals(Subject.ALL)) {
-				return addHandler(handler, allWildcardSubscriptions);
+			WildCardNode currentNode = wildcardSubscriptions;
+			for (String part : splitSubject(subject)) {
+				if (Subject.WILD_CARD_TOKEN.equals(part)) {
+					break;
+				}
+				currentNode.getChild(part, true);
 			}
-			throw new UnsupportedOperationException("We don't support wild card subjects yet.");
+			return addHandler(handler, currentNode.getHandlers());
 		}
-		Collection<Handler<T>> handlers = subscriptions.get(subject);
-		if (handlers == null) {
-			handlers = new CopyOnWriteArrayList<>();
-			final Collection<Handler<T>> existingHandlers = subscriptions.putIfAbsent(subject, handlers);
-			// If another thread added a handler collection, use it and discard the collection just created
-			if (existingHandlers != null) {
-				handlers = existingHandlers;
-			}
-		}
-		return addHandler(handler, handlers);
+		return addHandler(handler, getHandlers(subject));
+	}
+
+	private String[] splitSubject(Subject subject) {
+		return subject.toString().split("\\.");
 	}
 
 	private SubscriptionHandle addHandler(final Handler<T> handler, final Collection<Handler<T>> handlers) {
@@ -64,22 +63,73 @@ public abstract class AbstractHub<T> {
 		};
 	}
 
+	private Collection<Handler<T>> getHandlers(Subject subject) {
+		final Collection<Handler<T>> handlers = subscriptions.get(subject);
+		if (handlers == null) {
+			final Collection<Handler<T>> newHandlers = new CopyOnWriteArrayList<>();
+			final Collection<Handler<T>> existingHandlers = subscriptions.putIfAbsent(subject, newHandlers);
+			// If another thread added a handler collection, use it and discard the collection just created
+			if (existingHandlers != null) {
+				return existingHandlers;
+			}
+			return newHandlers;
+		}
+		return handlers;
+	}
+
+	@Override
 	public void publish(Subject subject, Subject replySubject, String body) {
+		if (subject.isWildCard()) {
+			throw new IllegalArgumentException("Unable to publish to a wildcard subscription.");
+		}
 		final Set<Handler<T>> handlers = new HashSet<>();
-		handlers.addAll(allWildcardSubscriptions);
+
+		// Add wildcard handlers
+		WildCardNode currentNode = wildcardSubscriptions;
+		for (String part : splitSubject(subject)) {
+			handlers.addAll(currentNode.getHandlers());
+			currentNode = currentNode.getChild(part, false);
+			if (currentNode == null) {
+				break;
+			}
+		}
+
+		// Add static handlers
 		final Collection<Handler<T>> nonWildCardSubscriptions = subscriptions.get(subject);
 		if (nonWildCardSubscriptions != null) {
 			handlers.addAll(nonWildCardSubscriptions);
 		}
 
+		// If we have any handlers, encode and propagate the message.
 		if (handlers.size() > 0) {
-			final T message = encode(subject, replySubject, body);
+			final T message = encode(subject, replySubject, body, handlers.size());
 			for (Handler<T> handler : handlers) {
 				handler.publish(message);
 			}
 		}
 	}
 
-	protected abstract T encode(Subject subject, Subject replySubject, String body);
+	protected abstract T encode(Subject subject, Subject replySubject, String body, int recipientCount);
 
+	private class WildCardNode {
+		private final Collection<Handler<T>> handlers = new CopyOnWriteArrayList<>();
+		private final ConcurrentMap<String, WildCardNode> children = new ConcurrentHashMap<>();
+
+		public Collection<Handler<T>> getHandlers() {
+			return handlers;
+		}
+
+		public WildCardNode getChild(String nodeName, boolean createIfMissing) {
+			final WildCardNode node = children.get(nodeName);
+			if (node == null && createIfMissing) {
+				final WildCardNode newNode = new WildCardNode();
+				final WildCardNode existingNode = children.putIfAbsent(nodeName, newNode);
+				if (existingNode != null) {
+					return existingNode;
+				}
+				return newNode;
+			}
+			return node;
+		}
+	}
 }

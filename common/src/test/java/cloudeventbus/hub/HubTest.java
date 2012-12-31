@@ -36,8 +36,7 @@ public class HubTest {
 
 		final AtomicBoolean methodCalled = new AtomicBoolean();
 
-		// TODO Extract interface from AbstractHub
-		final AbstractHub<TestHub.Message> hub = new TestHub();
+		final Hub<TestHub.Message> hub = new TestHub();
 		hub.subscribe(new Subject("test"), new Handler<TestHub.Message>() {
 			@Override
 			public void publish(TestHub.Message message) {
@@ -53,14 +52,27 @@ public class HubTest {
 	}
 
 	@Test
-	public void wildCardSubscribe() throws Exception {
+	public void wildCardSubscribe() {
+		final Subject subject = new Subject("test.foo");
+		final Subject wildCardSubject = new Subject("test.*");
+
+		final Hub<TestHub.Message> hub = new TestHub();
+		final CountHandler handler = new CountHandler();
+
+		hub.subscribe(wildCardSubject, handler);
+		hub.publish(subject, null, "Test");
+
+		assertEquals(handler.getCallCount(), 1);
+	}
+
+	@Test
+	public void wildCardAllSubscribe() throws Exception {
 		final Subject subject = new Subject("test");
 		final String body = "Message body";
 
 		final AtomicBoolean methodCalled = new AtomicBoolean();
 
-		// TODO Extract interface from AbstractHub
-		final AbstractHub<TestHub.Message> hub = new TestHub();
+		final Hub<TestHub.Message> hub = new TestHub();
 		hub.subscribe(Subject.ALL, new Handler<TestHub.Message>() {
 			@Override
 			public void publish(TestHub.Message message) {
@@ -82,7 +94,7 @@ public class HubTest {
 
 		final CountHandler handler = new CountHandler();
 
-		final AbstractHub<TestHub.Message> hub = new TestHub();
+		final Hub<TestHub.Message> hub = new TestHub();
 		hub.subscribe(Subject.ALL, handler);
 		hub.subscribe(subject, handler);
 		hub.publish(subject, null, body);
