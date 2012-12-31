@@ -65,4 +65,34 @@ public class CertificateChainTest {
 		certificates.add(issuerCertificate);
 		certificates.add(issuerCertificate);
 	}
+
+	@Test(expectedExceptions = CertificatePermissionError.class)
+	public void invalidPermissions() {
+		final KeyPair issuerKeyPair = CertificateUtils.generateKeyPair();
+		final KeyPair certificateKeyPair = CertificateUtils.generateKeyPair();
+		final KeyPair delegateCertificateKeyPair = CertificateUtils.generateKeyPair();
+
+		final Certificate issuerCertificate = CertificateUtils.generateSelfSignedCertificate(issuerKeyPair, -1, "Issuer");
+		final Certificate certificate = CertificateUtils.generateSignedCertificate(
+				issuerCertificate,
+				issuerKeyPair.getPrivate(),
+				certificateKeyPair.getPublic(),
+				Certificate.Type.CLIENT,
+				-1,
+				Subject.list("foo.*"),
+				Subject.list("foo.*"),
+				"Client certificate");
+
+		final Certificate delegateCertificate = CertificateUtils.generateSignedCertificate(
+				certificate,
+				certificateKeyPair.getPrivate(),
+				delegateCertificateKeyPair.getPublic(),
+				Certificate.Type.CLIENT,
+				-1,
+				Subject.list("bar.*"),
+				Subject.list("bar.*"),
+				"Delegate client certificate");
+
+		new CertificateChain(certificate, delegateCertificate);
+	}
 }
