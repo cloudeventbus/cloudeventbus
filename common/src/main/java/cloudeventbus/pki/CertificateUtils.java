@@ -89,7 +89,7 @@ public class CertificateUtils {
 		if (issuer.getSerialNumber() != certificate.getIssuer()) {
 			throw new CertificateIssuerMismatchException("The authority certificate serial number doesn't much the certificate issuer.");
 		}
-		// TODO Make sure that the certificate permissions don't exceed the authorityCertificate permissions.
+		validatePermissions(issuer, certificate);
 		final byte[] hash = certificate.hash();
 
 		try {
@@ -154,6 +154,22 @@ public class CertificateUtils {
 
 	private CertificateUtils() {
 		// Don't instantiate me.
+	}
+
+	public static void validatePermissions(Certificate issuer, Certificate certificate) {
+		validateSubSubjects(issuer.getPublishPermissions(), certificate.getPublishPermissions(), "publish");
+		validateSubSubjects(issuer.getSubscribePermissions(), certificate.getSubscribePermissions(), "subscribe");
+	}
+
+	private static void validateSubSubjects(List<Subject> issuerPermissions, List<Subject> permissions, String type) {
+		outer: for (Subject permission : permissions) {
+			for (Subject parentPermission : issuerPermissions) {
+				if (parentPermission.isSub(permission)) {
+					continue outer;
+				}
+			}
+			throw new CertificatePermissionError ("Permission " + permission + " is not a sub " + type + " permission to any permissions in parent certificate.");
+		}
 	}
 
 }

@@ -18,7 +18,6 @@ package cloudeventbus.pki;
 
 import java.util.AbstractList;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -28,11 +27,10 @@ public class CertificateChain extends AbstractList<Certificate> {
 
 	private final List<Certificate> internalList = new ArrayList<>();
 
-	public CertificateChain() {
-	}
-
 	public CertificateChain(Certificate... certificates) {
-		internalList.addAll(Arrays.asList(certificates));
+		for (Certificate certificate : certificates) {
+			add(certificate);
+		}
 	}
 
 	@Override
@@ -42,6 +40,7 @@ public class CertificateChain extends AbstractList<Certificate> {
 		} else {
 			final Certificate previousCertificate = getLast();
 			previousCertificate.validateSignature(certificate);
+			CertificateUtils.validatePermissions(previousCertificate, certificate);
 			for (Certificate c : internalList) {
 				if (c.getSerialNumber() == certificate.getSerialNumber()) {
 					throw new DuplicateCertificateException("A certificate with the serial number " + certificate.getSerialNumber() + " already exists in the certificate chain.");
