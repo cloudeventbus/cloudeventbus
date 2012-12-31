@@ -37,12 +37,16 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundMessageHandlerAdapter;
 import io.netty.handler.codec.DecoderException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
 // TODO Send ping frame very 30 seconds. Close socket after 1 minute of inactivity.
 public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(ServerHandler.class);
 
 	private static final int SUPPORTED_VERSION = 1;
 
@@ -61,6 +65,8 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, Frame frame) throws Exception {
+		// TODO Added toString method to frames for debugging purposes.
+		LOGGER.debug("Received frame: {}", frame);
 		if (frame instanceof AuthenticationResponseFrame) {
 			AuthenticationResponseFrame authenticationResponse = (AuthenticationResponseFrame) frame;
 			final CertificateChain certificates = authenticationResponse.getCertificates();
@@ -100,8 +106,9 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 			// TODO Implement unsubscribe
 		} else if (frame instanceof PingFrame) {
 			ctx.write(PongFrame.PONG);
+		} else {
+			throw new CloudEventBusServerException("Unable to handle frame of type " + frame.getClass().getName());
 		}
-		throw new CloudEventBusServerException("Unable to handle frame of type " + frame.getClass().getName());
 	}
 
 	@Override
@@ -118,7 +125,8 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-		// TODO Add logging
+		// TODO Experiment with using a marker to identify the remote agent.
+		LOGGER.error((clientAgent == null ? "" : clientAgent + " ") + cause.getMessage(), cause);
 		if (cause instanceof DecoderException) {
 			cause = cause.getCause();
 		}
