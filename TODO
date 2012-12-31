@@ -1,6 +1,5 @@
 - Implement server
 - Implement client
-- Figure out how to validate permissions going down a certificate chain.
 - Build simple PKI command-line tools
 - Build simple event bus command-line clients
 - Performance test
