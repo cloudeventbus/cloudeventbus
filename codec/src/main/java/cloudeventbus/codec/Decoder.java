@@ -67,10 +67,10 @@ public class Decoder extends ByteToMessageDecoder<Frame> {
 		final String command = in.readBytes(frameLength).toString(CharsetUtil.UTF_8);
 		in.skipBytes(Codec.DELIMITER.length);
 		final String[] parts = command.split("\\s+");
-		final char frameType = parts[0].charAt(0);
+		final FrameType frameType = FrameType.getFrameType(parts[0].charAt(0));
 		final int argumentsLength = parts.length - 1;
 		switch (frameType) {
-			case FrameTypes.AUTH_RESPONSE:
+			case AUTH_RESPONSE:
 				assertArgumentsLength(3, argumentsLength, "authentication response");
 				final CertificateChain certificates = new CertificateChain();
 				final byte[] rawCertificates = Base64.decodeBase64(parts[1].getBytes());
@@ -78,11 +78,11 @@ public class Decoder extends ByteToMessageDecoder<Frame> {
 				final byte[] salt = Base64.decodeBase64(parts[2]);
 				final byte[] digitalSignature = Base64.decodeBase64(parts[3]);
 				return new AuthenticationResponseFrame(certificates, salt, digitalSignature);
-			case FrameTypes.AUTHENTICATE:
+			case AUTHENTICATE:
 				assertArgumentsLength(1, argumentsLength, "authentication request");
 				final byte[] challenge = Base64.decodeBase64(parts[1]);
 				return new AuthenticationRequestFrame(challenge);
-			case FrameTypes.ERROR:
+			case ERROR:
 				if (parts.length == 0) {
 					throw new DecodingException("Error is missing error code");
 				}
@@ -100,17 +100,17 @@ public class Decoder extends ByteToMessageDecoder<Frame> {
 				} else {
 					return new ErrorFrame(errorCode);
 				}
-			case FrameTypes.GREETING:
+			case GREETING:
 				assertArgumentsLength(2, argumentsLength, "greeting");
 				final int version = Integer.valueOf(parts[1]);
 				final String agent = parts[2];
 				return new GreetingFrame(version, agent);
-			case FrameTypes.PING:
+			case PING:
 				return PingFrame.PING;
-			case FrameTypes.PONG:
+			case PONG:
 				return PongFrame.PONG;
-			case FrameTypes.PUBLISH:
-			case FrameTypes.SEND:
+			case PUBLISH:
+			case SEND:
 				if (argumentsLength < 2 || argumentsLength > 3) {
 					throw new DecodingException("Expected message frame to have 2 or 3 arguments. It has " + argumentsLength + ".");
 				}
@@ -132,17 +132,17 @@ public class Decoder extends ByteToMessageDecoder<Frame> {
 				final ByteBuf messageBytes = in.readBytes(messageLength);
 				final String messageBody = new String(messageBytes.array(), CharsetUtil.UTF_8);
 				in.skipBytes(Codec.DELIMITER.length); // Ignore the CRLF after the message body.
-				if (frameType == FrameTypes.PUBLISH) {
+				if (frameType == FrameType.PUBLISH) {
 					return new PublishFrame(new Subject(messageSubject), replySubject == null ? null : new Subject(replySubject), messageBody);
 				} else {
 					return new SendFrame(new Subject(messageSubject), replySubject == null ? null : new Subject(replySubject), messageBody);
 				}
-			case FrameTypes.SERVER_READY:
+			case SERVER_READY:
 				return ServerReadyFrame.SERVER_READY;
-			case FrameTypes.SUBSCRIBE:
+			case SUBSCRIBE:
 				assertArgumentsLength(1, argumentsLength, "subscribe");
 				return new SubscribeFrame(new Subject(parts[1]));
-			case FrameTypes.UNSUBSCRIBE:
+			case UNSUBSCRIBE:
 				assertArgumentsLength(1, argumentsLength, "unsubscribe");
 				return new UnsubscribeFrame(new Subject(parts[1]));
 			default:

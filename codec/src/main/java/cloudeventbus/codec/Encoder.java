@@ -37,13 +37,13 @@ public class Encoder extends MessageToByteEncoder<Frame> {
 	public void encode(ChannelHandlerContext ctx, Frame frame, ByteBuf out) throws Exception {
 		if (frame instanceof AuthenticationRequestFrame) {
 			final AuthenticationRequestFrame authenticationRequestFrame = (AuthenticationRequestFrame) frame;
-			out.writeByte(FrameTypes.AUTHENTICATE);
+			out.writeByte(FrameType.AUTHENTICATE.getOpcode());
 			out.writeByte(' ');
 			final String challenge = Base64.encodeBase64String(authenticationRequestFrame.getChallenge());
 			writeString(out, challenge);
 		} else if (frame instanceof AuthenticationResponseFrame) {
 			final AuthenticationResponseFrame authenticationResponseFrame = (AuthenticationResponseFrame) frame;
-			out.writeByte(FrameTypes.AUTH_RESPONSE);
+			out.writeByte(FrameType.AUTH_RESPONSE.getOpcode());
 			out.writeByte(' ');
 
 			// Write certificate chain
@@ -63,7 +63,7 @@ public class Encoder extends MessageToByteEncoder<Frame> {
 			out.writeBytes(encodedDigitalSignature);
 		} else if (frame instanceof ErrorFrame) {
 			final ErrorFrame errorFrame = (ErrorFrame) frame;
-			out.writeByte(FrameTypes.ERROR);
+			out.writeByte(FrameType.ERROR.getOpcode());
 			out.writeByte(' ');
 			writeString(out, Integer.toString(errorFrame.getCode().getErrorNumber()));
 			if (errorFrame.getMessage() != null) {
@@ -72,33 +72,33 @@ public class Encoder extends MessageToByteEncoder<Frame> {
 			}
 		} else if (frame instanceof GreetingFrame) {
 			final GreetingFrame greetingFrame = (GreetingFrame) frame;
-			out.writeByte(FrameTypes.GREETING);
+			out.writeByte(FrameType.GREETING.getOpcode());
 			out.writeByte(' ');
 			writeString(out, Integer.toString(greetingFrame.getVersion()));
 			out.writeByte(' ');
 			writeString(out, greetingFrame.getAgent());
 		} else if (frame instanceof PingFrame) {
-			out.writeByte(FrameTypes.PING);
+			out.writeByte(FrameType.PING.getOpcode());
 		} else if (frame instanceof PongFrame) {
-			out.writeByte(FrameTypes.PONG);
+			out.writeByte(FrameType.PONG.getOpcode());
 		} else if (frame instanceof PublishFrame) {
 			final PublishFrame publishFrame = (PublishFrame) frame;
-			out.writeByte(FrameTypes.PUBLISH);
+			out.writeByte(FrameType.PUBLISH.getOpcode());
 			writeMessageFrame(out, publishFrame);
 		} else if (frame instanceof SendFrame) {
 			final SendFrame sendFrame = (SendFrame) frame;
-			out.writeByte(FrameTypes.SEND);
+			out.writeByte(FrameType.SEND.getOpcode());
 			writeMessageFrame(out, sendFrame);
 		} else if (frame instanceof ServerReadyFrame) {
-			out.writeByte(FrameTypes.SERVER_READY);
+			out.writeByte(FrameType.SERVER_READY.getOpcode());
 		} else if (frame instanceof SubscribeFrame) {
 			final SubscribeFrame subscribeFrame = (SubscribeFrame) frame;
-			out.writeByte(FrameTypes.SUBSCRIBE);
+			out.writeByte(FrameType.SUBSCRIBE.getOpcode());
 			out.writeByte(' ');
 			writeString(out, subscribeFrame.getSubject().toString());
 		} else if (frame instanceof UnsubscribeFrame) {
 			final UnsubscribeFrame unsubscribeFrame = (UnsubscribeFrame) frame;
-			out.writeByte(FrameTypes.UNSUBSCRIBE);
+			out.writeByte(FrameType.UNSUBSCRIBE.getOpcode());
 			out.writeByte(' ');
 			writeString(out, unsubscribeFrame.getSubject().toString());
 		} else {

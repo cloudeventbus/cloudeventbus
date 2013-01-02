@@ -19,19 +19,36 @@ package cloudeventbus.codec;
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-// TODO Convert to enum
-class FrameTypes {
+enum FrameType {
 
-	public static final char AUTHENTICATE  = 'A';
-	public static final char SEND =          'D';
-	public static final char ERROR =         'E';
-	public static final char GREETING =      'G';
-	public static final char PING =          'I';
-	public static final char PONG =          'J';
-	public static final char PUBLISH =       'P';
-	public static final char AUTH_RESPONSE = 'R';
-	public static final char SUBSCRIBE =     'S';
-	public static final char UNSUBSCRIBE =   'U';
-	public static final char SERVER_READY =  'Y';
+	AUTHENTICATE ('A'),
+	SEND         ('D'),
+	ERROR        ('E'),
+	GREETING     ('G'),
+	PING         ('I'),
+	PONG         ('J'),
+	PUBLISH      ('P'),
+	AUTH_RESPONSE('R'),
+	SUBSCRIBE    ('S'),
+	UNSUBSCRIBE  ('U'),
+	SERVER_READY ('Y');
 
+	private final char opcode;
+
+	FrameType(char opcode) {
+		this.opcode = opcode;
+	}
+
+	public char getOpcode() {
+		return opcode;
+	}
+
+	public static FrameType getFrameType(char opcode) {
+		for (FrameType frameType : values()) {
+			if (frameType.opcode == opcode) {
+				return frameType;
+			}
+		}
+		return null;
+	}
 }
