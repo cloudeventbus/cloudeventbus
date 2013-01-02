@@ -25,6 +25,8 @@ import cloudeventbus.pki.TrustStore;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.util.HashedWheelTimer;
+import io.netty.util.Timer;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
@@ -41,6 +43,8 @@ public class ServerChannelInitializer extends ChannelInitializer<SocketChannel> 
 		}
 	};
 
+	private final Timer timer = new HashedWheelTimer();
+
 	public ServerChannelInitializer(String versionString, TrustStore trustStore) {
 		this.versionString = versionString;
 		this.trustStore = trustStore;
@@ -50,7 +54,7 @@ public class ServerChannelInitializer extends ChannelInitializer<SocketChannel> 
 	public void initChannel(SocketChannel ch) throws Exception {
 		final ChannelPipeline pipeline = ch.pipeline();
 		pipeline.addLast(new Codec());
-		pipeline.addLast(new ServerHandler(versionString, hub, trustStore));
+		pipeline.addLast(new ServerHandler(versionString, hub, trustStore, timer));
 	}
 
 }

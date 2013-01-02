@@ -29,6 +29,8 @@ import cloudeventbus.pki.CertificateUtils;
 import cloudeventbus.pki.TrustStore;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.embedded.EmbeddedByteChannel;
+import io.netty.util.HashedWheelTimer;
+import io.netty.util.Timer;
 import org.testng.annotations.Test;
 
 import java.security.KeyPair;
@@ -41,10 +43,12 @@ import static org.testng.Assert.assertNotNull;
  */
 public class ServerHandlerTest {
 
+	private final Timer timer = new HashedWheelTimer();
+
 	@Test
 	public void greeting() {
 		final String agent = "unit-test-server-1.0";
-		final EmbeddedByteChannel serverChannel = new EmbeddedByteChannel(new Codec(), new ServerHandler(agent, null, null));
+		final EmbeddedByteChannel serverChannel = new EmbeddedByteChannel(new Codec(), new ServerHandler(agent, null, null, timer));
 		final EmbeddedByteChannel clientChannel = new EmbeddedByteChannel(new Codec());
 		final ByteBuf byteBuf = serverChannel.readOutbound();
 		clientChannel.writeInbound(byteBuf);
@@ -80,7 +84,7 @@ public class ServerHandlerTest {
 		);
 		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);
 
-		final EmbeddedByteChannel serverChannel = new EmbeddedByteChannel(new Codec(), new ServerHandler(agent, null, trustStore));
+		final EmbeddedByteChannel serverChannel = new EmbeddedByteChannel(new Codec(), new ServerHandler(agent, null, trustStore, timer));
 		final EmbeddedByteChannel clientChannel = new EmbeddedByteChannel(new Codec());
 		ByteBuf byteBuf = serverChannel.readOutbound();
 		clientChannel.writeInbound(byteBuf);
@@ -130,7 +134,7 @@ public class ServerHandlerTest {
 		);
 		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);
 
-		final EmbeddedByteChannel serverChannel = new EmbeddedByteChannel(new Codec(), new ServerHandler(agent, null, trustStore));
+		final EmbeddedByteChannel serverChannel = new EmbeddedByteChannel(new Codec(), new ServerHandler(agent, null, trustStore, timer));
 		final EmbeddedByteChannel clientChannel = new EmbeddedByteChannel(new Codec());
 		ByteBuf byteBuf = serverChannel.readOutbound();
 		clientChannel.writeInbound(byteBuf);
