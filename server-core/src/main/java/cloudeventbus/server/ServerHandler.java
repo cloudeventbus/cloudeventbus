@@ -57,7 +57,7 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 	private static final int SUPPORTED_VERSION = 1;
 
 	private final String agentString;
-	private final Hub<PublishFrame> hub; // TODO How to publish to WebSocket hub, etc.
+	private final Hub<PublishFrame> hub;
 	private final TrustStore trustStore;
 
 	private byte[] challenge;
