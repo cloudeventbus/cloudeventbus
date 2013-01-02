@@ -102,6 +102,63 @@ public class HubTest {
 		assertEquals(1, handler.getCallCount());
 	}
 
+	@Test
+	public void multipleWildCards() throws Exception {
+		final Subject subject1 = new Subject("test1.*");
+		final Subject subject2 = new Subject("test2.*");
+		final Subject subject3 = new Subject("test3.*");
+		final String body = "Message body";
+
+		final CountHandler handlerAll = new CountHandler();
+		final CountHandler handler1 = new CountHandler();
+		final CountHandler handler2 = new CountHandler();
+		final CountHandler handler3 = new CountHandler();
+
+		final Hub<TestHub.Message> hub = new TestHub();
+		hub.subscribe(Subject.ALL, handlerAll);
+		hub.subscribe(subject1, handler1);
+		hub.subscribe(subject2, handler2);
+		hub.subscribe(subject3, handler3);
+
+		hub.publish(new Subject("test1.foo"), null, body);
+		hub.publish(new Subject("test2.bar"), null, body);
+		hub.publish(new Subject("test3.baz"), null, body);
+
+		assertEquals(handlerAll.getCallCount(), 3);
+		assertEquals(handler1.getCallCount(), 1);
+		assertEquals(handler2.getCallCount(), 1);
+		assertEquals(handler3.getCallCount(), 1);
+	}
+
+	@Test
+	public void wildCardDepthTest() throws Exception {
+		final Subject subject1 = new Subject("foo.*");
+		final Subject subject2 = new Subject("foo.bar.*");
+		final Subject subject3 = new Subject("foo.bar.baz.*");
+		final String body = "Message body";
+
+		final CountHandler handlerAll = new CountHandler();
+		final CountHandler handler1 = new CountHandler();
+		final CountHandler handler2 = new CountHandler();
+		final CountHandler handler3 = new CountHandler();
+
+		final Hub<TestHub.Message> hub = new TestHub();
+		hub.subscribe(Subject.ALL, handlerAll);
+		hub.subscribe(subject1, handler1);
+		hub.subscribe(subject2, handler2);
+		hub.subscribe(subject3, handler3);
+
+		hub.publish(new Subject("foo"), null, body);
+		hub.publish(new Subject("foo.bar"), null, body);
+		hub.publish(new Subject("foo.bar.baz"), null, body);
+		hub.publish(new Subject("foo.bar.baz.joe"), null, body);
+
+		assertEquals(handlerAll.getCallCount(), 4);
+		assertEquals(handler1.getCallCount(), 3);
+		assertEquals(handler2.getCallCount(), 2);
+		assertEquals(handler3.getCallCount(), 1);
+	}
+
 	private class CountHandler implements Handler<TestHub.Message> {
 
 		private int callCount = 0;

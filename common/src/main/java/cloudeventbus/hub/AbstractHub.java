@@ -41,7 +41,7 @@ public abstract class AbstractHub<T> implements Hub<T> {
 				if (Subject.WILD_CARD_TOKEN.equals(part)) {
 					break;
 				}
-				currentNode.getChild(part, true);
+				currentNode = currentNode.getChild(part, true);
 			}
 			return addHandler(handler, currentNode.getHandlers());
 		}
