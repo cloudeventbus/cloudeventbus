@@ -130,7 +130,8 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 			if (subscriptionHandles.containsKey(subject)) {
 				throw new DuplicateSubscriptionException("Already subscribed to subject " + subject);
 			}
-			hub.subscribe(subject, handler);
+			final SubscriptionHandle subscriptionHandle = hub.subscribe(subject, handler);
+			subscriptionHandles.put(subject, subscriptionHandle);
 		} else if (frame instanceof UnsubscribeFrame) {
 			final UnsubscribeFrame unsubscribeFrame = (UnsubscribeFrame) frame;
 			final Subject subject = unsubscribeFrame.getSubject();

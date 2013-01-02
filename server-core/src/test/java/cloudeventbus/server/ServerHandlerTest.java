@@ -22,7 +22,10 @@ import cloudeventbus.codec.AuthenticationResponseFrame;
 import cloudeventbus.codec.Codec;
 import cloudeventbus.codec.ErrorFrame;
 import cloudeventbus.codec.GreetingFrame;
+import cloudeventbus.codec.PublishFrame;
 import cloudeventbus.codec.ServerReadyFrame;
+import cloudeventbus.codec.SubscribeFrame;
+import cloudeventbus.hub.AbstractHub;
 import cloudeventbus.pki.Certificate;
 import cloudeventbus.pki.CertificateChain;
 import cloudeventbus.pki.CertificateUtils;
@@ -61,6 +64,44 @@ public class ServerHandlerTest {
 		// Validate server ready
 		final ServerReadyFrame ready = (ServerReadyFrame) clientChannel.readInbound();
 		assertNotNull(ready);
+	}
+
+	@Test
+	public void doubleSubscribe() {
+		final String agent = "double-subscribe-server-1.0";
+
+		final EmbeddedByteChannel serverChannel = new EmbeddedByteChannel(new Codec(), new ServerHandler(agent, new AbstractHub<PublishFrame>() {
+				@Override
+				protected PublishFrame encode(Subject subject, Subject replySubject, String body, int recipientCount) {
+					return new PublishFrame(subject, replySubject, body);
+				}
+			}, null, timer));
+		final EmbeddedByteChannel clientChannel = new EmbeddedByteChannel(new Codec());
+		ByteBuf byteBuf = serverChannel.readOutbound();
+		clientChannel.writeInbound(byteBuf);
+
+		// Validate greeting
+		final GreetingFrame greeting = (GreetingFrame) clientChannel.readInbound();
+		assertNotNull(greeting);
+		assertEquals(greeting.getAgent(), agent);
+
+		// Validate server ready
+		final ServerReadyFrame ready = (ServerReadyFrame) clientChannel.readInbound();
+		assertNotNull(ready);
+
+		clientChannel.writeOutbound(new SubscribeFrame(new Subject("test")));
+		byteBuf = clientChannel.readOutbound();
+		serverChannel.writeInbound(byteBuf);
+
+		clientChannel.writeOutbound(new SubscribeFrame(new Subject("test")));
+		byteBuf = clientChannel.readOutbound();
+		serverChannel.writeInbound(byteBuf);
+
+		// Get response from server
+		byteBuf = serverChannel.readOutbound();
+		clientChannel.writeInbound(byteBuf);
+		final ErrorFrame errorFrame = (ErrorFrame) clientChannel.readInbound();
+		assertEquals(errorFrame.getCode(), ErrorFrame.Code.DUPLICATE_SUBSCRIPTION);
 	}
 
 	@Test
