@@ -85,4 +85,9 @@ public class ErrorFrame implements Frame {
 	public String getMessage() {
 		return message;
 	}
+
+	@Override
+	public String toString() {
+		return "Error code=" + code + " message='" + message + '\'';
+	}
 }

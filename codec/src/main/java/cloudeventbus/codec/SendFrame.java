@@ -25,4 +25,15 @@ public class SendFrame extends AbstractMessageFrame {
 	public SendFrame(Subject subject, Subject replySubject, String body) {
 		super(subject, replySubject, body);
 	}
+
+	@Override
+	public String toString() {
+		final StringBuilder builder = new StringBuilder();
+		builder.append("Send subject='").append( getSubject()).append("'");
+		if (getReplySubject() != null) {
+			builder.append(", ").append(getReplySubject()).append("'");
+		}
+		builder.append(", body='").append(getBody()).append("'");
+		return builder.toString();
+	}
 }

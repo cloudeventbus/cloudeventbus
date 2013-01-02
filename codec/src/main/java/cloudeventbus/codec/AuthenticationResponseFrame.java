@@ -59,4 +59,9 @@ public class AuthenticationResponseFrame implements Frame {
 	public byte[] getDigitalSignature() {
 		return digitalSignature.clone();
 	}
+
+	@Override
+	public String toString() {
+		return "Authentication response";
+	}
 }

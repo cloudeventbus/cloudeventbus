@@ -43,4 +43,8 @@ public class GreetingFrame implements Frame {
 		return version;
 	}
 
+	@Override
+	public String toString() {
+		return "Greeting version=" + version + " agent='" + agent + '\'';
+	}
 }

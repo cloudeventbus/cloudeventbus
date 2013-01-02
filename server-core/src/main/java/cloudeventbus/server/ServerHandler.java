@@ -86,7 +86,6 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, Frame frame) throws Exception {
 		resetIdleTask();
-		// TODO Added toString method to frames for debugging purposes.
 		LOGGER.debug("Received frame: {}", frame);
 		if (frame instanceof AuthenticationResponseFrame) {
 			AuthenticationResponseFrame authenticationResponse = (AuthenticationResponseFrame) frame;

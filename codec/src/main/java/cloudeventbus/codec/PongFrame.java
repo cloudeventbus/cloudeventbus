@@ -24,6 +24,10 @@ public class PongFrame implements Frame {
 	public static final PongFrame PONG = new PongFrame();
 
 	private PongFrame() {
+	}
 
+	@Override
+	public String toString() {
+		return "Pong";
 	}
 }

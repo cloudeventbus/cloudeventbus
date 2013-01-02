@@ -33,4 +33,8 @@ public class SubscribeFrame implements Frame {
 		return subject;
 	}
 
+	@Override
+	public String toString() {
+		return "Subscribe subject=" + subject;
+	}
 }

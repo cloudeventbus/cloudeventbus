@@ -24,7 +24,10 @@ public class PingFrame implements Frame {
 	public static final PingFrame PING = new PingFrame();
 
 	private PingFrame() {
-
 	}
 
+	@Override
+	public String toString() {
+		return "Ping";
+	}
 }

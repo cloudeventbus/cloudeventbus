@@ -32,4 +32,9 @@ public class UnsubscribeFrame implements Frame {
 	public Subject getSubject() {
 		return subject;
 	}
+
+	@Override
+	public String toString() {
+		return "Unsubscribe subject=" + subject;
+	}
 }
