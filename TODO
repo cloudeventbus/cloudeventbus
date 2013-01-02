@@ -9,3 +9,4 @@
 - Browser client/server (websocket based)
 - Build a Node.js client
 - Build a NATS/Cloud Event Bus gateway - This will allow applications to safely subscribe to NATS messages.
+- Add support for setting subscribe message received message count limits on the server.
