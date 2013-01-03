@@ -1,4 +1,5 @@
-# Cloud Event Bus
+Cloud Event Bus
+=====
 
 A distributed event bus for Cloud Foundry.
 
