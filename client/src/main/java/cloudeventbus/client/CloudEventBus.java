@@ -26,23 +26,18 @@ public interface CloudEventBus  extends AutoCloseable {
 
 	boolean isConnected();
 
+	boolean isServerReady();
+
 	void publish(String subject);
 
 	void publish(String subject, String body);
 
-	void publish(String subject, String body, MessageHandler replyHandler, MessageHandler... replyHandlers);
+	Request request(String subject, String body, MessageHandler replyHandler, MessageHandler... replyHandlers);
 
-	void publish(String subject, String body, Integer maxReplies, MessageHandler replyHandler, MessageHandler... replyHandlers);
+	Request request(String subject, String body, Integer maxReplies, MessageHandler replyHandler, MessageHandler... replyHandlers);
 
-	void send(String subject);
+	Subscription subscribe(String subject, MessageHandler... replyHandlers);
 
-	void send(String subject, String body);
+	Subscription subscribe(String subject, Integer maxMessages, MessageHandler... replyHandlers);
 
-	void send(String subject, String body, MessageHandler replyHandler, MessageHandler... replyHandlers);
-
-	void send(String subject, String body, Integer maxReplies, MessageHandler replyHandler, MessageHandler... replyHandlers);
-
-	Subscription subscribe(String subject);
-
-	Subscription subscribe(String subject, Integer maxMessages);
 }

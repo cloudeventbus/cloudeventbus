@@ -19,19 +19,8 @@ package cloudeventbus.client;
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-public interface Subscription extends Iterable<Message>, AutoCloseable {
-
-	@Override
-	void close();
-
-	String getSubject();
+public interface Subscription extends Request {
 
 	MessageHandler.Handler addMessageHandler(MessageHandler messageHandler);
 
-	int getReceivedMessages();
-
-	Integer getMaxMessages();
-
-	@Override
-	SubscriptionIterator iterator();
 }
