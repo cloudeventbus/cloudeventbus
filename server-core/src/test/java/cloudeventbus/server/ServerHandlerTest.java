@@ -39,7 +39,9 @@ import org.testng.annotations.Test;
 import java.security.KeyPair;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
@@ -50,64 +52,38 @@ public class ServerHandlerTest {
 
 	@Test
 	public void greeting() {
-		final String agent = "unit-test-server-1.0";
-		final EmbeddedByteChannel serverChannel = new EmbeddedByteChannel(new Codec(), new ServerHandler(agent, null, null, timer));
-		final EmbeddedByteChannel clientChannel = new EmbeddedByteChannel(new Codec());
-		final ByteBuf byteBuf = serverChannel.readOutbound();
-		clientChannel.writeInbound(byteBuf);
+		final MockServer server = new MockServer();
 
-		// Validate greeting
-		final GreetingFrame greeting = (GreetingFrame) clientChannel.readInbound();
+		final GreetingFrame greeting = (GreetingFrame) server.read();
 		assertNotNull(greeting);
-		assertEquals(greeting.getAgent(), agent);
+		assertEquals(greeting.getAgent(), MockServer.SERVER_AGENT);
 
-		// Validate server ready
-		final ServerReadyFrame ready = (ServerReadyFrame) clientChannel.readInbound();
+		final ServerReadyFrame ready = (ServerReadyFrame) server.read();
 		assertNotNull(ready);
 	}
 
 	@Test
 	public void doubleSubscribe() {
-		final String agent = "double-subscribe-server-1.0";
+		final MockServer server = new MockServer();
 
-		final EmbeddedByteChannel serverChannel = new EmbeddedByteChannel(new Codec(), new ServerHandler(agent, new AbstractHub<PublishFrame>() {
-				@Override
-				protected PublishFrame encode(Subject subject, Subject replySubject, String body, int recipientCount) {
-					return new PublishFrame(subject, replySubject, body);
-				}
-			}, null, timer));
-		final EmbeddedByteChannel clientChannel = new EmbeddedByteChannel(new Codec());
-		ByteBuf byteBuf = serverChannel.readOutbound();
-		clientChannel.writeInbound(byteBuf);
-
-		// Validate greeting
-		final GreetingFrame greeting = (GreetingFrame) clientChannel.readInbound();
+		final GreetingFrame greeting = (GreetingFrame) server.read();
 		assertNotNull(greeting);
-		assertEquals(greeting.getAgent(), agent);
+		assertEquals(greeting.getAgent(), MockServer.SERVER_AGENT);
 
-		// Validate server ready
-		final ServerReadyFrame ready = (ServerReadyFrame) clientChannel.readInbound();
+		final ServerReadyFrame ready = (ServerReadyFrame) server.read();
 		assertNotNull(ready);
 
-		clientChannel.writeOutbound(new SubscribeFrame(new Subject("test")));
-		byteBuf = clientChannel.readOutbound();
-		serverChannel.writeInbound(byteBuf);
+		server.write(new SubscribeFrame(new Subject("test")));
+		assertNull(server.read());
 
-		clientChannel.writeOutbound(new SubscribeFrame(new Subject("test")));
-		byteBuf = clientChannel.readOutbound();
-		serverChannel.writeInbound(byteBuf);
-
-		// Get response from server
-		byteBuf = serverChannel.readOutbound();
-		clientChannel.writeInbound(byteBuf);
-		final ErrorFrame errorFrame = (ErrorFrame) clientChannel.readInbound();
+		server.write(new SubscribeFrame(new Subject("test")));
+		final ErrorFrame errorFrame = (ErrorFrame) server.read();
+		assertNotNull(errorFrame);
 		assertEquals(errorFrame.getCode(), ErrorFrame.Code.DUPLICATE_SUBSCRIPTION);
 	}
 
 	@Test
 	public void authentication() {
-		final String agent = "test-authentication-server-1.0";
-
 		final KeyPair keyPair = CertificateUtils.generateKeyPair();
 		final Certificate certificate = CertificateUtils.generateSelfSignedCertificate(keyPair, -1, "Trusted certificate");
 		final TrustStore trustStore = new TrustStore(certificate);
@@ -125,39 +101,27 @@ public class ServerHandlerTest {
 		);
 		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);
 
-		final EmbeddedByteChannel serverChannel = new EmbeddedByteChannel(new Codec(), new ServerHandler(agent, null, trustStore, timer));
-		final EmbeddedByteChannel clientChannel = new EmbeddedByteChannel(new Codec());
-		ByteBuf byteBuf = serverChannel.readOutbound();
-		clientChannel.writeInbound(byteBuf);
+		final MockServer server = new MockServer(trustStore);
 
-		// Validate greeting
-		final GreetingFrame greeting = (GreetingFrame) clientChannel.readInbound();
+		final GreetingFrame greeting = (GreetingFrame) server.read();
 		assertNotNull(greeting);
-		assertEquals(greeting.getAgent(), agent);
+		assertEquals(greeting.getAgent(), MockServer.SERVER_AGENT);
 
-		// Get authentication request
-		final AuthenticationRequestFrame authenticationRequest = (AuthenticationRequestFrame) clientChannel.readInbound();
+		final AuthenticationRequestFrame authenticationRequest = (AuthenticationRequestFrame) server.read();
 		assertNotNull(authenticationRequest);
 
 		// Send authentication response
 		final byte[] salt = CertificateUtils.generateChallenge();
 		final byte[] signature = CertificateUtils.signChallenge(clientKeyPair.getPrivate(), authenticationRequest.getChallenge(), salt);
 		AuthenticationResponseFrame authenticationResponse = new AuthenticationResponseFrame(clientCertificates, salt, signature);
-		clientChannel.write(authenticationResponse);
-		byteBuf = clientChannel.readOutbound();
-		serverChannel.writeInbound(byteBuf);
+		server.write(authenticationResponse);
 
-		// Validate server ready
-		byteBuf = serverChannel.readOutbound();
-		clientChannel.writeInbound(byteBuf);
-		final ServerReadyFrame ready = (ServerReadyFrame) clientChannel.readInbound();
+		final ServerReadyFrame ready = (ServerReadyFrame) server.read();
 		assertNotNull(ready);
 	}
 
 	@Test
 	public void badAuthentication() {
-		final String agent = "test-bad-authentication-server-1.0";
-
 		final KeyPair keyPair = CertificateUtils.generateKeyPair();
 		final Certificate certificate = CertificateUtils.generateSelfSignedCertificate(keyPair, -1, "Trusted certificate");
 		final TrustStore trustStore = new TrustStore(certificate);
@@ -175,34 +139,27 @@ public class ServerHandlerTest {
 		);
 		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);
 
-		final EmbeddedByteChannel serverChannel = new EmbeddedByteChannel(new Codec(), new ServerHandler(agent, null, trustStore, timer));
-		final EmbeddedByteChannel clientChannel = new EmbeddedByteChannel(new Codec());
-		ByteBuf byteBuf = serverChannel.readOutbound();
-		clientChannel.writeInbound(byteBuf);
+		final MockServer server = new MockServer(trustStore);
 
-		// Validate greeting
-		final GreetingFrame greeting = (GreetingFrame) clientChannel.readInbound();
+		final GreetingFrame greeting = (GreetingFrame) server.read();
 		assertNotNull(greeting);
-		assertEquals(greeting.getAgent(), agent);
+		assertEquals(greeting.getAgent(), MockServer.SERVER_AGENT);
 
-		// Get authentication request
-		final AuthenticationRequestFrame authenticationRequest = (AuthenticationRequestFrame) clientChannel.readInbound();
+		final AuthenticationRequestFrame authenticationRequest = (AuthenticationRequestFrame) server.read();
 		assertNotNull(authenticationRequest);
 
 		// Send authentication response
 		final byte[] salt = CertificateUtils.generateChallenge();
 		final byte[] signature = CertificateUtils.signChallenge(clientKeyPair.getPrivate(), authenticationRequest.getChallenge(), salt);
-		salt[0]++; // Taint the salt
+		salt[0]++; // Taint the salt to create an error condition
 		AuthenticationResponseFrame authenticationResponse = new AuthenticationResponseFrame(clientCertificates, salt, signature);
-		clientChannel.write(authenticationResponse);
-		byteBuf = clientChannel.readOutbound();
-		serverChannel.writeInbound(byteBuf);
+		server.write(authenticationResponse);
 
-		// Validate server ready
-		byteBuf = serverChannel.readOutbound();
-		clientChannel.writeInbound(byteBuf);
-		final ErrorFrame error = (ErrorFrame) clientChannel.readInbound();
+		// Validate error
+		final ErrorFrame error = (ErrorFrame) server.read();
 		assertNotNull(error);
+		assertEquals(error.getCode(), ErrorFrame.Code.INVALID_SIGNATURE);
+		assertFalse(server.isConnected());
 	}
 
 }
