@@ -1,3 +1,4 @@
-= A Java Client for Cloud Event Bus
+Cloud Event Bus Client
+=====
 
 The default client for Cloud Event Bus.
