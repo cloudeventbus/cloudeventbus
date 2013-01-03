@@ -16,14 +16,14 @@
  */
 package cloudeventbus.server;
 
-import cloudeventbus.codec.PublishFrame;
+import cloudeventbus.codec.Frame;
 import cloudeventbus.hub.Handler;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-public class NettyHandler implements Handler<PublishFrame> {
+public class NettyHandler implements Handler<Frame> {
 
 	public NettyHandler(ChannelHandlerContext context) {
 		this.context = context;
@@ -32,7 +32,7 @@ public class NettyHandler implements Handler<PublishFrame> {
 	private final ChannelHandlerContext context;
 
 	@Override
-	public void publish(PublishFrame message) {
+	public void publish(Frame message) {
 		context.write(message);
 	}
 }

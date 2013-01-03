@@ -32,9 +32,11 @@ import cloudeventbus.codec.SubscribeFrame;
 import cloudeventbus.codec.UnsubscribeFrame;
 import cloudeventbus.hub.Hub;
 import cloudeventbus.hub.SubscriptionHandle;
+import cloudeventbus.pki.Certificate;
 import cloudeventbus.pki.CertificateChain;
 import cloudeventbus.pki.CertificatePermissionError;
 import cloudeventbus.pki.CertificateUtils;
+import cloudeventbus.pki.InvalidCertificateException;
 import cloudeventbus.pki.InvalidSignatureException;
 import cloudeventbus.pki.TrustStore;
 import io.netty.channel.ChannelFutureListener;
@@ -61,7 +63,7 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 	private static final int SUPPORTED_VERSION = 1;
 
 	private final String agentString;
-	private final Hub<PublishFrame> hub;
+	private final Hub<Frame> hub;
 	private final TrustStore trustStore;
 	private final Timer timer;
 
@@ -77,7 +79,7 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 	private TimerTask pingTask;
 	private Timeout pingTimeout;
 
-	public ServerHandler(String agentString, Hub<PublishFrame> hub, TrustStore trustStore, Timer timer) {
+	public ServerHandler(String agentString, Hub<Frame> hub, TrustStore trustStore, Timer timer) {
 		this.agentString = agentString;
 		this.hub = hub;
 		this.trustStore = trustStore;
@@ -92,6 +94,9 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 			AuthenticationResponseFrame authenticationResponse = (AuthenticationResponseFrame) frame;
 			final CertificateChain certificates = authenticationResponse.getCertificates();
 			trustStore.validateCertificateChain(certificates);
+			if (certificates.getLast().getType() == Certificate.Type.AUTHORITY) {
+				throw new InvalidCertificateException("Can not use an authority certificate to authenticate to server.");
+			}
 			this.clientCertificates = certificates;
 			CertificateUtils.validateSignature(
 					certificates.getLast().getPublicKey(),
@@ -223,6 +228,8 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 			errorCode = ErrorFrame.Code.INVALID_SIGNATURE;
 		} else if (cause instanceof ServerNotReadyException) {
 			errorCode = ErrorFrame.Code.SERVER_NOT_READY;
+		} else if (cause instanceof InvalidCertificateException) {
+			errorCode = ErrorFrame.Code.INVALID_CERTIFICATE;
 		} else if (cause instanceof InvalidProtocolVersionException) {
 			errorCode = ErrorFrame.Code.UNSUPPORTED_PROTOCOL_VERSION;
 		} else if (cause instanceof DuplicateSubscriptionException) {

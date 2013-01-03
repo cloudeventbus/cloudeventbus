@@ -18,6 +18,7 @@ package cloudeventbus.server;
 
 import cloudeventbus.Subject;
 import cloudeventbus.codec.Codec;
+import cloudeventbus.codec.Frame;
 import cloudeventbus.codec.PublishFrame;
 import cloudeventbus.hub.AbstractHub;
 import cloudeventbus.hub.Hub;
@@ -36,9 +37,9 @@ public class ServerChannelInitializer extends ChannelInitializer<SocketChannel> 
 	private final String versionString;
 	private final TrustStore trustStore;
 	// TODO Move initialization of Hub out of initializer
-	private final Hub<PublishFrame> hub = new AbstractHub<PublishFrame>() {
+	private final Hub<Frame> hub = new AbstractHub<Frame>() {
 		@Override
-		protected PublishFrame encode(Subject subject, Subject replySubject, String body, int recipientCount) {
+		protected Frame encode(Subject subject, Subject replySubject, String body, int recipientCount) {
 			return new PublishFrame(subject, replySubject, body);
 		}
 	};

@@ -40,9 +40,9 @@ public class MockServer {
 	final EmbeddedByteChannel serverChannel;
 	final EmbeddedByteChannel clientChannel = new EmbeddedByteChannel(new Codec());
 
-	final Hub<PublishFrame> hub = new AbstractHub<PublishFrame>() {
+	final Hub<Frame> hub = new AbstractHub<Frame>() {
 			@Override
-			protected PublishFrame encode(Subject subject, Subject replySubject, String body, int recipientCount) {
+			protected Frame encode(Subject subject, Subject replySubject, String body, int recipientCount) {
 				return new PublishFrame(subject, replySubject, body);
 			}
 		};
