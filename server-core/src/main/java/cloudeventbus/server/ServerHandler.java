@@ -33,6 +33,7 @@ import cloudeventbus.codec.UnsubscribeFrame;
 import cloudeventbus.hub.Hub;
 import cloudeventbus.hub.SubscriptionHandle;
 import cloudeventbus.pki.CertificateChain;
+import cloudeventbus.pki.CertificatePermissionError;
 import cloudeventbus.pki.CertificateUtils;
 import cloudeventbus.pki.InvalidSignatureException;
 import cloudeventbus.pki.TrustStore;
@@ -116,7 +117,11 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 			throw new ServerNotReadyException("This server requires authentication.");
 		} else if (frame instanceof PublishFrame) {
 			final PublishFrame publishFrame = (PublishFrame) frame;
-			hub.publish(publishFrame.getSubject(), publishFrame.getReplySubject(), publishFrame.getBody());
+			final Subject subject = publishFrame.getSubject();
+			if (clientCertificates != null) {
+				clientCertificates.getLast().validatePublishPermission(subject);
+			}
+			hub.publish(subject, publishFrame.getReplySubject(), publishFrame.getBody());
 		} else if (frame instanceof SendFrame) {
 			final SendFrame sendFrame = (SendFrame) frame;
 			if (!hub.send(sendFrame.getSubject(), sendFrame.getReplySubject(), sendFrame.getBody())) {
@@ -127,6 +132,9 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 		} else if (frame instanceof SubscribeFrame) {
 			final SubscribeFrame subscribeFrame = (SubscribeFrame) frame;
 			final Subject subject = subscribeFrame.getSubject();
+			if (clientCertificates != null) {
+				clientCertificates.getLast().validateSubscribePermission(subject);
+			}
 			if (subscriptionHandles.containsKey(subject)) {
 				throw new DuplicateSubscriptionException("Already subscribed to subject " + subject);
 			}
@@ -221,6 +229,8 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 			errorCode = ErrorFrame.Code.DUPLICATE_SUBSCRIPTION;
 		} else if (cause instanceof NotSubscribedException) {
 			errorCode = ErrorFrame.Code.NOT_SUBSCRIBED;
+		} else if (cause instanceof CertificatePermissionError) {
+			errorCode = ErrorFrame.Code.INSUFFICIENT_PRIVILEGES;
 		} else {
 			errorCode = ErrorFrame.Code.SERVER_ERROR;
 		}

@@ -293,4 +293,20 @@ public class Certificate {
 		}
 	}
 
+	public void validatePublishPermission(Subject subject) {
+		for (Subject publishSubject : publishPermissions) {
+			if (!publishSubject.isSub(subject)) {
+				throw new CertificatePermissionError ("Permission " + subject + " is not granted by certificate.");
+			}
+		}
+	}
+
+	public void validateSubscribePermission(Subject subject) {
+		for (Subject subscribeSubject : subscribePermissions) {
+			if (!subscribeSubject.isSub(subject)) {
+				throw new CertificatePermissionError ("Permission " + subject + " is not granted by certificate.");
+			}
+		}
+	}
+
 }

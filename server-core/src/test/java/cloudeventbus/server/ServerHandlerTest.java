@@ -162,4 +162,98 @@ public class ServerHandlerTest {
 		assertFalse(server.isConnected());
 	}
 
+	@Test
+	public void publishWithInsufficientPrivileges() {
+		final KeyPair keyPair = CertificateUtils.generateKeyPair();
+		final Certificate certificate = CertificateUtils.generateSelfSignedCertificate(keyPair, -1, "Trusted certificate");
+		final TrustStore trustStore = new TrustStore(certificate);
+
+		final KeyPair clientKeyPair = CertificateUtils.generateKeyPair();
+		final Certificate clientCertificate = CertificateUtils.generateSignedCertificate(
+				certificate,
+				keyPair.getPrivate(),
+				clientKeyPair.getPublic(),
+				Certificate.Type.CLIENT,
+				-1,
+				Subject.list("foo.*"),
+				Subject.list("bar.*"),
+				"Client certificate for testing"
+		);
+		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);
+
+		final MockServer server = new MockServer(trustStore);
+
+		final GreetingFrame greeting = (GreetingFrame) server.read();
+		assertNotNull(greeting);
+		assertEquals(greeting.getAgent(), MockServer.SERVER_AGENT);
+
+		final AuthenticationRequestFrame authenticationRequest = (AuthenticationRequestFrame) server.read();
+		assertNotNull(authenticationRequest);
+
+		// Send authentication response
+		final byte[] salt = CertificateUtils.generateChallenge();
+		final byte[] signature = CertificateUtils.signChallenge(clientKeyPair.getPrivate(), authenticationRequest.getChallenge(), salt);
+		AuthenticationResponseFrame authenticationResponse = new AuthenticationResponseFrame(clientCertificates, salt, signature);
+		server.write(authenticationResponse);
+
+		final ServerReadyFrame ready = (ServerReadyFrame) server.read();
+		assertNotNull(ready);
+
+		// Successfully authenticated, now publish to a subject we don't have rights to.
+		server.write(new PublishFrame(new Subject("test"), null, "This should fail."));
+
+		// Validate error
+		final ErrorFrame error = (ErrorFrame) server.read();
+		assertNotNull(error);
+		assertEquals(error.getCode(), ErrorFrame.Code.INSUFFICIENT_PRIVILEGES);
+		assertFalse(server.isConnected());
+	}
+
+	@Test
+	public void subscribeWithInsufficientPrivileges() {
+		final KeyPair keyPair = CertificateUtils.generateKeyPair();
+		final Certificate certificate = CertificateUtils.generateSelfSignedCertificate(keyPair, -1, "Trusted certificate");
+		final TrustStore trustStore = new TrustStore(certificate);
+
+		final KeyPair clientKeyPair = CertificateUtils.generateKeyPair();
+		final Certificate clientCertificate = CertificateUtils.generateSignedCertificate(
+				certificate,
+				keyPair.getPrivate(),
+				clientKeyPair.getPublic(),
+				Certificate.Type.CLIENT,
+				-1,
+				Subject.list("foo.*"),
+				Subject.list("bar.*"),
+				"Client certificate for testing"
+		);
+		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);
+
+		final MockServer server = new MockServer(trustStore);
+
+		final GreetingFrame greeting = (GreetingFrame) server.read();
+		assertNotNull(greeting);
+		assertEquals(greeting.getAgent(), MockServer.SERVER_AGENT);
+
+		final AuthenticationRequestFrame authenticationRequest = (AuthenticationRequestFrame) server.read();
+		assertNotNull(authenticationRequest);
+
+		// Send authentication response
+		final byte[] salt = CertificateUtils.generateChallenge();
+		final byte[] signature = CertificateUtils.signChallenge(clientKeyPair.getPrivate(), authenticationRequest.getChallenge(), salt);
+		AuthenticationResponseFrame authenticationResponse = new AuthenticationResponseFrame(clientCertificates, salt, signature);
+		server.write(authenticationResponse);
+
+		final ServerReadyFrame ready = (ServerReadyFrame) server.read();
+		assertNotNull(ready);
+
+		// Successfully authenticated, now subscribe to a subject we don't have rights to.
+		server.write(new SubscribeFrame(new Subject("test")));
+
+		// Validate error
+		final ErrorFrame error = (ErrorFrame) server.read();
+		assertNotNull(error);
+		assertEquals(error.getCode(), ErrorFrame.Code.INSUFFICIENT_PRIVILEGES);
+		assertFalse(server.isConnected());
+	}
+
 }
