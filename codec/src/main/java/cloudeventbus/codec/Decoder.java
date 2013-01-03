@@ -110,7 +110,6 @@ public class Decoder extends ByteToMessageDecoder<Frame> {
 			case PONG:
 				return PongFrame.PONG;
 			case PUBLISH:
-			case SEND:
 				if (argumentsLength < 2 || argumentsLength > 3) {
 					throw new DecodingException("Expected message frame to have 2 or 3 arguments. It has " + argumentsLength + ".");
 				}
@@ -132,11 +131,7 @@ public class Decoder extends ByteToMessageDecoder<Frame> {
 				final ByteBuf messageBytes = in.readBytes(messageLength);
 				final String messageBody = new String(messageBytes.array(), CharsetUtil.UTF_8);
 				in.skipBytes(Codec.DELIMITER.length); // Ignore the CRLF after the message body.
-				if (frameType == FrameType.PUBLISH) {
-					return new PublishFrame(new Subject(messageSubject), replySubject == null ? null : new Subject(replySubject), messageBody);
-				} else {
-					return new SendFrame(new Subject(messageSubject), replySubject == null ? null : new Subject(replySubject), messageBody);
-				}
+				return new PublishFrame(new Subject(messageSubject), replySubject == null ? null : new Subject(replySubject), messageBody);
 			case SERVER_READY:
 				return ServerReadyFrame.SERVER_READY;
 			case SUBSCRIBE:

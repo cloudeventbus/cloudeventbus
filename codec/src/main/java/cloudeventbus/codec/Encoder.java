@@ -84,11 +84,17 @@ public class Encoder extends MessageToByteEncoder<Frame> {
 		} else if (frame instanceof PublishFrame) {
 			final PublishFrame publishFrame = (PublishFrame) frame;
 			out.writeByte(FrameType.PUBLISH.getOpcode());
-			writeMessageFrame(out, publishFrame);
-		} else if (frame instanceof SendFrame) {
-			final SendFrame sendFrame = (SendFrame) frame;
-			out.writeByte(FrameType.SEND.getOpcode());
-			writeMessageFrame(out, sendFrame);
+			out.writeByte(' ');
+			writeString(out, publishFrame.getSubject().toString());
+			if (publishFrame.getReplySubject() != null) {
+				out.writeByte(' ');
+				writeString(out, publishFrame.getReplySubject().toString());
+			}
+			out.writeByte(' ');
+			final ByteBuf body = Unpooled.wrappedBuffer(publishFrame.getBody().getBytes(CharsetUtil.UTF_8));
+			writeString(out, Integer.toString(body.readableBytes()));
+			out.writeBytes(Codec.DELIMITER);
+			out.writeBytes(body);
 		} else if (frame instanceof ServerReadyFrame) {
 			out.writeByte(FrameType.SERVER_READY.getOpcode());
 		} else if (frame instanceof SubscribeFrame) {
@@ -105,20 +111,6 @@ public class Encoder extends MessageToByteEncoder<Frame> {
 			throw new EncodingException("Don't know how to encode message of type " + frame.getClass().getName());
 		}
 		out.writeBytes(Codec.DELIMITER);
-	}
-
-	private void writeMessageFrame(ByteBuf out, AbstractMessageFrame publishFrame) {
-		out.writeByte(' ');
-		writeString(out, publishFrame.getSubject().toString());
-		if (publishFrame.getReplySubject() != null) {
-			out.writeByte(' ');
-			writeString(out, publishFrame.getReplySubject().toString());
-		}
-		out.writeByte(' ');
-		final ByteBuf body = Unpooled.wrappedBuffer(publishFrame.getBody().getBytes(CharsetUtil.UTF_8));
-		writeString(out, Integer.toString(body.readableBytes()));
-		out.writeBytes(Codec.DELIMITER);
-		out.writeBytes(body);
 	}
 
 	private void writeString(ByteBuf out, String string) {

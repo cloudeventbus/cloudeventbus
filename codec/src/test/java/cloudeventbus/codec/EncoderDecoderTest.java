@@ -139,31 +139,6 @@ public class EncoderDecoderTest {
 	}
 
 	@Test
-	public void sendFrame() {
-		final Subject subject = new Subject("test");
-		final Subject replySubject = new Subject("_test");
-		final String body = "Testing";
-		final SendFrame frame = new SendFrame(subject, replySubject, body);
-		final SendFrame recodedFrame = recode(frame);
-
-		assertEquals(recodedFrame.getSubject(), subject);
-		assertEquals(recodedFrame.getReplySubject(), replySubject);
-		assertEquals(recodedFrame.getBody(), body);
-	}
-
-	@Test
-	public void sendFrameNoReply() {
-		final Subject subject = new Subject("testing.with.no.reply");
-		final String body = "I like this body.";
-		final SendFrame frame = new SendFrame(subject, null, body);
-		final SendFrame recodedFrame = recode(frame);
-
-		assertEquals(recodedFrame.getSubject(), subject);
-		assertNull(recodedFrame.getReplySubject());
-		assertEquals(recodedFrame.getBody(), body);
-	}
-
-	@Test
 	public void subscribe() {
 		final Subject subject = new Subject("this.is.some.subject");
 		final SubscribeFrame frame = new SubscribeFrame(subject);

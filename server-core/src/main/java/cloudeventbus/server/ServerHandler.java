@@ -26,7 +26,6 @@ import cloudeventbus.codec.GreetingFrame;
 import cloudeventbus.codec.PingFrame;
 import cloudeventbus.codec.PongFrame;
 import cloudeventbus.codec.PublishFrame;
-import cloudeventbus.codec.SendFrame;
 import cloudeventbus.codec.ServerReadyFrame;
 import cloudeventbus.codec.SubscribeFrame;
 import cloudeventbus.codec.UnsubscribeFrame;
@@ -124,13 +123,6 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 				clientCertificates.getLast().validatePublishPermission(subject);
 			}
 			hub.publish(subject, publishFrame.getReplySubject(), publishFrame.getBody());
-		} else if (frame instanceof SendFrame) {
-			final SendFrame sendFrame = (SendFrame) frame;
-			if (!hub.send(sendFrame.getSubject(), sendFrame.getReplySubject(), sendFrame.getBody())) {
-				// If we can't send the message locally, try sending it to a peer server.
-				// TODO Figure out peer servers.
-				throw new UnsupportedOperationException("We need to figure out peer servers and how to do a SEND with them.");
-			}
 		} else if (frame instanceof SubscribeFrame) {
 			final SubscribeFrame subscribeFrame = (SubscribeFrame) frame;
 			final Subject subject = subscribeFrame.getSubject();

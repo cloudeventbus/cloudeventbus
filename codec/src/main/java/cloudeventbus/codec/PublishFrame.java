@@ -21,10 +21,28 @@ import cloudeventbus.Subject;
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-public class PublishFrame extends AbstractMessageFrame {
+public class PublishFrame implements Frame {
+
+	private final Subject subject;
+	private final Subject replySubject;
+	private final String body;
 
 	public PublishFrame(Subject subject, Subject replySubject, String body) {
-		super(subject, replySubject, body);
+		this.subject = subject;
+		this.replySubject = replySubject;
+		this.body = body;
+	}
+
+	public Subject getSubject() {
+		return subject;
+	}
+
+	public Subject getReplySubject() {
+		return replySubject;
+	}
+
+	public String getBody() {
+		return body;
 	}
 
 	@Override

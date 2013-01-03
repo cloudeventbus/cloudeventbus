@@ -22,11 +22,10 @@ package cloudeventbus.codec;
 enum FrameType {
 
 	AUTHENTICATE ('A'),
-	SEND         ('D'),
 	ERROR        ('E'),
 	GREETING     ('G'),
 	PING         ('I'),
-	PONG         ('J'),
+	PONG         ('O'),
 	PUBLISH      ('P'),
 	AUTH_RESPONSE('R'),
 	SUBSCRIBE    ('S'),
