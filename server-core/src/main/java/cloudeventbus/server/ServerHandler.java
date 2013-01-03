@@ -42,15 +42,14 @@ import cloudeventbus.pki.TrustStore;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundMessageHandlerAdapter;
+import io.netty.channel.EventLoop;
 import io.netty.handler.codec.DecoderException;
-import io.netty.util.Timeout;
-import io.netty.util.Timer;
-import io.netty.util.TimerTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -65,7 +64,6 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 	private final String agentString;
 	private final Hub<Frame> hub;
 	private final TrustStore trustStore;
-	private final Timer timer;
 
 	private byte[] challenge;
 	private boolean serverReady = false;
@@ -74,21 +72,20 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 	private NettyHandler handler;
 	private final Map<Subject, SubscriptionHandle> subscriptionHandles = new HashMap<>();
 
-	private TimerTask idleTask;
-	private Timeout idleTimeout;
-	private TimerTask pingTask;
-	private Timeout pingTimeout;
+	private Runnable idleTask;
+	private ScheduledFuture<?> idleFuture;
+	private Runnable pingTask;
+	private ScheduledFuture<?> pingFuture;
 
-	public ServerHandler(String agentString, Hub<Frame> hub, TrustStore trustStore, Timer timer) {
+	public ServerHandler(String agentString, Hub<Frame> hub, TrustStore trustStore) {
 		this.agentString = agentString;
 		this.hub = hub;
 		this.trustStore = trustStore;
-		this.timer = timer;
 	}
 
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, Frame frame) throws Exception {
-		resetIdleTask();
+		resetIdleTask(ctx.channel().eventLoop());
 		LOGGER.debug("Received frame: {}", frame);
 		if (frame instanceof AuthenticationResponseFrame) {
 			AuthenticationResponseFrame authenticationResponse = (AuthenticationResponseFrame) frame;
@@ -160,33 +157,33 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 		}
 	}
 
-	private void resetIdleTask() {
-		if (idleTimeout != null) {
-			idleTimeout.cancel();
+	private void resetIdleTask(EventLoop eventLoop) {
+		if (idleFuture != null) {
+			idleFuture.cancel(false);
 		}
-		if (pingTimeout != null) {
-			pingTimeout.cancel();
+		if (pingFuture != null) {
+			pingFuture.cancel(false);
 		}
-		idleTimeout = timer.newTimeout(idleTask, 1, TimeUnit.MINUTES);
-		pingTimeout = timer.newTimeout(pingTask, 30, TimeUnit.SECONDS);
+		idleFuture = eventLoop.schedule(idleTask, 1, TimeUnit.MINUTES);
+		pingFuture = eventLoop.schedule(pingTask, 30, TimeUnit.SECONDS);
 	}
 
 	@Override
 	public void channelActive(final ChannelHandlerContext ctx) throws Exception {
-		idleTask = new TimerTask() {
+		idleTask = new Runnable() {
 			@Override
-			public void run(Timeout timeout) throws Exception {
+			public void run() {
 				LOGGER.warn("Idle connection {}", ctx.channel().remoteAddress());
-				error(ctx, new ErrorFrame(ErrorFrame.Code.IDLE_TIMEOUT, "Idle timeout"));
+				error(ctx, new ErrorFrame(ErrorFrame.Code.IDLE_TIMEOUT, "Connection closed for idle timeout"));
 			}
 		};
-		pingTask = new TimerTask() {
+		pingTask = new Runnable() {
 			@Override
-			public void run(Timeout timeout) throws Exception {
+			public void run() {
 				ctx.write(PingFrame.PING);
 			}
 		};
-		resetIdleTask();
+		resetIdleTask(ctx.channel().eventLoop());
 		ctx.write(new GreetingFrame(SUPPORTED_VERSION, agentString));
 		if (trustStore == null) {
 			serverReady = true;
@@ -205,11 +202,11 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 			handle.remove();
 		}
 		// Cancel idle check and ping tasks.
-		if (idleTimeout != null) {
-			idleTimeout.cancel();
+		if (idleFuture != null) {
+			idleFuture.cancel(false);
 		}
-		if (pingTimeout != null) {
-			pingTimeout.cancel();
+		if (pingFuture != null) {
+			pingFuture.cancel(false);
 		}
 	}
 

@@ -25,8 +25,6 @@ import cloudeventbus.hub.Hub;
 import cloudeventbus.pki.TrustStore;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.embedded.EmbeddedByteChannel;
-import io.netty.util.HashedWheelTimer;
-import io.netty.util.Timer;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
@@ -34,8 +32,6 @@ import io.netty.util.Timer;
 public class MockServer {
 
 	public static final String SERVER_AGENT = "mock-server-0.1";
-
-	final Timer timer = new HashedWheelTimer();
 
 	final EmbeddedByteChannel serverChannel;
 	final EmbeddedByteChannel clientChannel = new EmbeddedByteChannel(new Codec());
@@ -47,11 +43,11 @@ public class MockServer {
 			}
 		};
 	public MockServer() {
-		serverChannel = new EmbeddedByteChannel(new Codec(), new ServerHandler(SERVER_AGENT, hub, null, timer));
+		serverChannel = new EmbeddedByteChannel(new Codec(), new ServerHandler(SERVER_AGENT, hub, null));
 	}
 
 	public MockServer(TrustStore trustStore) {
-		serverChannel = new EmbeddedByteChannel(new Codec(), new ServerHandler(SERVER_AGENT, hub, trustStore, timer));
+		serverChannel = new EmbeddedByteChannel(new Codec(), new ServerHandler(SERVER_AGENT, hub, trustStore));
 	}
 
 	Frame read() {
