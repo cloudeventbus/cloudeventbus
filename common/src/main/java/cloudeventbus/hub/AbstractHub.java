@@ -28,7 +28,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-public abstract class AbstractHub<T> implements Hub<T> {
+public abstract class AbstractHub<T> implements SubscribeableHub<T> {
 
 	private final WildCardNode wildcardSubscriptions = new WildCardNode();
 	private final ConcurrentMap<Subject, Collection<Handler<T>>> subscriptions = new ConcurrentHashMap<>();

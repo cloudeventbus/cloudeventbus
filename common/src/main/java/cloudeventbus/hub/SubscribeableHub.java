@@ -21,6 +21,6 @@ import cloudeventbus.Subject;
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-public interface Hub {
-	void publish(Subject subject, Subject replySubject, String body);
+public interface SubscribeableHub<T> extends Hub {
+	SubscriptionHandle subscribe(Subject subject, Handler<T> handler);
 }
