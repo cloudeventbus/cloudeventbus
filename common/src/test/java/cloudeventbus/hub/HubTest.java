@@ -36,7 +36,7 @@ public class HubTest {
 
 		final AtomicBoolean methodCalled = new AtomicBoolean();
 
-		final Hub<TestHub.Message> hub = new TestHub();
+		final SubscribeableHub<TestHub.Message> hub = new TestHub();
 		hub.subscribe(new Subject("test"), new Handler<TestHub.Message>() {
 			@Override
 			public void publish(TestHub.Message message) {
@@ -56,7 +56,7 @@ public class HubTest {
 		final Subject subject = new Subject("test.foo");
 		final Subject wildCardSubject = new Subject("test.*");
 
-		final Hub<TestHub.Message> hub = new TestHub();
+		final SubscribeableHub<TestHub.Message> hub = new TestHub();
 		final CountHandler handler = new CountHandler();
 
 		hub.subscribe(wildCardSubject, handler);
@@ -72,7 +72,7 @@ public class HubTest {
 
 		final AtomicBoolean methodCalled = new AtomicBoolean();
 
-		final Hub<TestHub.Message> hub = new TestHub();
+		final SubscribeableHub<TestHub.Message> hub = new TestHub();
 		hub.subscribe(Subject.ALL, new Handler<TestHub.Message>() {
 			@Override
 			public void publish(TestHub.Message message) {
@@ -94,7 +94,7 @@ public class HubTest {
 
 		final CountHandler handler = new CountHandler();
 
-		final Hub<TestHub.Message> hub = new TestHub();
+		final SubscribeableHub<TestHub.Message> hub = new TestHub();
 		hub.subscribe(Subject.ALL, handler);
 		hub.subscribe(subject, handler);
 		hub.publish(subject, null, body);
@@ -114,7 +114,7 @@ public class HubTest {
 		final CountHandler handler2 = new CountHandler();
 		final CountHandler handler3 = new CountHandler();
 
-		final Hub<TestHub.Message> hub = new TestHub();
+		final SubscribeableHub<TestHub.Message> hub = new TestHub();
 		hub.subscribe(Subject.ALL, handlerAll);
 		hub.subscribe(subject1, handler1);
 		hub.subscribe(subject2, handler2);
@@ -142,7 +142,7 @@ public class HubTest {
 		final CountHandler handler2 = new CountHandler();
 		final CountHandler handler3 = new CountHandler();
 
-		final Hub<TestHub.Message> hub = new TestHub();
+		final SubscribeableHub<TestHub.Message> hub = new TestHub();
 		hub.subscribe(Subject.ALL, handlerAll);
 		hub.subscribe(subject1, handler1);
 		hub.subscribe(subject2, handler2);

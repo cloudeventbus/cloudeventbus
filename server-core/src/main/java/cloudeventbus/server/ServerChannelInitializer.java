@@ -22,6 +22,7 @@ import cloudeventbus.codec.Frame;
 import cloudeventbus.codec.PublishFrame;
 import cloudeventbus.hub.AbstractHub;
 import cloudeventbus.hub.Hub;
+import cloudeventbus.hub.SubscribeableHub;
 import cloudeventbus.pki.TrustStore;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -35,7 +36,7 @@ public class ServerChannelInitializer extends ChannelInitializer<SocketChannel> 
 	private final String versionString;
 	private final TrustStore trustStore;
 	// TODO Move initialization of Hub out of initializer
-	private final Hub<Frame> hub = new AbstractHub<Frame>() {
+	private final SubscribeableHub<Frame> hub = new AbstractHub<Frame>() {
 		@Override
 		protected Frame encode(Subject subject, Subject replySubject, String body, int recipientCount) {
 			return new PublishFrame(subject, replySubject, body);

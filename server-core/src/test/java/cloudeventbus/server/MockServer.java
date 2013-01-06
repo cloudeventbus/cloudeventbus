@@ -22,6 +22,7 @@ import cloudeventbus.codec.Frame;
 import cloudeventbus.codec.PublishFrame;
 import cloudeventbus.hub.AbstractHub;
 import cloudeventbus.hub.Hub;
+import cloudeventbus.hub.SubscribeableHub;
 import cloudeventbus.pki.TrustStore;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.embedded.EmbeddedByteChannel;
@@ -36,7 +37,7 @@ public class MockServer {
 	final EmbeddedByteChannel serverChannel;
 	final EmbeddedByteChannel clientChannel = new EmbeddedByteChannel(new Codec());
 
-	final Hub<Frame> hub = new AbstractHub<Frame>() {
+	final SubscribeableHub<Frame> hub = new AbstractHub<Frame>() {
 			@Override
 			protected Frame encode(Subject subject, Subject replySubject, String body, int recipientCount) {
 				return new PublishFrame(subject, replySubject, body);

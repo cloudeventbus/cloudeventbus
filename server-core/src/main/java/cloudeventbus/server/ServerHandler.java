@@ -30,6 +30,7 @@ import cloudeventbus.codec.ServerReadyFrame;
 import cloudeventbus.codec.SubscribeFrame;
 import cloudeventbus.codec.UnsubscribeFrame;
 import cloudeventbus.hub.Hub;
+import cloudeventbus.hub.SubscribeableHub;
 import cloudeventbus.hub.SubscriptionHandle;
 import cloudeventbus.pki.Certificate;
 import cloudeventbus.pki.CertificateChain;
@@ -61,7 +62,7 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 	private static final int SUPPORTED_VERSION = 1;
 
 	private final String agentString;
-	private final Hub<Frame> hub;
+	private final SubscribeableHub<Frame> hub;
 	private final TrustStore trustStore;
 
 	private byte[] challenge;
@@ -76,7 +77,7 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 	private Runnable pingTask;
 	private ScheduledFuture<?> pingFuture;
 
-	public ServerHandler(String agentString, Hub<Frame> hub, TrustStore trustStore) {
+	public ServerHandler(String agentString, SubscribeableHub<Frame> hub, TrustStore trustStore) {
 		this.agentString = agentString;
 		this.hub = hub;
 		this.trustStore = trustStore;
@@ -150,14 +151,19 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 	}
 
 	private void resetIdleTask(EventLoop eventLoop) {
-		if (idleFuture != null) {
-			idleFuture.cancel(false);
+		try {
+			if (idleFuture != null) {
+				idleFuture.cancel(false);
+			}
+			if (pingFuture != null) {
+				pingFuture.cancel(false);
+			}
+			idleFuture = eventLoop.schedule(idleTask, 1, TimeUnit.MINUTES);
+			pingFuture = eventLoop.schedule(pingTask, 30, TimeUnit.SECONDS);
+		} catch (UnsupportedOperationException e) {
+			// Don't throw an error when running tests.
+			LOGGER.warn("Ping and idle close not supported", e);
 		}
-		if (pingFuture != null) {
-			pingFuture.cancel(false);
-		}
-		idleFuture = eventLoop.schedule(idleTask, 1, TimeUnit.MINUTES);
-		pingFuture = eventLoop.schedule(pingTask, 30, TimeUnit.SECONDS);
 	}
 
 	@Override
