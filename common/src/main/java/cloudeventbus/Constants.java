@@ -22,9 +22,9 @@ package cloudeventbus;
 public class Constants {
 
 	/**
-	 * 4k default maximum message size.
+	 * 8k default maximum message size.
 	 */
-	public static final int DEFAULT_MAX_MESSAGE_SIZE = 4096;
+	public static final int DEFAULT_MAX_MESSAGE_SIZE = 1024 * 8;
 
 	/**
 	 * The default port for Cloud Event Bus.
