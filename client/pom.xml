@@ -11,5 +11,11 @@
 
 	<artifactId>client</artifactId>
 
+	<dependencies>
+		<dependency>
+			<groupId>com.github.cloudeventbus</groupId>
+			<artifactId>codec</artifactId>
+		</dependency>
+	</dependencies>
 
 </project>
