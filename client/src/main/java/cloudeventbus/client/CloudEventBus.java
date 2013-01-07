@@ -1,5 +1,5 @@
 /*
- *   Copyright (c) 2012 Mike Heath.  All rights reserved.
+ *   Copyright (c) 2013 Mike Heath.  All rights reserved.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -17,27 +17,97 @@
 package cloudeventbus.client;
 
 /**
+ * A client to a Cloud Event Bus cluster. If the client's connection to the server terminates, the client will
+ * automatically try to reconnect to the cluster. The client will obviously not receive any messages when not connected
+ * to the cluster but the {@code publish} methods can still be used without throwing an exception. The messages will
+ * get published when the client reconnects to the cluster.
+ *
  * @author Mike Heath <elcapo@gmail.com>
  */
 public interface CloudEventBus  extends AutoCloseable {
 
+	/**
+	 * Closes the client.
+	 */
 	@Override
 	void close();
 
+	/**
+	 * Indicates if the client is currently connected to a Cloud Event Bus cluster.
+	 *
+	 * @return {@code true} if the client is connected to a Cloud Event Bus cluster, {@code false} otherwise.
+	 */
 	boolean isConnected();
 
-	boolean isServerReady();
+	/**
+	 * Publishes a message to the specified subject.
+	 *
+	 * @param subject the subject on which the message will be published
+	 * @param body the body of the message being published
+	 * @throws ClientClosedException if this client has been closed.
+	 * @throws IllegalArgumentException if the supplied subject contains invalid characters or if the subject is a
+	 *                                  wildcard subject.
+	 */
+	void publish(String subject, String body) throws ClientClosedException, IllegalArgumentException;
 
-	void publish(String subject);
+	/**
+	 * Issues a request to the specified subject.
+	 *
+	 * @param subject the subject on which to publish the request
+	 * @param body the body of the request
+	 * @param replyHandler the first handler for replies
+	 * @param replyHandlers additional handlers for replies
+	 * @return a {@code Request} object for monitoring the request
+	 * @throws ClientClosedException if this client has been closed.
+	 * @throws IllegalArgumentException if the supplied subject contains invalid characters or if the subject is a
+	 *                                  wildcard subject.
+	 */
+	Request request(String subject, String body, MessageHandler replyHandler, MessageHandler... replyHandlers) throws ClientClosedException, IllegalArgumentException;
 
-	void publish(String subject, String body);
+	/**
+	 * Issues a request to the specified subject limiting the number of replies the request will receive.
+	 *
+	 * <p>When the number of message specified by {@code maxReplies} is received, the returned {@link Request} object
+	 * will be closed automatically.
+	 *
+	 * @param subject the subject on which to publish the request
+	 * @param body the body of the request
+	 * @param maxReplies the maximum number of replies the request will receive
+	 * @param replyHandler the first handler for replies
+	 * @param replyHandlers additional handlers for replies
+	 * @return a {@code Request} object for monitoring the request
+	 * @throws ClientClosedException if this client has been closed.
+	 * @throws IllegalArgumentException if the supplied subject contains invalid characters or if the subject is a
+	 *                                  wildcard subject or if {@code maxReplies} is less than 1.
+	 */
+	Request request(String subject, String body, Integer maxReplies, MessageHandler replyHandler, MessageHandler... replyHandlers) throws ClientClosedException, IllegalArgumentException;
 
-	Request request(String subject, String body, MessageHandler replyHandler, MessageHandler... replyHandlers);
+	/**
+	 * Subscribes to the specified subject. The subject may contain a wild card for subscribing to groups of messages.
+	 *
+	 * @param subject the subject to subscribe to.
+	 * @param replyHandlers any {@code MessageHandler}s to be invoked when messages arrive on the subscribe subject
+	 * @return a {@code Subscription} object for monitoring the subscription.
+	 * @throws ClientClosedException if this client has been closed.
+	 * @throws IllegalArgumentException if the supplied subject contains invalid characters.
+	 */
+	Subscription subscribe(String subject, MessageHandler... replyHandlers) throws ClientClosedException, IllegalArgumentException;
 
-	Request request(String subject, String body, Integer maxReplies, MessageHandler replyHandler, MessageHandler... replyHandlers);
-
-	Subscription subscribe(String subject, MessageHandler... replyHandlers);
-
-	Subscription subscribe(String subject, Integer maxMessages, MessageHandler... replyHandlers);
+	/**
+	 * Subscribes to the specified subject limiting the number of message the subscription will receive. The subject
+	 * may contain a wild card for subscribing to groups of messages.
+	 *
+	 * <p>When the number of message specified by {@code maxMessage} is received, the returned {@link Subscription}
+	 * object* will be closed automatically.
+	 *
+	 * @param subject the subject to subscribe to
+	 * @param maxMessages the maximum number of messages the subscription will receive
+	 * @param replyHandlers any {@code MessageHandler}s to be invoked when messages arrive on the subscribe subject
+	 * @return a {@code Subscription} object for monitoring the subscription.
+	 * @throws ClientClosedException if this client has been closed.
+	 * @throws IllegalArgumentException if the supplied subject contains invalid characters or if {@code maxMessages}
+	 *                                  is less than 1.
+	 */
+	Subscription subscribe(String subject, Integer maxMessages, MessageHandler... replyHandlers) throws ClientClosedException, IllegalArgumentException;
 
 }

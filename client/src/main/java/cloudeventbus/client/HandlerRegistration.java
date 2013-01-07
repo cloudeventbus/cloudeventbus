@@ -17,18 +17,17 @@
 package cloudeventbus.client;
 
 /**
- * A callback method that gets invoked when a message is received. This callback is used with subscriptions and
- * requests.
+ * Used to remove a registered {@link MessageHandler} instance from a {@link Subscription} instance.
  *
  * @author Mike Heath <elcapo@gmail.com>
  */
-public interface MessageHandler {
+public interface HandlerRegistration {
 
 	/**
-	 * Invoked when a message is received.
-	 *
-	 * @param message the received message.
+	 * Removes the registered {@link MessageHandler} instance from the {@link Subscription} instance. The registered
+	 * {@code MessageHandler} will no longer be invoked when the subscription receives messages. Nothing will happen
+	 * if this method is invoked more than once.
 	 */
-	void onMessage(Message message);
+	void remove();
 
 }

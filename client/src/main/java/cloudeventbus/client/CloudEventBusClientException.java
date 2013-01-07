@@ -1,5 +1,5 @@
 /*
- *   Copyright (c) 2012 Mike Heath.  All rights reserved.
+ *   Copyright (c) 2013 Mike Heath.  All rights reserved.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -16,15 +16,19 @@
  */
 package cloudeventbus.client;
 
-import java.util.Iterator;
-import java.util.concurrent.TimeUnit;
+import cloudeventbus.CloudEventBusException;
 
 /**
+ * The root exception for all client exceptions.
+ *
  * @author Mike Heath <elcapo@gmail.com>
  */
-public interface SubscriptionIterator extends AutoCloseable, Iterator<Message> {
-	@Override
-	void close();
+public class CloudEventBusClientException extends CloudEventBusException {
+	public CloudEventBusClientException(String message) {
+		super(message);
+	}
 
-	Message next(long timeout, TimeUnit unit);
+	public CloudEventBusClientException(String message, Throwable cause) {
+		super(message, cause);
+	}
 }

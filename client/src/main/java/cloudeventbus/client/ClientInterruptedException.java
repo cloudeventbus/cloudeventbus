@@ -17,18 +17,12 @@
 package cloudeventbus.client;
 
 /**
- * A callback method that gets invoked when a message is received. This callback is used with subscriptions and
- * requests.
+ * Wraps a {@link InterruptedException} as a non-checked exception.
  *
  * @author Mike Heath <elcapo@gmail.com>
  */
-public interface MessageHandler {
-
-	/**
-	 * Invoked when a message is received.
-	 *
-	 * @param message the received message.
-	 */
-	void onMessage(Message message);
-
+public class ClientInterruptedException extends CloudEventBusClientException {
+	public ClientInterruptedException(InterruptedException cause) {
+		super("Interrupted while waiting", cause);
+	}
 }
