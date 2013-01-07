@@ -69,9 +69,12 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 	private boolean serverReady = false;
 	private CertificateChain clientCertificates;
 	private String clientAgent;
+
+	// Subscription handler fields
 	private NettyHandler handler;
 	private final Map<Subject, SubscriptionHandle> subscriptionHandles = new HashMap<>();
 
+	// Ping and idle detection fields
 	private Runnable idleTask;
 	private ScheduledFuture<?> idleFuture;
 	private Runnable pingTask;
