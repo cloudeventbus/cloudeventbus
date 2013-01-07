@@ -1,5 +1,5 @@
 /*
- *   Copyright (c) 2012 Mike Heath.  All rights reserved.
+ *   Copyright (c) 2012, 2013 Mike Heath.  All rights reserved.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -17,13 +17,25 @@
 package cloudeventbus;
 
 /**
+ * The root exception for all Cloud Event Bus exceptions.
+ *
  * @author Mike Heath <elcapo@gmail.com>
  */
 public class CloudEventBusException extends RuntimeException {
+
+	/**
+	 * Creates a new exception with the specified message.
+	 * @param message a description of the error condition that produced this exception
+	 */
 	public CloudEventBusException(String message) {
 		super(message);
 	}
 
+	/**
+	 * Creates a new exception with the specified message.
+	 * @param message a description of the error condition that produced this exception.
+	 * @param cause the root cause of the exception
+	 */
 	public CloudEventBusException(String message, Throwable cause) {
 		super(message, cause);
 	}
