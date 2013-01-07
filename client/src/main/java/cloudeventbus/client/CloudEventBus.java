@@ -22,6 +22,7 @@ package cloudeventbus.client;
  * to the cluster but the {@code publish} methods can still be used without throwing an exception. The messages will
  * get published when the client reconnects to the cluster.
  *
+ * @see Connector for creating instances of this interface.
  * @author Mike Heath <elcapo@gmail.com>
  */
 public interface CloudEventBus  extends AutoCloseable {
@@ -86,12 +87,12 @@ public interface CloudEventBus  extends AutoCloseable {
 	 * Subscribes to the specified subject. The subject may contain a wild card for subscribing to groups of messages.
 	 *
 	 * @param subject the subject to subscribe to.
-	 * @param replyHandlers any {@code MessageHandler}s to be invoked when messages arrive on the subscribe subject
+	 * @param messageHandlers any {@code MessageHandler}s to be invoked when messages arrive on the subscribe subject
 	 * @return a {@code Subscription} object for monitoring the subscription.
 	 * @throws ClientClosedException if this client has been closed.
 	 * @throws IllegalArgumentException if the supplied subject contains invalid characters.
 	 */
-	Subscription subscribe(String subject, MessageHandler... replyHandlers) throws ClientClosedException, IllegalArgumentException;
+	Subscription subscribe(String subject, MessageHandler... messageHandlers) throws ClientClosedException, IllegalArgumentException;
 
 	/**
 	 * Subscribes to the specified subject limiting the number of message the subscription will receive. The subject
@@ -102,12 +103,12 @@ public interface CloudEventBus  extends AutoCloseable {
 	 *
 	 * @param subject the subject to subscribe to
 	 * @param maxMessages the maximum number of messages the subscription will receive
-	 * @param replyHandlers any {@code MessageHandler}s to be invoked when messages arrive on the subscribe subject
+	 * @param messageHandlers any {@code MessageHandler}s to be invoked when messages arrive on the subscribe subject
 	 * @return a {@code Subscription} object for monitoring the subscription.
 	 * @throws ClientClosedException if this client has been closed.
 	 * @throws IllegalArgumentException if the supplied subject contains invalid characters or if {@code maxMessages}
 	 *                                  is less than 1.
 	 */
-	Subscription subscribe(String subject, Integer maxMessages, MessageHandler... replyHandlers) throws ClientClosedException, IllegalArgumentException;
+	Subscription subscribe(String subject, Integer maxMessages, MessageHandler... messageHandlers) throws ClientClosedException, IllegalArgumentException;
 
 }
