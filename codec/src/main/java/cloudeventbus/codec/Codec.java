@@ -16,6 +16,7 @@
  */
 package cloudeventbus.codec;
 
+import cloudeventbus.Constants;
 import io.netty.channel.ChannelInboundHandler;
 import io.netty.channel.ChannelOutboundHandler;
 import io.netty.channel.CombinedChannelHandler;
@@ -27,9 +28,12 @@ public class Codec extends CombinedChannelHandler {
 
 	public static final byte[] DELIMITER = new byte[] {'\r', '\n'};
 
-
 	public Codec() {
-		super(new Decoder(), new Encoder());
+		this(Constants.DEFAULT_MAX_MESSAGE_SIZE);
+	}
+
+	public Codec(int maxMessageSize) {
+		super(new Decoder(maxMessageSize), new Encoder());
 	}
 
 }
