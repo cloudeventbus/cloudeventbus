@@ -16,6 +16,8 @@
  */
 package cloudeventbus;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
@@ -30,6 +32,11 @@ public class Constants {
 	 * The default port for Cloud Event Bus.
 	 */
 	public static final int DEFAULT_PORT = 4223;
+
+	/**
+	 * By default wait 5 seconds before attempting to reconnect to a Cloud Event Bus cluster.
+	 */
+	public static final long DEFAULT_RECONNECT_WAIT_TIME = TimeUnit.SECONDS.toMillis(5);
 
 	private Constants() {
 		// Don't instantiate this class.
