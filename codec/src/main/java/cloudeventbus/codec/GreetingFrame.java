@@ -47,4 +47,9 @@ public class GreetingFrame implements Frame {
 	public String toString() {
 		return "Greeting version=" + version + " agent='" + agent + '\'';
 	}
+
+	@Override
+	public FrameType getFrameType() {
+		return FrameType.GREETING;
+	}
 }

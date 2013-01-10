@@ -67,7 +67,11 @@ public class Decoder extends ByteToMessageDecoder<Frame> {
 		final String command = in.readBytes(frameLength).toString(CharsetUtil.UTF_8);
 		in.skipBytes(Codec.DELIMITER.length);
 		final String[] parts = command.split("\\s+");
-		final FrameType frameType = FrameType.getFrameType(parts[0].charAt(0));
+		final char frameTypeChar = parts[0].charAt(0);
+		final FrameType frameType = FrameType.getFrameType(frameTypeChar);
+		if (frameType == null) {
+			throw new DecodingException("Invalid frame type " + frameTypeChar);
+		}
 		final int argumentsLength = parts.length - 1;
 		switch (frameType) {
 			case AUTH_RESPONSE:

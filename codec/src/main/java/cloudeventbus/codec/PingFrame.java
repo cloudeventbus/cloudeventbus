@@ -30,4 +30,9 @@ public class PingFrame implements Frame {
 	public String toString() {
 		return "Ping";
 	}
+
+	@Override
+	public FrameType getFrameType() {
+		return FrameType.PING;
+	}
 }

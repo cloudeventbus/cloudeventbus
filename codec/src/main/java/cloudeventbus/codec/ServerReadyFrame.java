@@ -30,4 +30,9 @@ public class ServerReadyFrame implements Frame {
 	public String toString() {
 		return "Server ready";
 	}
+
+	@Override
+	public FrameType getFrameType() {
+		return FrameType.SERVER_READY;
+	}
 }

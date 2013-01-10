@@ -35,80 +35,91 @@ public class Encoder extends MessageToByteEncoder<Frame> {
 
 	@Override
 	public void encode(ChannelHandlerContext ctx, Frame frame, ByteBuf out) throws Exception {
-		if (frame instanceof AuthenticationRequestFrame) {
-			final AuthenticationRequestFrame authenticationRequestFrame = (AuthenticationRequestFrame) frame;
-			out.writeByte(FrameType.AUTHENTICATE.getOpcode());
-			out.writeByte(' ');
-			final String challenge = Base64.encodeBase64String(authenticationRequestFrame.getChallenge());
-			writeString(out, challenge);
-		} else if (frame instanceof AuthenticationResponseFrame) {
-			final AuthenticationResponseFrame authenticationResponseFrame = (AuthenticationResponseFrame) frame;
-			out.writeByte(FrameType.AUTH_RESPONSE.getOpcode());
-			out.writeByte(' ');
-
-			// Write certificate chain
-			final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-			final OutputStream base64Out = new Base64OutputStream(outputStream, true, Integer.MAX_VALUE, new byte[0]);
-			CertificateStoreLoader.store(base64Out, authenticationResponseFrame.getCertificates());
-			out.writeBytes(outputStream.toByteArray());
-			out.writeByte(' ');
-
-			// Write salt
-			final byte[] encodedSalt = Base64.encodeBase64(authenticationResponseFrame.getSalt());
-			out.writeBytes(encodedSalt);
-			out.writeByte(' ');
-
-			// Write signature
-			final byte[] encodedDigitalSignature = Base64.encodeBase64(authenticationResponseFrame.getDigitalSignature());
-			out.writeBytes(encodedDigitalSignature);
-		} else if (frame instanceof ErrorFrame) {
-			final ErrorFrame errorFrame = (ErrorFrame) frame;
-			out.writeByte(FrameType.ERROR.getOpcode());
-			out.writeByte(' ');
-			writeString(out, Integer.toString(errorFrame.getCode().getErrorNumber()));
-			if (errorFrame.getMessage() != null) {
+		switch (frame.getFrameType()) {
+			case AUTHENTICATE:
+				final AuthenticationRequestFrame authenticationRequestFrame = (AuthenticationRequestFrame) frame;
+				out.writeByte(FrameType.AUTHENTICATE.getOpcode());
 				out.writeByte(' ');
-				writeString(out, errorFrame.getMessage());
-			}
-		} else if (frame instanceof GreetingFrame) {
-			final GreetingFrame greetingFrame = (GreetingFrame) frame;
-			out.writeByte(FrameType.GREETING.getOpcode());
-			out.writeByte(' ');
-			writeString(out, Integer.toString(greetingFrame.getVersion()));
-			out.writeByte(' ');
-			writeString(out, greetingFrame.getAgent());
-		} else if (frame instanceof PingFrame) {
-			out.writeByte(FrameType.PING.getOpcode());
-		} else if (frame instanceof PongFrame) {
-			out.writeByte(FrameType.PONG.getOpcode());
-		} else if (frame instanceof PublishFrame) {
-			final PublishFrame publishFrame = (PublishFrame) frame;
-			out.writeByte(FrameType.PUBLISH.getOpcode());
-			out.writeByte(' ');
-			writeString(out, publishFrame.getSubject().toString());
-			if (publishFrame.getReplySubject() != null) {
+				final String challenge = Base64.encodeBase64String(authenticationRequestFrame.getChallenge());
+				writeString(out, challenge);
+				break;
+			case AUTH_RESPONSE:
+				final AuthenticationResponseFrame authenticationResponseFrame = (AuthenticationResponseFrame) frame;
+				out.writeByte(FrameType.AUTH_RESPONSE.getOpcode());
 				out.writeByte(' ');
-				writeString(out, publishFrame.getReplySubject().toString());
-			}
-			out.writeByte(' ');
-			final ByteBuf body = Unpooled.wrappedBuffer(publishFrame.getBody().getBytes(CharsetUtil.UTF_8));
-			writeString(out, Integer.toString(body.readableBytes()));
-			out.writeBytes(Codec.DELIMITER);
-			out.writeBytes(body);
-		} else if (frame instanceof ServerReadyFrame) {
-			out.writeByte(FrameType.SERVER_READY.getOpcode());
-		} else if (frame instanceof SubscribeFrame) {
-			final SubscribeFrame subscribeFrame = (SubscribeFrame) frame;
-			out.writeByte(FrameType.SUBSCRIBE.getOpcode());
-			out.writeByte(' ');
-			writeString(out, subscribeFrame.getSubject().toString());
-		} else if (frame instanceof UnsubscribeFrame) {
-			final UnsubscribeFrame unsubscribeFrame = (UnsubscribeFrame) frame;
-			out.writeByte(FrameType.UNSUBSCRIBE.getOpcode());
-			out.writeByte(' ');
-			writeString(out, unsubscribeFrame.getSubject().toString());
-		} else {
-			throw new EncodingException("Don't know how to encode message of type " + frame.getClass().getName());
+
+				// Write certificate chain
+				final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+				final OutputStream base64Out = new Base64OutputStream(outputStream, true, Integer.MAX_VALUE, new byte[0]);
+				CertificateStoreLoader.store(base64Out, authenticationResponseFrame.getCertificates());
+				out.writeBytes(outputStream.toByteArray());
+				out.writeByte(' ');
+
+				// Write salt
+				final byte[] encodedSalt = Base64.encodeBase64(authenticationResponseFrame.getSalt());
+				out.writeBytes(encodedSalt);
+				out.writeByte(' ');
+
+				// Write signature
+				final byte[] encodedDigitalSignature = Base64.encodeBase64(authenticationResponseFrame.getDigitalSignature());
+				out.writeBytes(encodedDigitalSignature);
+				break;
+			case ERROR:
+				final ErrorFrame errorFrame = (ErrorFrame) frame;
+				out.writeByte(FrameType.ERROR.getOpcode());
+				out.writeByte(' ');
+				writeString(out, Integer.toString(errorFrame.getCode().getErrorNumber()));
+				if (errorFrame.getMessage() != null) {
+					out.writeByte(' ');
+					writeString(out, errorFrame.getMessage());
+				}
+				break;
+			case GREETING:
+				final GreetingFrame greetingFrame = (GreetingFrame) frame;
+				out.writeByte(FrameType.GREETING.getOpcode());
+				out.writeByte(' ');
+				writeString(out, Integer.toString(greetingFrame.getVersion()));
+				out.writeByte(' ');
+				writeString(out, greetingFrame.getAgent());
+				break;
+			case PING:
+				out.writeByte(FrameType.PING.getOpcode());
+				break;
+			case PONG:
+				out.writeByte(FrameType.PONG.getOpcode());
+				break;
+			case PUBLISH:
+				final PublishFrame publishFrame = (PublishFrame) frame;
+				out.writeByte(FrameType.PUBLISH.getOpcode());
+				out.writeByte(' ');
+				writeString(out, publishFrame.getSubject().toString());
+				if (publishFrame.getReplySubject() != null) {
+					out.writeByte(' ');
+					writeString(out, publishFrame.getReplySubject().toString());
+				}
+				out.writeByte(' ');
+				final ByteBuf body = Unpooled.wrappedBuffer(publishFrame.getBody().getBytes(CharsetUtil.UTF_8));
+				writeString(out, Integer.toString(body.readableBytes()));
+				out.writeBytes(Codec.DELIMITER);
+				out.writeBytes(body);
+				break;
+			case SERVER_READY:
+				out.writeByte(FrameType.SERVER_READY.getOpcode());
+				break;
+			case SUBSCRIBE:
+				final SubscribeFrame subscribeFrame = (SubscribeFrame) frame;
+				out.writeByte(FrameType.SUBSCRIBE.getOpcode());
+				out.writeByte(' ');
+				writeString(out, subscribeFrame.getSubject().toString());
+				break;
+			case UNSUBSCRIBE:
+				final UnsubscribeFrame unsubscribeFrame = (UnsubscribeFrame) frame;
+				out.writeByte(FrameType.UNSUBSCRIBE.getOpcode());
+				out.writeByte(' ');
+				writeString(out, unsubscribeFrame.getSubject().toString());
+				break;
+			default:
+				throw new EncodingException("Don't know how to encode message of type " + frame.getClass().getName());
 		}
 		out.writeBytes(Codec.DELIMITER);
 	}

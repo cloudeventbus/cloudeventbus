@@ -19,7 +19,7 @@ package cloudeventbus.codec;
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-enum FrameType {
+public enum FrameType {
 
 	AUTHENTICATE ('A'),
 	ERROR        ('E'),

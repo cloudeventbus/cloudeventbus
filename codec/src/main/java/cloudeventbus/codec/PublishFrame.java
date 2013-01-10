@@ -55,4 +55,9 @@ public class PublishFrame implements Frame {
 		builder.append(", body='").append(getBody()).append("'");
 		return builder.toString();
 	}
+
+	@Override
+	public FrameType getFrameType() {
+		return FrameType.PUBLISH;
+	}
 }

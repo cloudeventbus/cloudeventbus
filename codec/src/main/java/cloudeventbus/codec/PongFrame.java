@@ -30,4 +30,10 @@ public class PongFrame implements Frame {
 	public String toString() {
 		return "Pong";
 	}
+
+	@Override
+	public FrameType getFrameType() {
+		return FrameType.PONG;
+	}
+
 }

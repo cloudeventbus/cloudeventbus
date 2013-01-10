@@ -64,4 +64,9 @@ public class AuthenticationResponseFrame implements Frame {
 	public String toString() {
 		return "Authentication response";
 	}
+
+	@Override
+	public FrameType getFrameType() {
+		return FrameType.AUTH_RESPONSE;
+	}
 }

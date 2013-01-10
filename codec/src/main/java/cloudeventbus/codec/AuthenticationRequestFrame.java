@@ -16,8 +16,6 @@
  */
 package cloudeventbus.codec;
 
-import org.apache.commons.codec.binary.Base64;
-
 /**
  * Represent an authentication request. The request contains a challenge consisting of a random string of bytes. The
  * client encrypts this challenge using its private key and returns the encrypted challenge to the server in an
@@ -43,5 +41,10 @@ public class AuthenticationRequestFrame implements Frame {
 	@Override
 	public String toString() {
 		return "Authentication request";
+	}
+
+	@Override
+	public FrameType getFrameType() {
+		return FrameType.AUTHENTICATE;
 	}
 }

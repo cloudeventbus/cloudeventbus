@@ -37,4 +37,9 @@ public class SubscribeFrame implements Frame {
 	public String toString() {
 		return "Subscribe subject=" + subject;
 	}
+
+	@Override
+	public FrameType getFrameType() {
+		return FrameType.SUBSCRIBE;
+	}
 }

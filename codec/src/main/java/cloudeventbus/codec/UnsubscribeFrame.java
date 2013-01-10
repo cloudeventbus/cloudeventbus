@@ -37,4 +37,9 @@ public class UnsubscribeFrame implements Frame {
 	public String toString() {
 		return "Unsubscribe subject=" + subject;
 	}
+
+	@Override
+	public FrameType getFrameType() {
+		return FrameType.UNSUBSCRIBE;
+	}
 }
