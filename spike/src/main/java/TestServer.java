@@ -32,7 +32,7 @@ public class TestServer {
 				.group(new NioEventLoopGroup(), new NioEventLoopGroup())
 				.channel(NioServerSocketChannel.class)
 				.localAddress(new InetSocketAddress(Constants.DEFAULT_PORT))
-				.childHandler(new ServerChannelInitializer("test-0.1", null))
+				.childHandler(new ServerChannelInitializer("test-server-0.1", null))
 				.bind().awaitUninterruptibly();
 		System.out.println("Server running...");
 	}
