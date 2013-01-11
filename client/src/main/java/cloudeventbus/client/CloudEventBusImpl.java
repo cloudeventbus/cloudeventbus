@@ -196,7 +196,7 @@ class CloudEventBusImpl implements CloudEventBus {
 
 	@Override
 	public Request request(String subject, String body, MessageHandler replyHandler, MessageHandler... replyHandlers) throws ClientClosedException, IllegalArgumentException {
-		return request(subject, body, null, replyHandler, replyHandlers);
+		return request(subject, body, 1, replyHandler, replyHandlers);
 	}
 
 	@Override

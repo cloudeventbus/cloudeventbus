@@ -54,7 +54,7 @@ public interface CloudEventBus  extends AutoCloseable {
 	void publish(String subject, String body) throws ClientClosedException, IllegalArgumentException;
 
 	/**
-	 * Issues a request to the specified subject.
+	 * Issues a request to the specified subject expecting a single reply.
 	 *
 	 * @param subject the subject on which to publish the request
 	 * @param body the body of the request
