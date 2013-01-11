@@ -133,7 +133,11 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 			if (clientCertificates != null) {
 				clientCertificates.getLast().validatePublishPermission(subject);
 			}
-			hub.publish(subject, publishFrame.getReplySubject(), publishFrame.getBody());
+			final Subject replySubject = publishFrame.getReplySubject();
+			if (replySubject != null) {
+				hub.subscribe(replySubject, handler);
+			}
+			hub.publish(subject, replySubject, publishFrame.getBody());
 		} else if (frame instanceof SubscribeFrame) {
 			final SubscribeFrame subscribeFrame = (SubscribeFrame) frame;
 			final Subject subject = subscribeFrame.getSubject();
