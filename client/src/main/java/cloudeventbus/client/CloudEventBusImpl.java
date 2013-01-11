@@ -84,6 +84,7 @@ class CloudEventBusImpl implements CloudEventBus {
 	private boolean closed = false;
 	private volatile boolean serverReady = false;
 	private final Map<Subject, List<DefaultSubscription>> subscriptions = new HashMap<>();
+	private final List<PublishFrame> publishQueue = new ArrayList<>();
 
 	private volatile CloudEventBusClientException error;
 
@@ -179,12 +180,16 @@ class CloudEventBusImpl implements CloudEventBus {
 	@Override
 	public void publish(String subject, String body) throws ClientClosedException, IllegalArgumentException {
 		assertNotClosed();
-		// TODO Validate subject is not wildcard
+		final Subject wrappedSubject = new Subject(subject);
+		if (wrappedSubject.isWildCard()) {
+			throw new IllegalArgumentException("Can't publish to a wild card subject.");
+		}
 		synchronized (lock) {
+			final PublishFrame message = new PublishFrame(wrappedSubject, null, body);
 			if (channel == null || !channel.isActive()) {
-				// TODO Queue up publish
+				publishQueue.add(message);
 			} else {
-				channel.write(new PublishFrame(new Subject(subject), null, body));
+				channel.write(message);
 			}
 		}
 	}
@@ -195,20 +200,45 @@ class CloudEventBusImpl implements CloudEventBus {
 	}
 
 	@Override
-	public Request request(String subject, String body, Integer maxReplies, MessageHandler replyHandler, MessageHandler... replyHandlers) throws ClientClosedException, IllegalArgumentException {
+	public Request request(final String subject, String body, final Integer maxReplies, MessageHandler replyHandler, MessageHandler... replyHandlers) throws ClientClosedException, IllegalArgumentException {
 		assertNotClosed();
-		// TODO Validate subject is not wildcard
-		synchronized (lock) {
-			if (!channel.isActive()) {
-				// TODO Queue up request
-			} else {
-				final Subject replySubject = Subject.createReplySubject();
-				// TODO subscribe locally to reply subject
+		final Subject wrappedSubject = new Subject(subject);
+		if (wrappedSubject.isWildCard()) {
+			throw new IllegalArgumentException("Can't publish to a wild card subject.");
+		}
+		final Subject replySubject = Subject.createReplySubject();
+		final DefaultSubscription replySubscription = new DefaultSubscription(replySubject.toString(), maxReplies, replyHandlers);
 
-				channel.write(new PublishFrame(new Subject(subject), null, body));
+		final PublishFrame message = new PublishFrame(new Subject(subject), replySubject, body);
+		synchronized (lock) {
+			addSubscription(replySubject, replySubscription);
+			if (channel == null || !channel.isActive()) {
+				publishQueue.add(message);
+			} else {
+				channel.write(message);
 			}
 		}
-		return null;
+		return new Request() {
+			@Override
+			public void close() {
+				replySubscription.close();
+			}
+
+			@Override
+			public String getSubject() {
+				return subject;
+			}
+
+			@Override
+			public int getReceivedReplies() {
+				return replySubscription.getReceivedMessages();
+			}
+
+			@Override
+			public Integer getMaxReplies() {
+				return maxReplies;
+			}
+		};
 	}
 
 	@Override
@@ -220,41 +250,72 @@ class CloudEventBusImpl implements CloudEventBus {
 	public Subscription subscribe(String subject, Integer maxMessages, MessageHandler... messageHandlers) throws ClientClosedException, IllegalArgumentException {
 		assertNotClosed();
 		final Subject wrappedSubject = new Subject(subject);
-		final DefaultSubscription subscription = new DefaultSubscription(subject, maxMessages, messageHandlers) {
-			@Override
-			public void close() {
-				super.close();
-				synchronized (lock) {
-					final List<DefaultSubscription> subscriptionList = subscriptions.get(wrappedSubject);
-					if (subscriptionList.remove(this)) {
-						if (subscriptionList.isEmpty() && channel.isActive()) {
-							// Send unsubscribe to server if there are no more subscriptions on this subject.
-							channel.write(new UnsubscribeFrame(wrappedSubject));
-						}
-					}
-				}
-			}
-		};
+		final DefaultSubscription subscription = createSubscription(wrappedSubject, maxMessages, messageHandlers);
 
 		// Send subscribe to server if this is the first time we're subscribing to this subject.
-		if (addSubscription(wrappedSubject, subscription) && channel != null && channel.isActive()) {
-			channel.write(new SubscribeFrame(new Subject(subject)));
+		synchronized (lock) {
+			if (addSubscription(wrappedSubject, subscription) && channel != null && channel.isActive()) {
+				channel.write(new SubscribeFrame(new Subject(subject)));
+			}
 		}
 
 		return subscription;
 	}
 
+	private DefaultSubscription createSubscription(final Subject subject, final Integer maxMessages, final MessageHandler[] messageHandlers) {
+		return new DefaultSubscription(subject.toString(), maxMessages, messageHandlers) {
+			@Override
+			public void close() {
+				super.close();
+				synchronized (lock) {
+					final List<DefaultSubscription> subscriptionList = subscriptions.get(subject);
+					if (subscriptionList.remove(this)) {
+						if (subscriptionList.isEmpty() && channel.isActive()) {
+							// Send unsubscribe to server if there are no more subscriptions on this subject.
+							subscriptions.remove(subject);
+							channel.write(new UnsubscribeFrame(subject));
+						}
+					}
+				}
+			}
+
+			@Override
+			protected DefaultMessage createMessageObject(String subject, final String replySubject, String body) {
+				if (replySubject == null) {
+					return new DefaultMessage(subject, body, false);
+				}
+				return new DefaultMessage(subject, body, true) {
+					@Override
+					public void reply(String body) throws UnsupportedOperationException {
+						publish(replySubject, body);
+					}
+
+					@Override
+					public void reply(final String body, long delay, TimeUnit timeUnit) throws UnsupportedOperationException {
+						eventLoopGroup.next().schedule(new Runnable() {
+							@Override
+							public void run() {
+								publish(replySubject, body);
+							}
+						}, delay, timeUnit);
+						super.reply(body, delay, timeUnit);
+					}
+				};
+			}
+		};
+	}
+
 	private boolean addSubscription(Subject subject, DefaultSubscription subscription) {
 		synchronized (lock) {
+			boolean firstAdd = false;
 			List<DefaultSubscription> subscriptionList = subscriptions.get(subject);
 			if (subscriptionList == null) {
 				subscriptionList = new ArrayList<>();
 				subscriptions.put(subject, subscriptionList);
-				subscriptionList.add(subscription);
-				return true;
+				firstAdd = true;
 			}
 			subscriptionList.add(subscription);
-			return false;
+			return firstAdd;
 		}
 	}
 
@@ -346,9 +407,11 @@ class CloudEventBusImpl implements CloudEventBus {
 										// Make a copy of the list so that we don't get a concurrent modification
 										// exception if the list of subscribers changes in the on message callback.
 										final LinkedList<DefaultSubscription> copy = new LinkedList<>(entry.getValue());
+										final String replySubjectString = publishFrame.getReplySubject() == null ? null : publishFrame.getReplySubject().toString();
 										for (DefaultSubscription subscription : copy) {
 											subscription.onMessage(
 													subject.toString(),
+													replySubjectString,
 													publishFrame.getBody());
 										}
 									}
@@ -362,9 +425,12 @@ class CloudEventBusImpl implements CloudEventBus {
 								for (Subject subject : subscriptions.keySet()) {
 									ctx.write(new SubscribeFrame(subject));
 								}
+								for (PublishFrame publish : publishQueue) {
+									ctx.write(publish);
+								}
+								publishQueue.clear();
 							}
 							fireStateChange(ConnectionStateListener.State.SERVERY_READY);
-							// TODO publish pending messages
 							break;
 						default:
 							close();

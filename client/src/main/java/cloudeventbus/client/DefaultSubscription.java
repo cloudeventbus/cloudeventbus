@@ -109,12 +109,12 @@ public class DefaultSubscription implements Subscription {
 		};
 	}
 
-	public void onMessage(String subject, String body) {
+	public void onMessage(String subject, String replySubject, String body) {
 		final int messageCount = receivedMessageCount.incrementAndGet();
 		if (maxMessages != null && messageCount >= maxMessages) {
 			close();
 		}
-		final Message message = new DefaultMessage(subject, body, false);
+		final Message message = createMessageObject(subject, replySubject, body);
 		synchronized (handlers) {
 			for (MessageHandler handler : handlers) {
 				try {
@@ -124,5 +124,9 @@ public class DefaultSubscription implements Subscription {
 				}
 			}
 		}
+	}
+
+	protected DefaultMessage createMessageObject(String subject, String replySubject, String body) {
+		return new DefaultMessage(subject, body, replySubject == null);
 	}
 }

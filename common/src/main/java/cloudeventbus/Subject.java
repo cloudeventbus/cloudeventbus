@@ -16,8 +16,6 @@
  */
 package cloudeventbus;
 
-import org.apache.commons.codec.binary.Base64;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -33,6 +31,7 @@ public class Subject {
 
 	public static final String WILD_CARD_TOKEN = "*";
 	public static final Subject ALL = new Subject("*");
+	private static final char[] VALID_SUBJECT_CHARS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
 	private static final Pattern SUBJECT_PATTERN = Pattern.compile("[0-9a-zA-Z_-]+(\\.[0-9a-zA-Z_-]+)*(\\.\\*){0,1}");
 
 	public static List<Subject> list(String... subjects) {
@@ -44,9 +43,12 @@ public class Subject {
 	}
 
 	public static Subject createReplySubject() {
-		final byte[] randomBytes = new byte[Constants.REPLY_SUBJECT_SIZE];
-		ThreadLocalRandom.current().nextBytes(randomBytes);
-		return new Subject("_" + Base64.encodeBase64String(randomBytes));
+		final ThreadLocalRandom random = ThreadLocalRandom.current();
+		final char[] randomChars = new char[Constants.REPLY_SUBJECT_SIZE];
+		for (int i=0; i < Constants.REPLY_SUBJECT_SIZE; i++) {
+			randomChars[i] = VALID_SUBJECT_CHARS[random.nextInt(VALID_SUBJECT_CHARS.length)];
+		}
+		return new Subject("_" + new String(randomChars));
 	}
 
 	private final String subject;
@@ -84,8 +86,7 @@ public class Subject {
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == null) { return false; }
-		if (obj.getClass() != Subject.class) { return false; }
-		return subject.equals(((Subject)obj).subject);
+		return obj.getClass() == Subject.class && subject.equals(((Subject) obj).subject);
 	}
 
 	/**

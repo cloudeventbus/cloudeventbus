@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Mike Heath <elcapo@gmail.com>
  */
-// TODO Add callback when connection is open/closed
+// TODO Add Executor configuration option for calling ConnectionStateListener and MessageHandlers.
 public class Connector {
 
 	/**
