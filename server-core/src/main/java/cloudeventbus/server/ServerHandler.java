@@ -16,6 +16,7 @@
  */
 package cloudeventbus.server;
 
+import cloudeventbus.Constants;
 import cloudeventbus.Subject;
 import cloudeventbus.codec.AuthenticationRequestFrame;
 import cloudeventbus.codec.AuthenticationResponseFrame;
@@ -29,7 +30,6 @@ import cloudeventbus.codec.PublishFrame;
 import cloudeventbus.codec.ServerReadyFrame;
 import cloudeventbus.codec.SubscribeFrame;
 import cloudeventbus.codec.UnsubscribeFrame;
-import cloudeventbus.hub.Hub;
 import cloudeventbus.hub.SubscribeableHub;
 import cloudeventbus.hub.SubscriptionHandle;
 import cloudeventbus.pki.Certificate;
@@ -58,8 +58,6 @@ import java.util.concurrent.TimeUnit;
 public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ServerHandler.class);
-
-	private static final int SUPPORTED_VERSION = 1;
 
 	private final String agentString;
 	private final SubscribeableHub<Frame> hub;
@@ -90,6 +88,7 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 	public void messageReceived(ChannelHandlerContext ctx, Frame frame) throws Exception {
 		resetIdleTask(ctx.channel().eventLoop());
 		LOGGER.debug("Received frame: {}", frame);
+		// TODO Modify to use switch statement with frame.getFrameType();
 		if (frame instanceof AuthenticationResponseFrame) {
 			AuthenticationResponseFrame authenticationResponse = (AuthenticationResponseFrame) frame;
 			final CertificateChain certificates = authenticationResponse.getCertificates();
@@ -108,8 +107,16 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 		} else if (frame instanceof GreetingFrame) {
 			final GreetingFrame greetingFrame = (GreetingFrame) frame;
 			clientAgent = greetingFrame.getAgent();
-			if (greetingFrame.getVersion() != SUPPORTED_VERSION) {
+			if (greetingFrame.getVersion() != Constants.PROTOCOL_VERSION) {
 				throw new InvalidProtocolVersionException("This server doesn't support protocol version " + greetingFrame.getVersion());
+			}
+			ctx.write(new GreetingFrame(Constants.PROTOCOL_VERSION, agentString));
+			if (trustStore == null) {
+				serverReady = true;
+				ctx.write(ServerReadyFrame.SERVER_READY);
+			} else {
+				challenge = CertificateUtils.generateChallenge();
+				ctx.write(new AuthenticationRequestFrame(challenge));
 			}
 		} else if (frame instanceof AuthenticationRequestFrame) {
 			// TODO Implement support for the client request authentication
@@ -185,14 +192,6 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 			}
 		};
 		resetIdleTask(ctx.channel().eventLoop());
-		ctx.write(new GreetingFrame(SUPPORTED_VERSION, agentString));
-		if (trustStore == null) {
-			serverReady = true;
-			ctx.write(ServerReadyFrame.SERVER_READY);
-		} else {
-			challenge = CertificateUtils.generateChallenge();
-			ctx.write(new AuthenticationRequestFrame(challenge));
-		}
 		handler = new NettyHandler(ctx);
 	}
 
