@@ -158,7 +158,12 @@ public class EncoderDecoderTest {
 
 	@Test(expectedExceptions = EncoderException.class)
 	public void unknownFrame() {
-		recode(new Frame() {});
+		recode(new Frame() {
+			@Override
+			public FrameType getFrameType() {
+				return null;
+			}
+		});
 	}
 
 	private <T extends Frame> T recode(T frame) {

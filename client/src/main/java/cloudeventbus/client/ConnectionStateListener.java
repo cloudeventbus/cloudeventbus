@@ -17,14 +17,16 @@
 package cloudeventbus.client;
 
 /**
- * Thrown when a method on a {@link CloudEventBus}, {@link Request}, or {@link Subscription} object is invoked and the
- * object has been closed.
- *
  * @author Mike Heath <elcapo@gmail.com>
  */
-public class ClientClosedException extends CloudEventBusClientException {
+public interface ConnectionStateListener {
 
-	public ClientClosedException(String message, Throwable cause) {
-		super(message, cause);
+	public enum State {
+		CONNECTED,
+		SERVERY_READY,
+		DISCONNECTED
 	}
+
+	void onConnectionStateChange(CloudEventBus eventBus, State state);
+
 }

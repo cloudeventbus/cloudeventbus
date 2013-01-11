@@ -23,6 +23,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class Constants {
 
+	public static final int PROTOCOL_VERSION = 1;
+
 	/**
 	 * 8k default maximum message size.
 	 */
@@ -37,6 +39,7 @@ public class Constants {
 	 * By default wait 5 seconds before attempting to reconnect to a Cloud Event Bus cluster.
 	 */
 	public static final long DEFAULT_RECONNECT_WAIT_TIME = TimeUnit.SECONDS.toMillis(5);
+	public static final int REPLY_SUBJECT_SIZE = 20;
 
 	private Constants() {
 		// Don't instantiate this class.

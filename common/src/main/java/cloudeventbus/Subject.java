@@ -16,9 +16,12 @@
  */
 package cloudeventbus;
 
+import org.apache.commons.codec.binary.Base64;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Pattern;
 
 /**
@@ -38,6 +41,12 @@ public class Subject {
 			list[i] = new Subject(subjects[i]);
 		}
 		return Collections.unmodifiableList(Arrays.asList(list));
+	}
+
+	public static Subject createReplySubject() {
+		final byte[] randomBytes = new byte[Constants.REPLY_SUBJECT_SIZE];
+		ThreadLocalRandom.current().nextBytes(randomBytes);
+		return new Subject("_" + Base64.encodeBase64String(randomBytes));
 	}
 
 	private final String subject;
@@ -87,6 +96,5 @@ public class Subject {
 	public String toString() {
 		return subject;
 	}
-
 
 }

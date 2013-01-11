@@ -34,11 +34,13 @@ public interface CloudEventBus  extends AutoCloseable {
 	void close();
 
 	/**
-	 * Indicates if the client is currently connected to a Cloud Event Bus cluster.
+	 * Indicates if the client is currently connected to a server in a Cloud Event Bus cluster and the server is ready
+	 * to process messages.
 	 *
-	 * @return {@code true} if the client is connected to a Cloud Event Bus cluster, {@code false} otherwise.
+	 * @return {@code true} if the client is the remote server in a Cloud Event Bus cluster is ready to process
+	 * messages, {@code false} otherwise.
 	 */
-	boolean isConnected();
+	boolean isServerReady();
 
 	/**
 	 * Publishes a message to the specified subject.

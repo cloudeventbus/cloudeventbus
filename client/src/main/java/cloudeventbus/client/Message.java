@@ -35,13 +35,6 @@ public interface Message {
 	boolean isRequest();
 
 	/**
-	 * Returns the subscription the message was received on.
-	 *
-	 * @return the subscription the message was received on.
-	 */
-	Subscription getSubscription();
-
-	/**
 	 * Returns the subject used to send the message.
 	 *
 	 * @return the subject used to send the message.
