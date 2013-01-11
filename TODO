@@ -1,12 +1,13 @@
-- Implement server
 - Implement client
+- Create and implement integration test module to test interaction bewteen client and server.
+- Implement server clustering
 - Build simple PKI command-line tools
 - Build simple event bus client command-line clients
 - Performance test
 - Experiment with how much performance/memory benefit direct buffers will really give us
 - Implement a VCAP service gateway
 - Create a BOSH release
-- Browser client/server (websocket based)
+- Browser client/server (websocket based, maybe engine.io based)
 - Build a Node.js client
 - Build a NATS/Cloud Event Bus gateway - This will allow applications to safely subscribe to NATS messages.
 - Add support for setting subscribe message received message count limits on the server.
