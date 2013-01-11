@@ -55,6 +55,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -76,6 +77,8 @@ class CloudEventBusImpl implements CloudEventBus {
 	private final TrustStore trustStore;
 
 	private final List<ConnectionStateListener> listeners;
+
+	private final Executor executor;
 
 	private final Object lock = new Object();
 
@@ -105,6 +108,8 @@ class CloudEventBusImpl implements CloudEventBus {
 		trustStore = connector.trustStore;
 
 		listeners = new ArrayList<>(connector.listeners);
+
+		executor = connector.callbackExecutor;
 
 		connect();
 	}
@@ -327,13 +332,18 @@ class CloudEventBusImpl implements CloudEventBus {
 		}
 	}
 
-	private void fireStateChange(ConnectionStateListener.State state) {
-		for (ConnectionStateListener listener : listeners) {
-			try {
-				listener.onConnectionStateChange(this, state);
-			} catch (Throwable t) {
-				LOGGER.error("Error invoking connection state listener.", t);
-			}
+	private void fireStateChange(final ConnectionStateListener.State state) {
+		for (final ConnectionStateListener listener : listeners) {
+			executor.execute(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						listener.onConnectionStateChange(CloudEventBusImpl.this, state);
+					} catch (Throwable t) {
+						LOGGER.error("Error invoking connection state listener.", t);
+					}
+				}
+			});
 		}
 	}
 
@@ -408,11 +418,16 @@ class CloudEventBusImpl implements CloudEventBus {
 										// exception if the list of subscribers changes in the on message callback.
 										final LinkedList<DefaultSubscription> copy = new LinkedList<>(entry.getValue());
 										final String replySubjectString = publishFrame.getReplySubject() == null ? null : publishFrame.getReplySubject().toString();
-										for (DefaultSubscription subscription : copy) {
-											subscription.onMessage(
-													subject.toString(),
-													replySubjectString,
-													publishFrame.getBody());
+										for (final DefaultSubscription subscription : copy) {
+											executor.execute(new Runnable() {
+												@Override
+												public void run() {
+													subscription.onMessage(
+															subject.toString(),
+															replySubjectString,
+															publishFrame.getBody());
+												}
+											});
 										}
 									}
 								}

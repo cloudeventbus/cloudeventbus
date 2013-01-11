@@ -25,6 +25,7 @@ import java.net.SocketAddress;
 import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -38,7 +39,6 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Mike Heath <elcapo@gmail.com>
  */
-// TODO Add Executor configuration option for calling ConnectionStateListener and MessageHandlers.
 public class Connector {
 
 	/**
@@ -76,7 +76,20 @@ public class Connector {
 	 */
 	PrivateKey privateKey;
 
+	/**
+	 * The listeners that get invoked when the connection state has changed.
+	 */
 	final List<ConnectionStateListener> listeners = new ArrayList<>();
+
+	/**
+	 * Executor to use for invoking callbacks. By default use same thread.
+	 */
+	Executor callbackExecutor = new Executor() {
+		@Override
+		public void execute(Runnable command) {
+			command.run();
+		}
+	};
 
 	/**
 	 * Adds a server candidate to connect to. Invoke this method multiple times to add multiple server candidates. One
@@ -178,6 +191,19 @@ public class Connector {
 	 */
 	public Connector addConnectionStateListener(ConnectionStateListener listener) {
 		listeners.add(listener);
+		return this;
+	}
+
+	/**
+	 * The executor to use for invoking callbacks such as {@link MessageHandler}s and {@link ConnectionStateListener}s.
+	 * The default executor uses the Netty IO thread so any blocking in the callback will hold up the client from
+	 * publishing or receiving messages.
+	 *
+	 * @param executor the executor to use for invoking callbacks.
+	 * @return this connector.
+	 */
+	public Connector callbackExecutor(Executor executor) {
+		this.callbackExecutor = executor;
 		return this;
 	}
 
