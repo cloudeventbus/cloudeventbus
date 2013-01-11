@@ -23,6 +23,9 @@ package cloudeventbus.client;
  * @author Mike Heath <elcapo@gmail.com>
  */
 public class ClientClosedException extends CloudEventBusClientException {
+	public ClientClosedException(String message) {
+		super(message);
+	}
 
 	public ClientClosedException(String message, Throwable cause) {
 		super(message, cause);

@@ -51,6 +51,8 @@ import org.slf4j.LoggerFactory;
 import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -81,7 +83,7 @@ class CloudEventBusImpl implements CloudEventBus {
 	private Channel channel;
 	private boolean closed = false;
 	private volatile boolean serverReady = false;
-	private final Map<Subject, List<AbstractSubscription>> subscriptions = new HashMap<>();
+	private final Map<Subject, List<DefaultSubscription>> subscriptions = new HashMap<>();
 
 	private volatile CloudEventBusClientException error;
 
@@ -152,14 +154,21 @@ class CloudEventBusImpl implements CloudEventBus {
 	public void close() {
 		synchronized (lock) {
 			closed = true;
-			if (shutDownEventLoop) {
-				eventLoopGroup.shutdown();
-			}
 			if (channel != null) {
 				channel.close();
 			}
+			if (shutDownEventLoop) {
+				eventLoopGroup.shutdown();
+			}
+			for (List<DefaultSubscription> subscriptionList : subscriptions.values()) {
+				final Iterator<DefaultSubscription> iterator = subscriptionList.iterator();
+				while (iterator.hasNext()) {
+					final DefaultSubscription subscription = iterator.next();
+					iterator.remove();
+					subscription.close();
+				}
+			}
 		}
-		// TODO Close all subscriptions
 	}
 
 	@Override
@@ -211,11 +220,12 @@ class CloudEventBusImpl implements CloudEventBus {
 	public Subscription subscribe(String subject, Integer maxMessages, MessageHandler... messageHandlers) throws ClientClosedException, IllegalArgumentException {
 		assertNotClosed();
 		final Subject wrappedSubject = new Subject(subject);
-		final AbstractSubscription subscription = new AbstractSubscription(subject, maxMessages, messageHandlers) {
+		final DefaultSubscription subscription = new DefaultSubscription(subject, maxMessages, messageHandlers) {
 			@Override
 			public void close() {
+				super.close();
 				synchronized (lock) {
-					final List<AbstractSubscription> subscriptionList = subscriptions.get(wrappedSubject);
+					final List<DefaultSubscription> subscriptionList = subscriptions.get(wrappedSubject);
 					if (subscriptionList.remove(this)) {
 						if (subscriptionList.isEmpty() && channel.isActive()) {
 							// Send unsubscribe to server if there are no more subscriptions on this subject.
@@ -234,9 +244,9 @@ class CloudEventBusImpl implements CloudEventBus {
 		return subscription;
 	}
 
-	private boolean addSubscription(Subject subject, AbstractSubscription subscription) {
+	private boolean addSubscription(Subject subject, DefaultSubscription subscription) {
 		synchronized (lock) {
-			List<AbstractSubscription> subscriptionList = subscriptions.get(subject);
+			List<DefaultSubscription> subscriptionList = subscriptions.get(subject);
 			if (subscriptionList == null) {
 				subscriptionList = new ArrayList<>();
 				subscriptions.put(subject, subscriptionList);
@@ -329,11 +339,14 @@ class CloudEventBusImpl implements CloudEventBus {
 							final PublishFrame publishFrame = (PublishFrame) frame;
 
 							synchronized (lock) {
-								for (Map.Entry<Subject, List<AbstractSubscription>> entry : subscriptions.entrySet()) {
+								for (Map.Entry<Subject, List<DefaultSubscription>> entry : subscriptions.entrySet()) {
 									final Subject key = entry.getKey();
 									final Subject subject = publishFrame.getSubject();
 									if (key.isSub(subject)) {
-										for (AbstractSubscription subscription : entry.getValue()) {
+										// Make a copy of the list so that we don't get a concurrent modification
+										// exception if the list of subscribers changes in the on message callback.
+										final LinkedList<DefaultSubscription> copy = new LinkedList<>(entry.getValue());
+										for (DefaultSubscription subscription : copy) {
 											subscription.onMessage(
 													subject.toString(),
 													publishFrame.getBody());

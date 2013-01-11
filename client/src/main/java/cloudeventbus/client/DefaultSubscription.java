@@ -21,26 +21,40 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-public abstract class AbstractSubscription implements Subscription {
+public class DefaultSubscription implements Subscription {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSubscription.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(DefaultSubscription.class);
 
 	private final String subject;
 	private final Integer maxMessages;
 	private final AtomicInteger receivedMessageCount = new AtomicInteger();
 
 	private final List<MessageHandler> handlers = new ArrayList<>();
+	private final List<BlockingQueueMessageIterator> iterators = new ArrayList<>();
 
-	public AbstractSubscription(String subject, Integer maxMessages, MessageHandler... messageHandlers) {
+	public DefaultSubscription(String subject, Integer maxMessages, MessageHandler... messageHandlers) {
 		this.subject = subject;
 		this.maxMessages = maxMessages;
 		Collections.addAll(handlers, messageHandlers);
+	}
+
+	@Override
+	public void close() {
+		synchronized (iterators) {
+			final Iterator<BlockingQueueMessageIterator> messageIteratorIterator = iterators.iterator();
+			while (messageIteratorIterator.hasNext()) {
+				final BlockingQueueMessageIterator messageIterator = messageIteratorIterator.next();
+				messageIteratorIterator.remove();
+				messageIterator.close();
+			}
+		}
 	}
 
 	@Override
@@ -60,8 +74,24 @@ public abstract class AbstractSubscription implements Subscription {
 
 	@Override
 	public MessageIterator iterator() {
-		// TODO Implement me.
-		return null;
+		return new BlockingQueueMessageIterator() {
+			private final HandlerRegistration registration;
+			{
+				registration = addMessageHandler(this);
+				synchronized (iterators) {
+					iterators.add(this);
+				}
+			}
+
+			@Override
+			public void close() {
+				registration.remove();
+				synchronized (iterators) {
+					iterators.remove(this);
+				}
+				super.close();
+			}
+		};
 	}
 
 	@Override
