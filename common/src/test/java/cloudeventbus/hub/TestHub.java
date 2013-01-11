@@ -19,7 +19,7 @@ package cloudeventbus.hub;
 import cloudeventbus.Subject;
 
 /**
- * @author Mike Heath <heathma@ldschurch.org>
+ * @author Mike Heath <elcapo@gmail.com>
  */
 class TestHub extends AbstractHub<TestHub.Message> {
 
