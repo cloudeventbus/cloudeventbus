@@ -26,6 +26,8 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.TooLongFrameException;
 import io.netty.util.CharsetUtil;
 import org.apache.commons.codec.binary.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 
@@ -33,6 +35,8 @@ import java.io.ByteArrayInputStream;
  * @author Mike Heath <elcapo@gmail.com>
  */
 public class Decoder extends ByteToMessageDecoder<Frame> {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(Decoder.class);
 
 	private final int maxMessageSize;
 
@@ -72,6 +76,7 @@ public class Decoder extends ByteToMessageDecoder<Frame> {
 		if (frameType == null) {
 			throw new DecodingException("Invalid frame type " + frameTypeChar);
 		}
+		LOGGER.debug("Decoding frame of type {}", frameType);
 		final int argumentsLength = parts.length - 1;
 		switch (frameType) {
 			case AUTH_RESPONSE:

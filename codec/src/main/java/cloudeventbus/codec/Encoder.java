@@ -24,6 +24,8 @@ import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.util.CharsetUtil;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Base64OutputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
@@ -33,8 +35,11 @@ import java.io.OutputStream;
  */
 public class Encoder extends MessageToByteEncoder<Frame> {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(Encoder.class);
+
 	@Override
 	public void encode(ChannelHandlerContext ctx, Frame frame, ByteBuf out) throws Exception {
+		LOGGER.debug("Encoding frame {}", frame);
 		switch (frame.getFrameType()) {
 			case AUTHENTICATE:
 				final AuthenticationRequestFrame authenticationRequestFrame = (AuthenticationRequestFrame) frame;
