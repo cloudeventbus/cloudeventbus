@@ -61,9 +61,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-class CloudEventBusImpl implements CloudEventBus {
+class EventBusImpl implements EventBus {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(CloudEventBusImpl.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(EventBusImpl.class);
 
 	private final ServerList servers = new ServerList();
 	private final long reconnectWaitTime;
@@ -91,7 +91,7 @@ class CloudEventBusImpl implements CloudEventBus {
 
 	private volatile CloudEventBusClientException error;
 
-	public CloudEventBusImpl(Connector connector) {
+	public EventBusImpl(Connector connector) {
 		if (connector.servers.size() == 0) {
 			throw new IllegalArgumentException("No servers were specified to connect to.");
 		}
@@ -338,7 +338,7 @@ class CloudEventBusImpl implements CloudEventBus {
 				@Override
 				public void run() {
 					try {
-						listener.onConnectionStateChange(CloudEventBusImpl.this, state);
+						listener.onConnectionStateChange(EventBusImpl.this, state);
 					} catch (Throwable t) {
 						LOGGER.error("Error invoking connection state listener.", t);
 					}

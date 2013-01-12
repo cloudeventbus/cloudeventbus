@@ -28,8 +28,8 @@ package cloudeventbus.client;
  * {@link MessageHandler}s after the subscription has been created. Similar to the previous problem, if a reply is
  * received before the {@code MessageHandler} has been added to the request, receipt of the message will be lost.
  *
- * @see CloudEventBus#request(String, String, Integer, MessageHandler, MessageHandler...)
- * @see CloudEventBus#request(String, String, MessageHandler, MessageHandler...)
+ * @see EventBus#request(String, String, Integer, MessageHandler, MessageHandler...)
+ * @see EventBus#request(String, String, MessageHandler, MessageHandler...)
  * @author Mike Heath <elcapo@gmail.com>
  */
 public interface Request extends AutoCloseable {

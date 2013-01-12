@@ -25,7 +25,7 @@ package cloudeventbus.client;
  * @see Connector for creating instances of this interface.
  * @author Mike Heath <elcapo@gmail.com>
  */
-public interface CloudEventBus  extends AutoCloseable {
+public interface EventBus extends AutoCloseable {
 
 	/**
 	 * Closes the client.

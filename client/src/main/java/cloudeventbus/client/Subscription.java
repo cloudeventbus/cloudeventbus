@@ -25,8 +25,8 @@ package cloudeventbus.client;
  * subscription. If an iterator stops being used, its {@link MessageIterator#close()} method should be invoked to keep
  * messages from being queued unnecessarily and wasting memory.
  *
- * @see CloudEventBus#subscribe(String, MessageHandler...)
- * @see CloudEventBus#subscribe(String, Integer, MessageHandler...)
+ * @see EventBus#subscribe(String, MessageHandler...)
+ * @see EventBus#subscribe(String, Integer, MessageHandler...)
  * @author Mike Heath <elcapo@gmail.com>
  */
 public interface Subscription extends Iterable<Message>, AutoCloseable {

@@ -27,6 +27,6 @@ public interface ConnectionStateListener {
 		DISCONNECTED
 	}
 
-	void onConnectionStateChange(CloudEventBus eventBus, State state);
+	void onConnectionStateChange(EventBus eventBus, State state);
 
 }

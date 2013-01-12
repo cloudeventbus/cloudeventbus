@@ -29,12 +29,12 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Creates a {@link CloudEventBus} client to connect to a Cloud Event Bus cluster.
+ * Creates a {@link EventBus} client to connect to a Cloud Event Bus cluster.
  *
  * <p>Each method, except {@code connect()}, returns {@code this} so that the methods may be used for chained invocation. For example,
  *
  * <code>
- *     CloudEventBus eventBus = new Connector().addServer(...).addServer(...).connect();
+ *     EventBus eventBus = new Connector().addServer(...).addServer(...).connect();
  * </code>
  *
  * @author Mike Heath <elcapo@gmail.com>
@@ -118,7 +118,7 @@ public class Connector {
 
 	/**
 	 * Specifies the Netty {@code EventLoopGroup} to use for connecting to the Cloud Event Bus cluster. If an event
-	 * loop is not specified, one will be created and destroyed when {@link cloudeventbus.client.CloudEventBus#close()}
+	 * loop is not specified, one will be created and destroyed when {@link EventBus#close()}
 	 * is invoked.
 	 *
 	 * @param eventLoopGroup the Netty event loop group to use.
@@ -208,11 +208,11 @@ public class Connector {
 	}
 
 	/**
-	 * Creates a {@link CloudEventBus} instances and initiates a connection to the Cloud Event Bus cluster.
+	 * Creates a {@link EventBus} instances and initiates a connection to the Cloud Event Bus cluster.
 	 *
-	 * @return a {@code CloudEventBus} object.
+	 * @return a {@code EventBus} object.
 	 */
-	public CloudEventBus connect() {
-		return new CloudEventBusImpl(this);
+	public EventBus connect() {
+		return new EventBusImpl(this);
 	}
 }
