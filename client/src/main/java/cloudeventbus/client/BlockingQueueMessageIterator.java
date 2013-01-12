@@ -42,7 +42,7 @@ class BlockingQueueMessageIterator implements MessageIterator, MessageHandler {
 
 	@Override
 	public boolean hasNext() {
-		return !closed || (queue.peek() != CLOSED && !queue.isEmpty());
+		return queue.peek() != CLOSED;
 	}
 
 	@Override

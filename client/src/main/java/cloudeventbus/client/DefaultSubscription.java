@@ -120,9 +120,6 @@ public class DefaultSubscription implements Subscription {
 
 	public void onMessage(String subject, String replySubject, String body) {
 		final int messageCount = receivedMessageCount.incrementAndGet();
-		if (maxMessages != null && messageCount >= maxMessages) {
-			close();
-		}
 		final Message message = createMessageObject(subject, replySubject, body);
 		synchronized (handlers) {
 			for (MessageHandler handler : handlers) {
@@ -132,6 +129,9 @@ public class DefaultSubscription implements Subscription {
 					LOGGER.error("Error in message handler", t);
 				}
 			}
+		}
+		if (maxMessages != null && messageCount >= maxMessages) {
+			close();
 		}
 	}
 
