@@ -16,6 +16,7 @@
  */
 package cloudeventbus.client;
 
+import java.util.NoSuchElementException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -25,30 +26,7 @@ import java.util.concurrent.TimeUnit;
  */
 class BlockingQueueMessageIterator implements MessageIterator, MessageHandler {
 
-	private static final Message CLOSED = new Message() {
-		@Override
-		public boolean isRequest() {
-			return false;
-		}
-
-		@Override
-		public String getSubject() {
-			return null;
-		}
-
-		@Override
-		public String getBody() {
-			return null;
-		}
-
-		@Override
-		public void reply(String body) throws UnsupportedOperationException {
-		}
-
-		@Override
-		public void reply(String body, long delay, TimeUnit timeUnit) throws UnsupportedOperationException {
-		}
-	};
+	private static final Message CLOSED = new DefaultMessage(null, null, false);
 
 	private final BlockingQueue<Message> queue = new LinkedBlockingQueue<>();
 	private volatile boolean closed = false;
@@ -59,20 +37,19 @@ class BlockingQueueMessageIterator implements MessageIterator, MessageHandler {
 			return;
 		}
 		closed = true;
-		try {
-			queue.put(CLOSED);
-		} catch (InterruptedException e) {
-			throw new ClientInterruptedException(e);
-		}
+		onMessage(CLOSED);
 	}
 
 	@Override
 	public boolean hasNext() {
-		return queue.size() > 0 || !closed;
+		return !closed || (queue.peek() != CLOSED && !queue.isEmpty());
 	}
 
 	@Override
-	public Message next() throws ClientClosedException, ClientInterruptedException {
+	public Message next() throws ClientClosedException, ClientInterruptedException, NoSuchElementException {
+		if (!hasNext()) {
+			throw new NoSuchElementException();
+		}
 		try {
 			final Message message = queue.take();
 			if (message == CLOSED) {
@@ -85,7 +62,10 @@ class BlockingQueueMessageIterator implements MessageIterator, MessageHandler {
 	}
 
 	@Override
-	public Message next(long timeout, TimeUnit unit) throws ClientClosedException, ClientInterruptedException {
+	public Message next(long timeout, TimeUnit unit) throws ClientClosedException, ClientInterruptedException, NoSuchElementException {
+		if (!hasNext()) {
+			throw new NoSuchElementException();
+		}
 		try {
 			final Message message = queue.poll(timeout, unit);
 			if (message == CLOSED) {

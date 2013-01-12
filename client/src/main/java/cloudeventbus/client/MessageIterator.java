@@ -17,6 +17,7 @@
 package cloudeventbus.client;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -33,10 +34,10 @@ public interface MessageIterator extends AutoCloseable, Iterator<Message> {
 	void close();
 
 	/**
-	 * Returns {@true} unless the iterator has been closed. If the {@link Request} or {@link Subscription} from which
+	 * Returns {@code true} unless the iterator has been closed. If the {@link Request} or {@link Subscription} from which
 	 * this iterator was created are closed, this iterator will be closed automatically.
 	 *
-	 * @return {@true} unless the iterator has been closed.
+	 * @return {@code true} unless the iterator has been closed.
 	 */
 	@Override
 	boolean hasNext();
@@ -46,11 +47,12 @@ public interface MessageIterator extends AutoCloseable, Iterator<Message> {
 	 * {@link ClientClosedException}.
 	 *
 	 * @return the received message.
-	 * @throws ClientClosedException if the iterator has been closed.
+	 * @throws ClientClosedException if the iterator is closed while waiting for a message to arrive.
 	 * @throws ClientInterruptedException if the blocked thread is interrupted while waiting for a message.
+	 * @throws NoSuchElementException if the iteration has no more elements
 	 */
 	@Override
-	Message next() throws ClientClosedException, ClientInterruptedException;
+	Message next() throws ClientClosedException, ClientInterruptedException, NoSuchElementException;
 
 	/**
 	 * Throws an {@link UnsupportedOperationException}.
@@ -66,6 +68,8 @@ public interface MessageIterator extends AutoCloseable, Iterator<Message> {
 	 * @return the received message.
 	 * @throws ClientClosedException if the iterator has been closed.
 	 * @throws ClientInterruptedException if the blocked thread is interrupted while waiting for a message.
+	 * @throws NoSuchElementException if the iteration has no more elements
 	 */
-	Message next(long timeout, TimeUnit unit) throws ClientClosedException, ClientInterruptedException;
+	Message next(long timeout, TimeUnit unit)
+			throws ClientClosedException, ClientInterruptedException, NoSuchElementException;
 }
