@@ -39,6 +39,8 @@ public class DefaultSubscription implements Subscription {
 	private final List<MessageHandler> handlers = new ArrayList<>();
 	private final List<BlockingQueueMessageIterator> iterators = new ArrayList<>();
 
+	private volatile boolean closed;
+
 	public DefaultSubscription(String subject, Integer maxMessages, MessageHandler... messageHandlers) {
 		this.subject = subject;
 		this.maxMessages = maxMessages;
@@ -47,6 +49,10 @@ public class DefaultSubscription implements Subscription {
 
 	@Override
 	public void close() {
+		if (closed) {
+			return;
+		}
+		closed = true;
 		synchronized (iterators) {
 			final Iterator<BlockingQueueMessageIterator> messageIteratorIterator = iterators.iterator();
 			while (messageIteratorIterator.hasNext()) {
@@ -96,6 +102,9 @@ public class DefaultSubscription implements Subscription {
 
 	@Override
 	public HandlerRegistration addMessageHandler(final MessageHandler messageHandler) {
+		if (closed) {
+			throw new ClientClosedException("Subscription closed");
+		}
 		synchronized (handlers) {
 			handlers.add(messageHandler);
 		}
