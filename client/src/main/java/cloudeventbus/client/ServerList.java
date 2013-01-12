@@ -2,6 +2,7 @@ package cloudeventbus.client;
 
 import java.net.SocketAddress;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -20,11 +21,15 @@ class ServerList {
 
 	private Iterator<Server> iterator;
 
-	public void addServers(Iterable<SocketAddress> addresses) {
+	public void addServer(SocketAddress address) {
 		synchronized (lock) {
-			for (SocketAddress address : addresses) {
-				servers.add(new Server(address));
-			}
+			servers.add(new Server(address));
+		}
+	}
+
+	public void addServers(Iterable<SocketAddress> addresses) {
+		for (SocketAddress address : addresses) {
+			addServer(address);
 		}
 	}
 
@@ -47,6 +52,7 @@ class ServerList {
 					}
 					activeServers.addAll(servers);
 				}
+				Collections.shuffle(activeServers);
 				iterator = activeServers.iterator();
 			}
 			return iterator.next();

@@ -17,10 +17,10 @@
 package cloudeventbus.client;
 
 import org.testng.annotations.Test;
+import static org.testng.Assert.*;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.testng.Assert.*;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
