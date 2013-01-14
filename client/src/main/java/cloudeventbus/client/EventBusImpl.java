@@ -55,6 +55,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
@@ -212,11 +213,12 @@ class EventBusImpl implements EventBus {
 			throw new IllegalArgumentException("Can't publish to a wild card subject.");
 		}
 		final Subject replySubject = Subject.createReplySubject();
-		final DefaultSubscription replySubscription = new DefaultSubscription(replySubject.toString(), maxReplies, replyHandlers);
+		final DefaultSubscription replySubscription = createSubscription(replySubject, maxReplies, replyHandlers);
+		replySubscription.addMessageHandler(replyHandler);
+		addSubscription(replySubject, replySubscription);
 
 		final PublishFrame message = new PublishFrame(new Subject(subject), replySubject, body);
 		synchronized (lock) {
-			addSubscription(replySubject, replySubscription);
 			if (channel == null || !channel.isActive()) {
 				publishQueue.add(message);
 			} else {
@@ -358,7 +360,7 @@ class EventBusImpl implements EventBus {
 			pipeline.addLast("handler", new ChannelInboundMessageHandlerAdapter<Frame>() {
 				@Override
 				public void messageReceived(ChannelHandlerContext ctx, Frame frame) throws Exception {
-					LOGGER.debug("Received frame: {}", frame);
+					LOGGER.debug("Received frame on client: {}", frame);
 					switch (frame.getFrameType()) {
 						case AUTH_RESPONSE: {
 							AuthenticationResponseFrame authenticationResponse = (AuthenticationResponseFrame) frame;
@@ -410,7 +412,9 @@ class EventBusImpl implements EventBus {
 							final PublishFrame publishFrame = (PublishFrame) frame;
 
 							synchronized (lock) {
-								for (Map.Entry<Subject, List<DefaultSubscription>> entry : subscriptions.entrySet()) {
+								// Make a copy to iterate over because the subscriptions map may change while processing messages
+								final List<Map.Entry<Subject,List<DefaultSubscription>>> entries = new LinkedList<>(subscriptions.entrySet());
+								for (Map.Entry<Subject, List<DefaultSubscription>> entry : entries) {
 									final Subject key = entry.getKey();
 									final Subject subject = publishFrame.getSubject();
 									if (key.isSub(subject)) {
