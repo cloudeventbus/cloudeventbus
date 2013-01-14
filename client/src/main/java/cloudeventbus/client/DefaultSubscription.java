@@ -120,17 +120,20 @@ public class DefaultSubscription implements Subscription {
 
 	public void onMessage(String subject, String replySubject, String body) {
 		final int messageCount = receivedMessageCount.incrementAndGet();
-		final Message message = createMessageObject(subject, replySubject, body);
-		synchronized (handlers) {
-			for (MessageHandler handler : handlers) {
-				try {
-					handler.onMessage(message);
-				} catch (Throwable t) {
-					LOGGER.error("Error in message handler", t);
+		// If the subscription has closed, don't process any late messages.
+		if (!closed) {
+			final Message message = createMessageObject(subject, replySubject, body);
+			synchronized (handlers) {
+				for (MessageHandler handler : handlers) {
+					try {
+						handler.onMessage(message);
+					} catch (Throwable t) {
+						LOGGER.error("Error in message handler", t);
+					}
 				}
 			}
 		}
-		if (maxMessages != null && messageCount >= maxMessages) {
+		if (maxMessages != null && messageCount == maxMessages) {
 			close();
 		}
 	}
