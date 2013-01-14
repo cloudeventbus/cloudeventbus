@@ -19,21 +19,15 @@ package cloudeventbus.server;
 import cloudeventbus.Subject;
 import cloudeventbus.codec.AuthenticationRequestFrame;
 import cloudeventbus.codec.AuthenticationResponseFrame;
-import cloudeventbus.codec.Codec;
 import cloudeventbus.codec.ErrorFrame;
 import cloudeventbus.codec.GreetingFrame;
 import cloudeventbus.codec.PublishFrame;
 import cloudeventbus.codec.ServerReadyFrame;
 import cloudeventbus.codec.SubscribeFrame;
-import cloudeventbus.hub.AbstractHub;
 import cloudeventbus.pki.Certificate;
 import cloudeventbus.pki.CertificateChain;
 import cloudeventbus.pki.CertificateUtils;
 import cloudeventbus.pki.TrustStore;
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.embedded.EmbeddedByteChannel;
-import io.netty.util.HashedWheelTimer;
-import io.netty.util.Timer;
 import org.testng.annotations.Test;
 
 import java.security.KeyPair;
@@ -48,11 +42,10 @@ import static org.testng.Assert.assertNull;
  */
 public class ServerHandlerTest {
 
-	private final Timer timer = new HashedWheelTimer();
-
 	@Test
 	public void greeting() {
 		final MockServer server = new MockServer();
+		server.write(new GreetingFrame(1, "mock-client"));
 
 		final GreetingFrame greeting = (GreetingFrame) server.read();
 		assertNotNull(greeting);
@@ -65,6 +58,7 @@ public class ServerHandlerTest {
 	@Test
 	public void doubleSubscribe() {
 		final MockServer server = new MockServer();
+		server.write(new GreetingFrame(1, "mock-client"));
 
 		final GreetingFrame greeting = (GreetingFrame) server.read();
 		assertNotNull(greeting);
@@ -102,6 +96,7 @@ public class ServerHandlerTest {
 		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);
 
 		final MockServer server = new MockServer(trustStore);
+		server.write(new GreetingFrame(1, "mock-client"));
 
 		final GreetingFrame greeting = (GreetingFrame) server.read();
 		assertNotNull(greeting);
@@ -140,6 +135,7 @@ public class ServerHandlerTest {
 		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);
 
 		final MockServer server = new MockServer(trustStore);
+		server.write(new GreetingFrame(1, "mock-client"));
 
 		final GreetingFrame greeting = (GreetingFrame) server.read();
 		assertNotNull(greeting);
@@ -182,6 +178,7 @@ public class ServerHandlerTest {
 		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);
 
 		final MockServer server = new MockServer(trustStore);
+		server.write(new GreetingFrame(1, "mock-client"));
 
 		final GreetingFrame greeting = (GreetingFrame) server.read();
 		assertNotNull(greeting);
@@ -229,6 +226,7 @@ public class ServerHandlerTest {
 		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);
 
 		final MockServer server = new MockServer(trustStore);
+		server.write(new GreetingFrame(1, "mock-client"));
 
 		final GreetingFrame greeting = (GreetingFrame) server.read();
 		assertNotNull(greeting);
