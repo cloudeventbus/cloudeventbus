@@ -1,6 +1,5 @@
-- Implement client
-- Create and implement integration test module to test interaction bewteen client and server.
 - Implement server clustering
+  - Advertise cluster info to clients for fail-over
 - Build simple PKI command-line tools
 - Build simple event bus client command-line clients
 - Performance test
