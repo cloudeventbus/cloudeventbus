@@ -21,6 +21,7 @@ import cloudeventbus.pki.CertificateChain;
 import cloudeventbus.pki.TrustStore;
 import io.netty.channel.EventLoopGroup;
 
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.security.PrivateKey;
 import java.util.ArrayList;
@@ -92,8 +93,29 @@ public class Connector {
 	};
 
 	/**
-	 * Adds a server candidate to connect to. Invoke this method multiple times to add multiple server candidates. One
-	 * of the servers will be chosen at random to connect to.
+	 * Adds a server candidate to connect to user the specified host and the default port, 4223.
+	 *
+	 * @param host the host to connect to.
+	 * @see #addServer(java.net.SocketAddress)
+	 */
+	public Connector addServer(String host) {
+		return addServer(host, Constants.DEFAULT_PORT);
+	}
+
+	/**
+	 * Adds a server candidate to connect to user the specified host and port.
+	 *
+	 * @param host the host to connect to
+	 * @param port the port to use
+	 * @see #addServer(java.net.SocketAddress)
+	 */
+	public Connector addServer(String host, int port) {
+		return addServer(new InetSocketAddress(host, port));
+	}
+
+	/**
+	 * Adds a server candidate to connect to. This method may be invoked multiple times to add multiple server
+	 * candidates. One of the servers will be chosen at random to connect to.
 	 *
 	 * @param address the address of the server.
 	 * @return this connector.
@@ -215,4 +237,5 @@ public class Connector {
 	public EventBus connect() {
 		return new EventBusImpl(this);
 	}
+
 }
