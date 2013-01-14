@@ -87,7 +87,7 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, Frame frame) throws Exception {
 		resetIdleTask(ctx.channel().eventLoop());
-		LOGGER.debug("Received frame: {}", frame);
+		LOGGER.debug("Received frame on server: {}", frame);
 		// TODO Modify to use switch statement with frame.getFrameType();
 		if (frame instanceof AuthenticationResponseFrame) {
 			AuthenticationResponseFrame authenticationResponse = (AuthenticationResponseFrame) frame;
@@ -182,6 +182,7 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 
 	@Override
 	public void channelActive(final ChannelHandlerContext ctx) throws Exception {
+		LOGGER.debug("Channel active from {}", ctx.channel().remoteAddress());
 		idleTask = new Runnable() {
 			@Override
 			public void run() {
@@ -201,6 +202,7 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 
 	@Override
 	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+		LOGGER.debug("Channel inactive from {}", ctx.channel().remoteAddress());
 		// Cleanup subscriptions in hub
 		for (SubscriptionHandle handle : subscriptionHandles.values()) {
 			handle.remove();
