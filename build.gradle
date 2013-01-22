@@ -1,0 +1,60 @@
+import org.gradle.api.tasks.application.CreateStartScripts
+
+apply plugin: 'java'
+
+def version = '0.1-SNAPSHOT'
+
+repositories {
+	mavenLocal()
+	mavenCentral()
+}
+
+dependencies {
+	runtime "com.github.cloudeventbus:cli:${version}"
+}
+
+task copyLibs(type: Copy) {
+	from configurations.runtime.files
+	into 'build/lib'
+}
+
+task copy(dependsOn: copyLibs)
+
+task certsStartScript (type: CreateStartScripts) {
+	applicationName = 'certs'
+	classpath = configurations.runtime
+	mainClassName = 'cloudeventbus.cli.Certs'
+	optsEnvironmentVar = 'OPTS_CEB'
+	outputDir = file('build/bin')
+}
+
+task publishStartScript (type: CreateStartScripts) {
+	applicationName = 'ceb-publish'
+	classpath = configurations.runtime
+	mainClassName = 'cloudeventbus.cli.Publish'
+	optsEnvironmentVar = 'OPTS_CEB'
+	outputDir = file('build/bin')
+}
+
+task subscribeStartScript (type: CreateStartScripts) {
+	applicationName = 'ceb-subscribe'
+	classpath = configurations.runtime
+	mainClassName = 'cloudeventbus.cli.Subscribe'
+	optsEnvironmentVar = 'OPTS_CEB'
+	outputDir = file('build/bin')
+}
+
+task serverStartScript (type: CreateStartScripts) {
+	applicationName = 'ceb-server'
+	classpath = configurations.runtime
+	mainClassName = 'cloudeventbus.cli.Server'
+	optsEnvironmentVar = 'OPTS_CEB'
+	outputDir = file('build/bin')
+}
+
+task startScripts (dependsOn: [certsStartScript, publishStartScript, subscribeStartScript, serverStartScript])
+
+task zip (dependsOn: [copy, startScripts])
+
+jar.enabled = false
+assemble.dependsOn zip

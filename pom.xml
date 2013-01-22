@@ -14,6 +14,7 @@
 		<module>spike</module>
 		<module>server-core</module>
 		<module>test</module>
+		<module>cli</module>
 	</modules>
 
 	<packaging>pom</packaging>
@@ -29,6 +30,7 @@
 		<testng.version>6.3.1</testng.version>
 		<java.version>1.7</java.version>
 		<commons-codec.version>1.7</commons-codec.version>
+		<jcommander.version>1.30</jcommander.version>
 	</properties>
 
 	<dependencyManagement>
@@ -115,6 +117,11 @@
 				<groupId>commons-codec</groupId>
 				<artifactId>commons-codec</artifactId>
 				<version>${commons-codec.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.beust</groupId>
+				<artifactId>jcommander</artifactId>
+				<version>${jcommander.version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
