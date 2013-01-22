@@ -16,6 +16,7 @@
  */
 package cloudeventbus;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -40,6 +41,14 @@ public class Subject {
 			list[i] = new Subject(subjects[i]);
 		}
 		return Collections.unmodifiableList(Arrays.asList(list));
+	}
+
+	public static List<Subject> list(List<String> subjects) {
+		final List<Subject> list = new ArrayList<>(subjects.size());
+		for (String subject : subjects) {
+			list.add(new Subject(subject));
+		}
+		return Collections.unmodifiableList(list);
 	}
 
 	public static Subject createReplySubject() {
