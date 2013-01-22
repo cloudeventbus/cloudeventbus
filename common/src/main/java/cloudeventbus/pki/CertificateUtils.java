@@ -56,6 +56,10 @@ public class CertificateUtils {
 	}
 
 	public static Certificate generateSelfSignedCertificate(KeyPair keyPair, long expirationDate, String comment) {
+		return generateSelfSignedCertificate(keyPair, expirationDate, Arrays.asList(Subject.ALL), Arrays.asList(Subject.ALL), comment);
+	}
+
+	public static Certificate generateSelfSignedCertificate(KeyPair keyPair, long expirationDate, List<Subject> subscribePermissions, List<Subject> publishPermissions, String comment) {
 		final long serialNumber = secureRandom.get().nextLong();
 		final Certificate certificate = new Certificate(
 				Certificate.Type.AUTHORITY,
@@ -63,8 +67,8 @@ public class CertificateUtils {
 				serialNumber,
 				expirationDate,
 				keyPair.getPublic(),
-				Arrays.asList(Subject.ALL),
-				Arrays.asList(Subject.ALL),
+				subscribePermissions,
+				publishPermissions,
 				comment,
 				null);
 		return signCertificate(certificate, keyPair.getPrivate(), certificate);
