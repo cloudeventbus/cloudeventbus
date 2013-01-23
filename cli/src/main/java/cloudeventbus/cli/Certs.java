@@ -1,3 +1,19 @@
+/*
+ *   Copyright (c) 2013 Mike Heath.  All rights reserved.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *
+ */
 package cloudeventbus.cli;
 
 import cloudeventbus.Subject;
@@ -33,7 +49,6 @@ import java.util.List;
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-// TODO Add support for appending client/server certs
 // TODO Add support for validating certificate chain
 // TODO Write and publish docs
 public class Certs {
@@ -44,11 +59,13 @@ public class Certs {
 		final CreateAuthorityCommand createAuthorityCommand = new CreateAuthorityCommand();
 		final CreateClientCommand createClientCommand = new CreateClientCommand();
 		final CreateServerCommand createServerCommand = new CreateServerCommand();
+		final ChainCertificateCommand chainCertificateCommand = new ChainCertificateCommand();
 		final ShowCertificateCommand showCertificateCommand = new ShowCertificateCommand();
 		commander.addObject(options);
 		commander.addCommand(createAuthorityCommand);
 		commander.addCommand(createClientCommand);
 		commander.addCommand(createServerCommand);
+		commander.addCommand(chainCertificateCommand);
 		commander.addCommand(new ListAuthorities());
 		commander.addCommand(showCertificateCommand);
 
@@ -65,7 +82,7 @@ public class Certs {
 				switch(command) {
 					case "create-authority": {
 						final KeyPair keyPair = CertificateUtils.generateKeyPair();
-						writePrivateKey(keyPair.getPrivate(), createAuthorityCommand.privateKey);
+						savePrivateKey(keyPair.getPrivate(), createAuthorityCommand.privateKey);
 						final Certificate certificate = CertificateUtils.generateSelfSignedCertificate(
 								keyPair,
 								getExpirationDate(createAuthorityCommand.expirationDate),
@@ -92,6 +109,9 @@ public class Certs {
 					case "show-certificate":
 						final CertificateChain certificates = loadCertificateChain(showCertificateCommand.certificate);
 						displayCertificates(certificates);
+						break;
+					case "chain-certificate":
+						chainCertificate(chainCertificateCommand);
 						break;
 				}
 			}
@@ -130,9 +150,9 @@ public class Certs {
 		if (issuerCertificate == null) {
 			throw new IllegalArgumentException("No certificate found in trust store with serial number " + createCommand.issuer);
 		}
-		final PrivateKey issuerPrivateKey = readPrivateKey(createCommand.issuerPrivateKey);
+		final PrivateKey issuerPrivateKey = loadPrivateKey(createCommand.issuerPrivateKey);
 		final KeyPair keyPair = CertificateUtils.generateKeyPair();
-		writePrivateKey(keyPair.getPrivate(), createCommand.privateKey);
+		savePrivateKey(keyPair.getPrivate(), createCommand.privateKey);
 		final Certificate certificate = CertificateUtils.generateSignedCertificate(
 				issuerCertificate,
 				issuerPrivateKey,
@@ -145,6 +165,26 @@ public class Certs {
 		);
 		final CertificateChain chain = new CertificateChain(certificate);
 		saveCertificates(createCommand.certificate, chain);
+	}
+
+	private static void chainCertificate(ChainCertificateCommand command) throws Exception {
+		final CertificateChain certificates = loadCertificateChain(command.existingCertificate);
+		final PrivateKey privateKey = loadPrivateKey(command.existingPrivateKey);
+
+		final KeyPair keyPair = CertificateUtils.generateKeyPair();
+		final Certificate certificate = CertificateUtils.generateSignedCertificate(
+				certificates.getLast(),
+				privateKey,
+				keyPair.getPublic(),
+				certificates.getLast().getType(),
+				getExpirationDate(command.expirationDate),
+				Subject.list(command.subscribePermissions),
+				Subject.list(command.publishPermissions),
+				command.comment
+		);
+		certificates.add(certificate);
+		saveCertificates(command.certificate, certificates);
+		savePrivateKey(keyPair.getPrivate(), command.privateKey);
 	}
 
 	private static long getExpirationDate(long expirationDate) {
@@ -201,6 +241,19 @@ public class Certs {
 	private static class CreateServerCommand extends AbstractCreateClientServerCommand {
 	}
 
+	@Parameters(commandNames = "chain-certificate", commandDescription = "Chains a new certificate to an existing certificate or certificate chain")
+	private static class ChainCertificateCommand extends AbstractCreateCommand {
+
+		@Parameter(names = "-existingPrivateKey", description = "The private key of the certificate being chained or the private key of the last certificate in the chain", required = true)
+		String existingPrivateKey;
+
+		@Parameter(names = "-existingCertificate", description = "The file name of the existing certificate or certificate chain", required = true)
+		String existingCertificate;
+
+		@Parameter(names = "-certificate", description = "The file in which to store the new certificate chain", required = true)
+		String certificate;
+	}
+
 	@Parameters(commandNames = "list-authorities", commandDescription = "List the certificates in the trust store.")
 	private static class ListAuthorities {
 	}
@@ -211,7 +264,7 @@ public class Certs {
 		String certificate;
 	}
 
-	private static PrivateKey readPrivateKey(String fileName) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+	private static PrivateKey loadPrivateKey(String fileName) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
 		final Path path = Paths.get(fileName);
 		final byte[] encodedPrivateKey = Files.readAllBytes(path);
 		final KeyFactory keyFactory = KeyFactory.getInstance("RSA");
@@ -219,7 +272,7 @@ public class Certs {
 		return keyFactory.generatePrivate(privateKeySpec);
 	}
 
-	private static void writePrivateKey(PrivateKey privateKey, String fileName) throws IOException {
+	private static void savePrivateKey(PrivateKey privateKey, String fileName) throws IOException {
 		try (
 				final OutputStream outputStream = Files.newOutputStream(Paths.get(fileName), StandardOpenOption.CREATE_NEW)
 		) {
@@ -252,13 +305,13 @@ public class Certs {
 		return certificateChain;
 	}
 
-	private static void saveCertificates(String fileName, Collection<Certificate> trustStore) throws IOException {
+	private static void saveCertificates(String fileName, Collection<Certificate> certificates) throws IOException {
 		final Path path = Paths.get(fileName);
 		try (
 				final OutputStream fileOut = Files.newOutputStream(path, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 		        final OutputStream out = new Base64OutputStream(fileOut)
 		) {
-			CertificateStoreLoader.store(out, trustStore);
+			CertificateStoreLoader.store(out, certificates);
 		}
 	}
 
