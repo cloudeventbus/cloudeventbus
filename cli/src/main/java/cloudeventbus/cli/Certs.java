@@ -49,7 +49,6 @@ import java.util.List;
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-// TODO Add support for validating certificate chain
 // TODO Write and publish docs
 public class Certs {
 	public static void main(String[] args) throws Exception {
@@ -61,6 +60,7 @@ public class Certs {
 		final CreateServerCommand createServerCommand = new CreateServerCommand();
 		final ChainCertificateCommand chainCertificateCommand = new ChainCertificateCommand();
 		final ShowCertificateCommand showCertificateCommand = new ShowCertificateCommand();
+		final ValidateCommand validateCommand = new ValidateCommand();
 		commander.addObject(options);
 		commander.addCommand(createAuthorityCommand);
 		commander.addCommand(createClientCommand);
@@ -68,6 +68,7 @@ public class Certs {
 		commander.addCommand(chainCertificateCommand);
 		commander.addCommand(new ListAuthorities());
 		commander.addCommand(showCertificateCommand);
+		commander.addCommand(validateCommand);
 
 		commander.setProgramName("ceb-certs");
 
@@ -106,13 +107,20 @@ public class Certs {
 					case "create-server":
 						createCertificate(trustStore, Certificate.Type.SERVER, createServerCommand);
 						break;
-					case "show-certificate":
+					case "show-certificate": {
 						final CertificateChain certificates = loadCertificateChain(showCertificateCommand.certificate);
 						displayCertificates(certificates);
 						break;
+					}
 					case "chain-certificate":
 						chainCertificate(chainCertificateCommand);
 						break;
+					case "validate-certificate": {
+						final CertificateChain certificates = loadCertificateChain(validateCommand.certificate);
+						trustStore.validateCertificateChain(certificates);
+						System.out.println(validateCommand.certificate + " is valid.");
+						break;
+					}
 				}
 			}
 		} catch (ParameterException e) {
@@ -260,7 +268,13 @@ public class Certs {
 
 	@Parameters(commandNames = "show-certificate", commandDescription = "Displays the contents of a certificate.")
 	private static class ShowCertificateCommand {
-		@Parameter(names = "-certificate", description = "The certificate to display", required = true)
+		@Parameter(names = "-certificate", description = "The certificate or certificate chain to display", required = true)
+		String certificate;
+	}
+
+	@Parameters(commandNames = "validate-certificate", commandDescription = "Validates a certificate or certificate chain against the trust store")
+	private static class ValidateCommand {
+		@Parameter(names = "-certificate", description = "The certificate or certificate chain to validate", required = true)
 		String certificate;
 	}
 
