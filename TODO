@@ -1,3 +1,7 @@
+- Add options for adding all the authorities in one trust store into another
+- Add options for removing authorities from a trust store
+- Test CLI security
+- Add support for building .zip to Gradle build
 - Implement server clustering
   - Advertise cluster info to clients for fail-over
   - Advertise connection state (number of clients, etc.) if peer has significantly less load, redirect new clients to peer
@@ -6,14 +10,13 @@
 - Implement VCAP component based server
   - Use NATS for peer discover
     - NATS 0.5 release
-  - Publish component info on NATS, /varz and /heathz - Get a release of Java component framework out
+  - Publish component info on NATS, /varz and /healthz - Get a release of Java component framework out
 - Implement a VCAP service gateway
 - Lower disconnect timeout if client doesn't authenticate. No ping unless server is ready
 - Create a BOSH release
 - Browser client/server (websocket based, maybe engine.io based)
 - Build a Node.js client
 - Build a NATS/Cloud Event Bus gateway - This will allow applications to safely subscribe to NATS messages.
-- Add support for setting subscribe message received message count limits on the server.
-- Write a wiki about why we don't support "send" (publishing to a single recipient) -- How do you deal with wild cards?
+- Write a wiki about why we don't support "send" (publishing to a single recipient) -- How do you deal with wild cards? Or should we turn wild card support off?
 - Write documentation and tutorials
 - Revamp exceptions - Fewer exception, move error codes to common module.
