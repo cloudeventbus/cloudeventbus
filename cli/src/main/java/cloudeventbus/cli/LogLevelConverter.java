@@ -17,24 +17,18 @@
 package cloudeventbus.cli;
 
 import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import com.beust.jcommander.Parameter;
-import org.slf4j.LoggerFactory;
+import com.beust.jcommander.IStringConverter;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-class DefaultOptions {
-
-	@Parameter(names = "-trustStore", description = "Specifies the trust store to use.")
-	String trustStore = System.getProperty("user.home") + "/.cloudeventbus/" + "truststore";
-
-	@Parameter(names = "-logLevel", description = "Logging level (DEBUG, ERROR, INFO, OFF)", converter = LogLevelConverter.class)
-	Level logLevel = Level.WARN;
-
-	static void setLogLevel(DefaultOptions options) {
-		final Logger logger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-		logger.setLevel(options.logLevel);
+public class LogLevelConverter implements IStringConverter<Level> {
+	@Override
+	public Level convert(String value) {
+		final Level level = Level.valueOf(value);
+		if (level == null) {
+			throw new IllegalArgumentException("Invalid log level: " + value);
+		}
+		return level;
 	}
-
 }

@@ -43,6 +43,8 @@ public class ClientPublish {
 		try {
 			commander.parse(args);
 
+			DefaultOptions.setLogLevel(options);
+
 			if (options.mainParameters == null || options.mainParameters.size() != 2) {
 				commander.usage();
 				System.exit(1);
