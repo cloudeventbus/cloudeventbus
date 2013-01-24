@@ -31,7 +31,7 @@ task certsStartScript (type: CreateStartScripts) {
 task publishStartScript (type: CreateStartScripts) {
 	applicationName = 'eventbus-publish'
 	classpath = configurations.runtime
-	mainClassName = 'cloudeventbus.cli.Publish'
+	mainClassName = 'cloudeventbus.cli.ClientPublish'
 	optsEnvironmentVar = 'OPTS_CEB'
 	outputDir = file('build/bin')
 }
@@ -39,7 +39,7 @@ task publishStartScript (type: CreateStartScripts) {
 task subscribeStartScript (type: CreateStartScripts) {
 	applicationName = 'eventbus-subscribe'
 	classpath = configurations.runtime
-	mainClassName = 'cloudeventbus.cli.Subscribe'
+	mainClassName = 'cloudeventbus.cli.ClientSubscribe'
 	optsEnvironmentVar = 'OPTS_CEB'
 	outputDir = file('build/bin')
 }
