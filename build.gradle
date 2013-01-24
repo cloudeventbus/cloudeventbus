@@ -21,7 +21,7 @@ task copyLibs(type: Copy) {
 task copy(dependsOn: copyLibs)
 
 task certsStartScript (type: CreateStartScripts) {
-	applicationName = 'certs'
+	applicationName = 'eventbus-certs'
 	classpath = configurations.runtime
 	mainClassName = 'cloudeventbus.cli.Certs'
 	optsEnvironmentVar = 'OPTS_CEB'
@@ -29,7 +29,7 @@ task certsStartScript (type: CreateStartScripts) {
 }
 
 task publishStartScript (type: CreateStartScripts) {
-	applicationName = 'ceb-publish'
+	applicationName = 'eventbus-publish'
 	classpath = configurations.runtime
 	mainClassName = 'cloudeventbus.cli.Publish'
 	optsEnvironmentVar = 'OPTS_CEB'
@@ -37,7 +37,7 @@ task publishStartScript (type: CreateStartScripts) {
 }
 
 task subscribeStartScript (type: CreateStartScripts) {
-	applicationName = 'ceb-subscribe'
+	applicationName = 'eventbus-subscribe'
 	classpath = configurations.runtime
 	mainClassName = 'cloudeventbus.cli.Subscribe'
 	optsEnvironmentVar = 'OPTS_CEB'
@@ -45,7 +45,7 @@ task subscribeStartScript (type: CreateStartScripts) {
 }
 
 task serverStartScript (type: CreateStartScripts) {
-	applicationName = 'ceb-server'
+	applicationName = 'eventbus-server'
 	classpath = configurations.runtime
 	mainClassName = 'cloudeventbus.cli.Server'
 	optsEnvironmentVar = 'OPTS_CEB'

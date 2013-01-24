@@ -17,16 +17,29 @@
 package cloudeventbus.pki;
 
 import cloudeventbus.Subject;
+import org.apache.commons.codec.binary.Base64InputStream;
+import org.apache.commons.codec.binary.Base64OutputStream;
 
 import javax.crypto.Cipher;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.security.GeneralSecurityException;
+import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -176,4 +189,73 @@ public class CertificateUtils {
 		}
 	}
 
+	public static PrivateKey loadPrivateKey(String fileName) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+		final Path path = Paths.get(fileName);
+		final byte[] encodedPrivateKey = Files.readAllBytes(path);
+		final KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+		final PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(encodedPrivateKey);
+		return keyFactory.generatePrivate(privateKeySpec);
+	}
+
+	public static void savePrivateKey(PrivateKey privateKey, String fileName) throws IOException {
+		try (
+				final OutputStream outputStream = Files.newOutputStream(Paths.get(fileName), StandardOpenOption.CREATE_NEW)
+		) {
+			outputStream.write(privateKey.getEncoded());
+		}
+	}
+
+	public static TrustStore loadTrustStore(String fileName) throws IOException {
+		final TrustStore trustStore = new TrustStore();
+		final Path path = Paths.get(fileName);
+		if (Files.notExists(path)) {
+			return trustStore;
+		}
+		loadCertificates(path, trustStore);
+		return trustStore;
+	}
+
+	private static void loadCertificates(Path path, Collection<Certificate> certificates) throws IOException {
+		try (
+				final InputStream fileIn = Files.newInputStream(path);
+				final InputStream in = new Base64InputStream(fileIn)
+		) {
+			CertificateStoreLoader.load(in, certificates);
+		}
+	}
+
+	/**
+	 * Loads a collection of certificates as a {@link CertificateChain} from the specified file.
+	 *
+	 * @param fileName the file from which the certificates will be loaded
+	 * @return a certificate chain holding the certificates in the specified file.
+	 * @throws IOException if an I/O error occurs
+	 */
+	public static CertificateChain loadCertificateChain(String fileName) throws IOException {
+		final CertificateChain certificateChain = new CertificateChain();
+		final Path path = Paths.get(fileName);
+		loadCertificates(path, certificateChain);
+		return certificateChain;
+	}
+
+	/**
+	 * Saves a collection of certificates to the specified file.
+	 *
+	 * @param fileName the file to which the certificates will be saved
+	 * @param certificates the certificate to be saved
+	 * @throws IOException if an I/O error occurs
+	 */
+	public static void saveCertificates(String fileName, Collection<Certificate> certificates) throws IOException {
+		final Path path = Paths.get(fileName);
+		final Path directory = path.getParent();
+		if (directory != null && !Files.exists(directory)) {
+			Files.createDirectories(directory);
+		}
+		try (
+				final OutputStream fileOut = Files.newOutputStream(path, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+		        final OutputStream out = new Base64OutputStream(fileOut)
+		) {
+			CertificateStoreLoader.store(out, certificates);
+		}
+	}
 }

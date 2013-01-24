@@ -1,5 +1,5 @@
-- Build simple PKI command-line tools
-- Build simple event bus client command-line clients
+- Build simple event bus command-line clients
+- Lower disconnect timeout if client doesn't authenticate. No ping unless server is ready
 - Implement server clustering
   - Advertise cluster info to clients for fail-over
 - Performance test
