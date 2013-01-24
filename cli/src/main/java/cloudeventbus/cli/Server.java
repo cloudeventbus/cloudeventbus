@@ -16,7 +16,6 @@
  */
 package cloudeventbus.cli;
 
-import ch.qos.logback.classic.Logger;
 import cloudeventbus.pki.CertificateChain;
 import cloudeventbus.pki.CertificateUtils;
 import cloudeventbus.pki.TrustStore;
@@ -27,7 +26,6 @@ import com.beust.jcommander.ParameterException;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.socket.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.security.PrivateKey;
