@@ -16,9 +16,10 @@
  */
 package cloudeventbus.cli;
 
-import cloudeventbus.client.ConnectionStateListener;
 import cloudeventbus.client.Connector;
 import cloudeventbus.client.EventBus;
+import cloudeventbus.client.Message;
+import cloudeventbus.client.MessageHandler;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
@@ -28,7 +29,7 @@ import java.util.List;
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-public class ClientPublish {
+public class ClientSubscribe {
 
 	public static void main(String[] args) throws Exception {
 		final JCommander commander = new JCommander();
@@ -36,28 +37,26 @@ public class ClientPublish {
 		final Options options = new Options();
 		commander.addObject(options);
 
-		commander.setProgramName("eventbus-publish");
+		commander.setProgramName("eventbus-subscribe");
 
 		try {
 			commander.parse(args);
 
 			DefaultOptions.setLogLevel(options);
 
-			if (options.mainParameters == null || options.mainParameters.size() != 2) {
+			if (options.mainParameters == null || options.mainParameters.size() != 1) {
 				commander.usage();
 				System.exit(1);
 			}
 
 			final Connector connector = AbstractClientOptions.configureConnector(options);
-			connector.addConnectionStateListener(new ConnectionStateListener() {
+			final EventBus eventBus = connector.connect();
+			eventBus.subscribe(options.mainParameters.get(0), new MessageHandler() {
 				@Override
-				public void onConnectionStateChange(EventBus eventBus, State state) {
-					if (state == State.SERVERY_READY) {
-						eventBus.publish(options.mainParameters.get(0), options.mainParameters.get(1));
-						eventBus.close();
-					}
+				public void onMessage(Message message) {
+					System.out.println(message.getSubject() + " : " + message.getBody());
 				}
-			}).connect();
+			});
 		} catch (ParameterException e) {
 			System.err.println(e.getMessage());
 			commander.usage();
@@ -67,7 +66,7 @@ public class ClientPublish {
 
 	private static class Options extends AbstractClientOptions {
 
-		@Parameter(description = "subject body")
+		@Parameter(description = "subject")
 		List<String> mainParameters;
 
 	}
