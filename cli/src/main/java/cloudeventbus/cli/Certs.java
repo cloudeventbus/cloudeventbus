@@ -30,6 +30,7 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
@@ -129,7 +130,7 @@ public class Certs {
 			} else {
 				// TODO Split this out to days, hours, minutes, seconds
 				final long seconds = (certificate.getExpirationDate() - System.currentTimeMillis()) / 1000;
-				expirationString = "Expires in " + seconds + " seconds";
+				expirationString = "Expires in " + formatTime(seconds);
 			}
 			System.out.println("Expiration:            " + expirationString);
 			System.out.println("Publish permissions:   " + certificate.getPublishPermissions());
@@ -137,6 +138,16 @@ public class Certs {
 			System.out.println("Comment: " + certificate.getComment());
 			System.out.println("=============================================================");
 		}
+	}
+
+	private static String formatTime(long seconds) {
+		final long days = seconds / TimeUnit.DAYS.toSeconds(1);
+		seconds -= TimeUnit.DAYS.toSeconds(days);
+		final long hours = seconds / TimeUnit.HOURS.toSeconds(1);
+		seconds -= TimeUnit.HOURS.toSeconds(hours);
+		final long minutes = seconds / TimeUnit.MINUTES.toSeconds(1);
+		seconds -= TimeUnit.MINUTES.toSeconds(minutes);
+		return String.format("%d days, %d hours, %d minutes, %d seconds", days, hours, minutes,seconds);
 	}
 
 	private static void createCertificate(TrustStore trustStore, Certificate.Type type, AbstractCreateClientServerCommand createCommand) throws Exception {
