@@ -48,6 +48,12 @@ public class Connector {
 	final List<SocketAddress> servers = new ArrayList<>();
 
 	/**
+	 * Indicates if the client should automatically try to reconnect to the Cloud Event Bus cluster if its connection
+	 * closes unexpectedly.
+	 */
+	boolean autoReconnect = true;
+
+	/**
 	 * The amount of time to wait before reconnecting to the Cloud Event Bus cluster.
 	 */
 	long reconnectWaitTime = Constants.DEFAULT_RECONNECT_WAIT_TIME;
@@ -135,6 +141,18 @@ public class Connector {
 	 */
 	public Connector reconnectWaitTime(long time, TimeUnit timeUnit) {
 		this.reconnectWaitTime = timeUnit.toMillis(time);
+		return this;
+	}
+
+	/**
+	 * Indicates if the client should automatically try to reconnect to the Cloud Event Bus cluster if its connection
+	 * closes unexpectedly.
+	 *
+	 * @param autoReconnect indicates if the client should automatically try to reconnect
+	 * @return this connector.
+	 */
+	public Connector autoReconnect(boolean autoReconnect) {
+		this.autoReconnect = autoReconnect;
 		return this;
 	}
 
@@ -237,5 +255,4 @@ public class Connector {
 	public EventBus connect() {
 		return new EventBusImpl(this);
 	}
-
 }

@@ -55,7 +55,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
@@ -67,6 +66,7 @@ class EventBusImpl implements EventBus {
 	private static final Logger LOGGER = LoggerFactory.getLogger(EventBusImpl.class);
 
 	private final ServerList servers = new ServerList();
+	private final boolean autoReconnect;
 	private final long reconnectWaitTime;
 
 	private final EventLoopGroup eventLoopGroup;
@@ -98,6 +98,7 @@ class EventBusImpl implements EventBus {
 		}
 
 		servers.addServers(connector.servers);
+		autoReconnect = connector.autoReconnect;
 		reconnectWaitTime = connector.reconnectWaitTime;
 
 		shutDownEventLoop = connector.eventLoopGroup == null;
@@ -142,19 +143,23 @@ class EventBusImpl implements EventBus {
 					}
 				} else {
 					LOGGER.warn("Connection to {} failed", server.getAddress());
-					synchronized (lock) {
-						if (!closed) {
-							eventLoopGroup.next().schedule(new Runnable() {
-								@Override
-								public void run() {
-									connect();
-								}
-							}, reconnectWaitTime, TimeUnit.MILLISECONDS);
-						}
-					}
+					scheduleReconnect();
 				}
 			}
 		});
+	}
+
+	private void scheduleReconnect() {
+		synchronized (lock) {
+			if (!closed && autoReconnect) {
+				eventLoopGroup.next().schedule(new Runnable() {
+					@Override
+					public void run() {
+						connect();
+					}
+				}, reconnectWaitTime, TimeUnit.MILLISECONDS);
+			}
+		}
 	}
 
 	@Override
@@ -473,10 +478,17 @@ class EventBusImpl implements EventBus {
 					serverReady = false;
 					synchronized (lock) {
 						// If the connection closes unexpectedly, try to immediately reconnect
-						if (!closed) {
+						if (!closed && autoReconnect) {
 							connect();
 						}
 					}
+				}
+
+				@Override
+				public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+					LOGGER.error(cause.getMessage(), cause);
+					error = new CloudEventBusClientException(cause.getMessage(), cause);
+					close();
 				}
 			});
 		}

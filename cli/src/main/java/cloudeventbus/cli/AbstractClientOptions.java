@@ -44,6 +44,7 @@ abstract class AbstractClientOptions  extends DefaultOptions {
 
 	static Connector configureConnector(AbstractClientOptions options) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
 		final Connector connector = new Connector();
+		connector.autoReconnect(false);
 		final TrustStore trustStore = CertificateUtils.loadTrustStore(options.trustStore);
 		if (trustStore != null && trustStore.size() > 0) {
 			System.out.println("Using trust store at: " + options.trustStore);
