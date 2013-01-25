@@ -44,7 +44,7 @@ public class TestServer implements AutoCloseable {
 				.group(new NioEventLoopGroup(), new NioEventLoopGroup())
 				.channel(NioServerSocketChannel.class)
 				.localAddress(new InetSocketAddress(port))
-				.childHandler(new ServerChannelInitializer(agent, null) {
+				.childHandler(new ServerChannelInitializer(agent, null, null, null) {
 					@Override
 					public void initChannel(SocketChannel channel) throws Exception {
 						super.initChannel(channel);

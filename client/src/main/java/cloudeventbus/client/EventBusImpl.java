@@ -476,19 +476,16 @@ class EventBusImpl implements EventBus {
 				public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 					fireStateChange(ConnectionStateListener.State.DISCONNECTED);
 					serverReady = false;
-					synchronized (lock) {
-						// If the connection closes unexpectedly, try to immediately reconnect
-						if (!closed && autoReconnect) {
-							connect();
-						}
-					}
+					scheduleReconnect();
 				}
 
 				@Override
 				public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 					LOGGER.error(cause.getMessage(), cause);
-					error = new CloudEventBusClientException(cause.getMessage(), cause);
-					close();
+					if (cause instanceof  CloudEventBusClientException) {
+						error = (CloudEventBusClientException) cause;
+						close();
+					}
 				}
 			});
 		}

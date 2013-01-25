@@ -64,20 +64,22 @@ public class Server {
 				privateKey = null;
 			} else {
 				certificateChain = CertificateUtils.loadCertificateChain(options.certificate);
+				System.out.println("Using certificate at: " + options.certificate);
 				if (options.privateKey == null) {
 					System.err.print("You must specify a private key when using a certificate.");
 					System.exit(1);
+					return;
 				} else {
 					privateKey = CertificateUtils.loadPrivateKey(options.privateKey);
+					System.out.println("Using private key at: " + options.privateKey);
 				}
 			}
-			// TODO Add support for specifying certificate and private key
 			// TODO Implement clustering
 			new ServerBootstrap()
 					.group(new NioEventLoopGroup(), new NioEventLoopGroup())
 					.channel(NioServerSocketChannel.class)
 					.localAddress(new InetSocketAddress(port))
-					.childHandler(new ServerChannelInitializer("eventbus-simple-server", trustStore))
+					.childHandler(new ServerChannelInitializer("eventbus-simple-server", trustStore, certificateChain, privateKey))
 					.bind().awaitUninterruptibly();
 			System.out.println("Server listening on port " + port);
 		} catch (ParameterException e) {

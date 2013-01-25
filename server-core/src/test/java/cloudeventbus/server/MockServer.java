@@ -21,11 +21,13 @@ import cloudeventbus.codec.Codec;
 import cloudeventbus.codec.Frame;
 import cloudeventbus.codec.PublishFrame;
 import cloudeventbus.hub.AbstractHub;
-import cloudeventbus.hub.Hub;
 import cloudeventbus.hub.SubscribeableHub;
+import cloudeventbus.pki.CertificateChain;
 import cloudeventbus.pki.TrustStore;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.embedded.EmbeddedByteChannel;
+
+import java.security.PrivateKey;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
@@ -44,11 +46,13 @@ public class MockServer {
 			}
 		};
 	public MockServer() {
-		serverChannel = new EmbeddedByteChannel(new Codec(), new ServerHandler(SERVER_AGENT, hub, null));
+		serverChannel = new EmbeddedByteChannel(new Codec(), new ServerHandler(SERVER_AGENT, hub, null, null, null));
 	}
 
-	public MockServer(TrustStore trustStore) {
-		serverChannel = new EmbeddedByteChannel(new Codec(), new ServerHandler(SERVER_AGENT, hub, trustStore));
+	public MockServer(TrustStore trustStore, CertificateChain certificateChain, PrivateKey privateKey) {
+		serverChannel = new EmbeddedByteChannel(
+				new Codec(),
+				new ServerHandler(SERVER_AGENT, hub, trustStore, certificateChain, privateKey));
 	}
 
 	Frame read() {

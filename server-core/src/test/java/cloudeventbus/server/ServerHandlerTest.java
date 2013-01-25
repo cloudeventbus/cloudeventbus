@@ -95,7 +95,7 @@ public class ServerHandlerTest {
 		);
 		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);
 
-		final MockServer server = new MockServer(trustStore);
+		final MockServer server = new MockServer(trustStore, null, null);
 		server.write(new GreetingFrame(1, "mock-client"));
 
 		final GreetingFrame greeting = (GreetingFrame) server.read();
@@ -134,7 +134,7 @@ public class ServerHandlerTest {
 		);
 		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);
 
-		final MockServer server = new MockServer(trustStore);
+		final MockServer server = new MockServer(trustStore, null, null);
 		server.write(new GreetingFrame(1, "mock-client"));
 
 		final GreetingFrame greeting = (GreetingFrame) server.read();
@@ -177,7 +177,7 @@ public class ServerHandlerTest {
 		);
 		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);
 
-		final MockServer server = new MockServer(trustStore);
+		final MockServer server = new MockServer(trustStore, null, null);
 		server.write(new GreetingFrame(1, "mock-client"));
 
 		final GreetingFrame greeting = (GreetingFrame) server.read();
@@ -225,7 +225,7 @@ public class ServerHandlerTest {
 		);
 		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);
 
-		final MockServer server = new MockServer(trustStore);
+		final MockServer server = new MockServer(trustStore, null, null);
 		server.write(new GreetingFrame(1, "mock-client"));
 
 		final GreetingFrame greeting = (GreetingFrame) server.read();

@@ -54,11 +54,13 @@ abstract class AbstractClientOptions  extends DefaultOptions {
 		connector.addServer(options.host, options.port);
 		if (options.certificate != null) {
 			connector.certificateChain(CertificateUtils.loadCertificateChain(options.certificate));
+			System.out.println("Using certificate at: " + options.certificate);
 			if (options.privateKey == null) {
 				System.err.print("You must specify a private key when using a certificate.");
 				System.exit(1);
 			} else {
 				connector.privateKey(CertificateUtils.loadPrivateKey(options.privateKey));
+				System.out.println("Using private key at: " + options.privateKey);
 			}
 		}
 		return connector;

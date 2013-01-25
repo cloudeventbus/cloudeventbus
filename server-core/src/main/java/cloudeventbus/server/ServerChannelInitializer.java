@@ -21,12 +21,14 @@ import cloudeventbus.codec.Codec;
 import cloudeventbus.codec.Frame;
 import cloudeventbus.codec.PublishFrame;
 import cloudeventbus.hub.AbstractHub;
-import cloudeventbus.hub.Hub;
 import cloudeventbus.hub.SubscribeableHub;
+import cloudeventbus.pki.CertificateChain;
 import cloudeventbus.pki.TrustStore;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
+
+import java.security.PrivateKey;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
@@ -35,6 +37,8 @@ public class ServerChannelInitializer extends ChannelInitializer<SocketChannel> 
 
 	private final String versionString;
 	private final TrustStore trustStore;
+	private final CertificateChain certificateChain;
+	private final PrivateKey privateKey;
 	// TODO Move initialization of Hub out of initializer
 	private final SubscribeableHub<Frame> hub = new AbstractHub<Frame>() {
 		@Override
@@ -43,16 +47,18 @@ public class ServerChannelInitializer extends ChannelInitializer<SocketChannel> 
 		}
 	};
 
-	public ServerChannelInitializer(String versionString, TrustStore trustStore) {
+	public ServerChannelInitializer(String versionString, TrustStore trustStore, CertificateChain certificateChain, PrivateKey privateKey) {
 		this.versionString = versionString;
 		this.trustStore = trustStore;
+		this.certificateChain = certificateChain;
+		this.privateKey = privateKey;
 	}
 
 	@Override
 	public void initChannel(SocketChannel ch) throws Exception {
 		final ChannelPipeline pipeline = ch.pipeline();
 		pipeline.addLast(new Codec());
-		pipeline.addLast(new ServerHandler(versionString, hub, trustStore));
+		pipeline.addLast(new ServerHandler(versionString, hub, trustStore, certificateChain, privateKey));
 	}
 
 }

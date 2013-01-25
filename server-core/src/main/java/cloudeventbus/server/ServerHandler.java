@@ -47,6 +47,7 @@ import io.netty.handler.codec.DecoderException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.security.PrivateKey;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
@@ -62,6 +63,8 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 	private final String agentString;
 	private final SubscribeableHub<Frame> hub;
 	private final TrustStore trustStore;
+	private final CertificateChain certificateChain;
+	private final PrivateKey privateKey;
 
 	private byte[] challenge;
 	private boolean serverReady = false;
@@ -78,10 +81,12 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 	private Runnable pingTask;
 	private ScheduledFuture<?> pingFuture;
 
-	public ServerHandler(String agentString, SubscribeableHub<Frame> hub, TrustStore trustStore) {
+	public ServerHandler(String agentString, SubscribeableHub<Frame> hub, TrustStore trustStore, CertificateChain certificateChain, PrivateKey privateKey) {
 		this.agentString = agentString;
 		this.hub = hub;
 		this.trustStore = trustStore;
+		this.certificateChain = certificateChain;
+		this.privateKey = privateKey;
 	}
 
 	@Override
@@ -119,8 +124,14 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 				ctx.write(new AuthenticationRequestFrame(challenge));
 			}
 		} else if (frame instanceof AuthenticationRequestFrame) {
-			// TODO Implement support for the client request authentication
-			throw new CloudEventBusServerException("Client to server authentication not yet supported");
+			if (certificateChain == null || privateKey == null) {
+				throw new CloudEventBusServerException("Unable to authenticate with server, missing private key or certificate chain");
+			}
+			final AuthenticationRequestFrame authenticationRequest = (AuthenticationRequestFrame) frame;
+			final byte[] salt = CertificateUtils.generateChallenge();
+			final byte[] signature = CertificateUtils.signChallenge(privateKey, authenticationRequest.getChallenge(), salt);
+			AuthenticationResponseFrame authenticationResponse = new AuthenticationResponseFrame(certificateChain, salt, signature);
+			ctx.write(authenticationResponse);
 		} else if (frame instanceof PongFrame) {
 			// Do nothing
 		}
