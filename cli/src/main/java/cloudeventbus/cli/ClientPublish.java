@@ -49,6 +49,7 @@ public class ClientPublish {
 			}
 
 			final Connector connector = AbstractClientOptions.configureConnector(options);
+			connector.autoReconnect(false);
 			connector.addConnectionStateListener(new ConnectionStateListener() {
 				@Override
 				public void onConnectionStateChange(EventBus eventBus, State state) {
