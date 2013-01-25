@@ -32,8 +32,9 @@ package cloudeventbus.client;
 public interface Subscription extends Iterable<Message>, AutoCloseable {
 
 	/**
-	 * Closes this request. Any {@link MessageHandler} objects associated with this request will no longer receive any
-	 * messages after this method is invoked.
+	 * Closes this subscription. Any {@link MessageHandler} objects associated with this request will no longer receive
+	 * messages for this subscription after this method is invoked. All {@link MessageIterator} objects created by
+	 * this subscription will also be closed.
 	 */
 	@Override
 	void close();
@@ -53,14 +54,24 @@ public interface Subscription extends Iterable<Message>, AutoCloseable {
 	int getReceivedMessages();
 
 	/**
-	 * Return the maximum number of messages this subscription will receive before being closed automatically.
+	 * Returns the maximum number of messages this subscription will receive before being closed automatically.
 	 *
 	 * @return the maximum number of messages this subscription will receive or {@code null} if no maximum was specified.
 	 */
 	Integer getMaxMessages();
 
 	/**
-	 * Creates a {@link MessageIterator} to iterate over messages received on this subscription.
+	 * Creates a {@link MessageIterator} to iterate over messages received on this subscription. Because
+	 * {@code Subscription} implements the {@link Iterable} interface, a subscription can be* used in a Java for loop.
+	 * For example:
+	 * <p/>
+	 * <pre>
+	 *     for (Message message : nats.subscribe("foo.>") {
+	 *         System.out.println(message);
+	 *     }
+	 * </pre>
+	 * <p/>
+	 * The for loop may terminate with an exception when the subscription is closed.
 	 *
 	 * @return an iterator.
 	 */
