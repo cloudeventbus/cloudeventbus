@@ -128,7 +128,6 @@ public class Certs {
 			} else if (certificate.getExpirationDate() < System.currentTimeMillis()) {
 				expirationString = "Expired";
 			} else {
-				// TODO Split this out to days, hours, minutes, seconds
 				final long seconds = (certificate.getExpirationDate() - System.currentTimeMillis()) / 1000;
 				expirationString = "Expires in " + formatTime(seconds);
 			}
@@ -147,7 +146,7 @@ public class Certs {
 		seconds -= TimeUnit.HOURS.toSeconds(hours);
 		final long minutes = seconds / TimeUnit.MINUTES.toSeconds(1);
 		seconds -= TimeUnit.MINUTES.toSeconds(minutes);
-		return String.format("%d days, %d hours, %d minutes, %d seconds", days, hours, minutes,seconds);
+		return String.format("%dd:%dh:%dm:%ds", days, hours, minutes,seconds);
 	}
 
 	private static void createCertificate(TrustStore trustStore, Certificate.Type type, AbstractCreateClientServerCommand createCommand) throws Exception {
