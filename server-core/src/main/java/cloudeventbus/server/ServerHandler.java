@@ -93,85 +93,101 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 	public void messageReceived(ChannelHandlerContext ctx, Frame frame) throws Exception {
 		resetIdleTask(ctx.channel().eventLoop());
 		LOGGER.debug("Received frame on server: {}", frame);
-		// TODO Modify to use switch statement with frame.getFrameType();
-		if (frame instanceof AuthenticationResponseFrame) {
-			AuthenticationResponseFrame authenticationResponse = (AuthenticationResponseFrame) frame;
-			final CertificateChain certificates = authenticationResponse.getCertificates();
-			trustStore.validateCertificateChain(certificates);
-			if (certificates.getLast().getType() == Certificate.Type.AUTHORITY) {
-				throw new InvalidCertificateException("Can not use an authority certificate to authenticate to server.");
-			}
-			this.clientCertificates = certificates;
-			CertificateUtils.validateSignature(
-					certificates.getLast().getPublicKey(),
-					challenge,
-					authenticationResponse.getSalt(),
-					authenticationResponse.getDigitalSignature());
-			serverReady = true;
-			ctx.write(ServerReadyFrame.SERVER_READY);
-		} else if (frame instanceof GreetingFrame) {
-			final GreetingFrame greetingFrame = (GreetingFrame) frame;
-			clientAgent = greetingFrame.getAgent();
-			if (greetingFrame.getVersion() != Constants.PROTOCOL_VERSION) {
-				throw new InvalidProtocolVersionException("This server doesn't support protocol version " + greetingFrame.getVersion());
-			}
-			ctx.write(new GreetingFrame(Constants.PROTOCOL_VERSION, agentString));
-			if (trustStore == null) {
+		switch (frame.getFrameType()) {
+			case AUTH_RESPONSE: {
+				AuthenticationResponseFrame authenticationResponse = (AuthenticationResponseFrame) frame;
+				final CertificateChain certificates = authenticationResponse.getCertificates();
+				trustStore.validateCertificateChain(certificates);
+				if (certificates.getLast().getType() == Certificate.Type.AUTHORITY) {
+					throw new InvalidCertificateException("Can not use an authority certificate to authenticate to server.");
+				}
+				this.clientCertificates = certificates;
+				CertificateUtils.validateSignature(
+						certificates.getLast().getPublicKey(),
+						challenge,
+						authenticationResponse.getSalt(),
+						authenticationResponse.getDigitalSignature());
 				serverReady = true;
 				ctx.write(ServerReadyFrame.SERVER_READY);
-			} else {
-				challenge = CertificateUtils.generateChallenge();
-				ctx.write(new AuthenticationRequestFrame(challenge));
+				break;
 			}
-		} else if (frame instanceof AuthenticationRequestFrame) {
-			if (certificateChain == null || privateKey == null) {
-				throw new CloudEventBusServerException("Unable to authenticate with server, missing private key or certificate chain");
+			case AUTHENTICATE: {
+				if (certificateChain == null || privateKey == null) {
+					throw new CloudEventBusServerException("Unable to authenticate with server, missing private key or certificate chain");
+				}
+				final AuthenticationRequestFrame authenticationRequest = (AuthenticationRequestFrame) frame;
+				final byte[] salt = CertificateUtils.generateChallenge();
+				final byte[] signature = CertificateUtils.signChallenge(privateKey, authenticationRequest.getChallenge(), salt);
+				AuthenticationResponseFrame authenticationResponse = new AuthenticationResponseFrame(certificateChain, salt, signature);
+				ctx.write(authenticationResponse);
+				break;
 			}
-			final AuthenticationRequestFrame authenticationRequest = (AuthenticationRequestFrame) frame;
-			final byte[] salt = CertificateUtils.generateChallenge();
-			final byte[] signature = CertificateUtils.signChallenge(privateKey, authenticationRequest.getChallenge(), salt);
-			AuthenticationResponseFrame authenticationResponse = new AuthenticationResponseFrame(certificateChain, salt, signature);
-			ctx.write(authenticationResponse);
-		} else if (frame instanceof PongFrame) {
-			// Do nothing
-		}
-		// The server has to be "ready" to process frames below this point.
-		else if (!serverReady) {
-			throw new ServerNotReadyException("This server requires authentication.");
-		} else if (frame instanceof PublishFrame) {
-			final PublishFrame publishFrame = (PublishFrame) frame;
-			final Subject subject = publishFrame.getSubject();
-			if (clientCertificates != null) {
-				clientCertificates.getLast().validatePublishPermission(subject);
-			}
-			final Subject replySubject = publishFrame.getReplySubject();
-			if (replySubject != null) {
-				hub.subscribe(replySubject, handler);
-			}
-			hub.publish(subject, replySubject, publishFrame.getBody());
-		} else if (frame instanceof SubscribeFrame) {
-			final SubscribeFrame subscribeFrame = (SubscribeFrame) frame;
-			final Subject subject = subscribeFrame.getSubject();
-			if (clientCertificates != null) {
-				clientCertificates.getLast().validateSubscribePermission(subject);
-			}
-			if (subscriptionHandles.containsKey(subject)) {
-				throw new DuplicateSubscriptionException("Already subscribed to subject " + subject);
-			}
-			final SubscriptionHandle subscriptionHandle = hub.subscribe(subject, handler);
-			subscriptionHandles.put(subject, subscriptionHandle);
-		} else if (frame instanceof UnsubscribeFrame) {
-			final UnsubscribeFrame unsubscribeFrame = (UnsubscribeFrame) frame;
-			final Subject subject = unsubscribeFrame.getSubject();
-			final SubscriptionHandle subscriptionHandle = subscriptionHandles.get(subject);
-			if (subscriptionHandle == null) {
-				throw new NotSubscribedException("Not subscribed to subject " + subject);
-			}
-			subscriptionHandle.remove();
-		} else if (frame instanceof PingFrame) {
-			ctx.write(PongFrame.PONG);
-		} else {
-			throw new CloudEventBusServerException("Unable to handle frame of type " + frame.getClass().getName());
+			case GREETING:
+				final GreetingFrame greetingFrame = (GreetingFrame) frame;
+				clientAgent = greetingFrame.getAgent();
+				if (greetingFrame.getVersion() != Constants.PROTOCOL_VERSION) {
+					throw new InvalidProtocolVersionException("This server doesn't support protocol version " + greetingFrame.getVersion());
+				}
+				ctx.write(new GreetingFrame(Constants.PROTOCOL_VERSION, agentString));
+				if (trustStore == null) {
+					serverReady = true;
+					ctx.write(ServerReadyFrame.SERVER_READY);
+				} else {
+					challenge = CertificateUtils.generateChallenge();
+					ctx.write(new AuthenticationRequestFrame(challenge));
+				}
+				break;
+			case PONG:
+				// Do nothing.
+				break;
+			default:
+				if (!serverReady) {
+					throw new ServerNotReadyException("This server requires authentication.");
+				} else {
+					switch (frame.getFrameType()) {
+						case PUBLISH: {
+							final PublishFrame publishFrame = (PublishFrame) frame;
+							final Subject subject = publishFrame.getSubject();
+							if (clientCertificates != null) {
+								clientCertificates.getLast().validatePublishPermission(subject);
+							}
+							final Subject replySubject = publishFrame.getReplySubject();
+							if (replySubject != null) {
+								hub.subscribe(replySubject, handler);
+							}
+							hub.publish(subject, replySubject, publishFrame.getBody());
+							break;
+						}
+						case SUBSCRIBE: {
+							final SubscribeFrame subscribeFrame = (SubscribeFrame) frame;
+							final Subject subject = subscribeFrame.getSubject();
+							if (clientCertificates != null) {
+								clientCertificates.getLast().validateSubscribePermission(subject);
+							}
+							if (subscriptionHandles.containsKey(subject)) {
+								throw new DuplicateSubscriptionException("Already subscribed to subject " + subject);
+							}
+							final SubscriptionHandle subscriptionHandle = hub.subscribe(subject, handler);
+							subscriptionHandles.put(subject, subscriptionHandle);
+							break;
+						}
+						case UNSUBSCRIBE: {
+							final UnsubscribeFrame unsubscribeFrame = (UnsubscribeFrame) frame;
+							final Subject subject = unsubscribeFrame.getSubject();
+							final SubscriptionHandle subscriptionHandle = subscriptionHandles.get(subject);
+							if (subscriptionHandle == null) {
+								throw new NotSubscribedException("Not subscribed to subject " + subject);
+							}
+							subscriptionHandle.remove();
+							break;
+						}
+						case PING:
+							ctx.write(PongFrame.PONG);
+							break;
+						default:
+							throw new CloudEventBusServerException("Unable to handle frame of type " + frame.getClass().getName());
+					}
+				}
 		}
 	}
 
