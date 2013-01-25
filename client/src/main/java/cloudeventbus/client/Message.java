@@ -27,7 +27,8 @@ public interface Message {
 
 	/**
 	 * Returns {@code true} if the message originated from a request, {@code false} if the message originated from a
-	 * publish.
+	 * publish. If the message originated from a request, the {@link #reply(String)} and
+	  * {@link #reply(String, long, java.util.concurrent.TimeUnit)} may be used to reply to the request.
 	 *
 	 * @return {@code true} if the message originated from a request, {@code false} if the message originated from a
 	 *         publish.
