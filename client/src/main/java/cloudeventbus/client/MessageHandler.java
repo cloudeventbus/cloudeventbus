@@ -17,8 +17,8 @@
 package cloudeventbus.client;
 
 /**
- * A callback method that gets invoked when a message is received. This callback is used with subscriptions and
- * requests.
+ * Provides a callback method that gets invoked when a message is received. This callback is used with subscriptions
+ * and requests.
  *
  * @author Mike Heath <elcapo@gmail.com>
  */
