@@ -1,12 +1,14 @@
 - Add options for adding all the authorities in one trust store into another
 - Add options for removing authorities from a trust store
-- Test CLI security
+- Add support for remembering the last client or server cert/key used to simplify repeated execution of CLI tools
 - Add support for building .zip to Gradle build
+- Configure Travis CI.
+- Implement a local EventBus for testing.
 - Implement server clustering
   - Advertise cluster info to clients for fail-over
   - Advertise connection state (number of clients, etc.) if peer has significantly less load, redirect new clients to peer
 - Performance test
-- Experiment with how much performance/memory benefit direct buffers will really give us
+- Experiment with how much performance benefit direct buffers will really give us
 - Implement VCAP component based server
   - Use NATS for peer discover
     - NATS 0.5 release
