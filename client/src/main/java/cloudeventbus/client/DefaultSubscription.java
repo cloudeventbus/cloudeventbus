@@ -139,6 +139,6 @@ public class DefaultSubscription implements Subscription {
 	}
 
 	protected DefaultMessage createMessageObject(String subject, String replySubject, String body) {
-		return new DefaultMessage(subject, body, replySubject == null);
+		return new DefaultMessage(subject, body, replySubject != null);
 	}
 }
