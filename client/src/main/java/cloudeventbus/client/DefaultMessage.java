@@ -25,17 +25,17 @@ public class DefaultMessage implements Message {
 
 	private final String subject;
 	private final String body;
-	private final boolean isRequest;
+	private final boolean request;
 
 	public DefaultMessage(String subject, String body, boolean request) {
 		this.subject = subject;
 		this.body = body;
-		isRequest = request;
+		this.request = request;
 	}
 
 	@Override
 	public boolean isRequest() {
-		return isRequest;
+		return request;
 	}
 
 	@Override
