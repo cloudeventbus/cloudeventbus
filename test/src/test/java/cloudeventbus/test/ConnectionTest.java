@@ -34,7 +34,8 @@ public class ConnectionTest {
 			assertEquals(server.getConnectionCount(), 0);
 			final BlockingConnectionStateListener listener = new BlockingConnectionStateListener();
 			try (
-					EventBus eventBus = new Connector().addServer("localhost").addConnectionStateListener(listener).connect()
+					EventBus eventBus = new Connector().addServer("localhost").addConnectionStateListener(listener)
+							.connect()
 				) {
 				listener.awaitReady();
 				assertTrue(eventBus.isServerReady());
