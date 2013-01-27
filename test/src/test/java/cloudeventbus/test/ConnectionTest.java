@@ -38,6 +38,7 @@ public class ConnectionTest {
 				) {
 				listener.awaitReady();
 				assertTrue(eventBus.isServerReady());
+				assertFalse(eventBus.isClosed());
 				assertEquals(server.getConnectionCount(), 1);
 				eventBus.close();
 				listener.awaitDisconnect();

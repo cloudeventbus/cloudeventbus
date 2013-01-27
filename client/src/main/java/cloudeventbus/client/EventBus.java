@@ -28,6 +28,14 @@ package cloudeventbus.client;
 public interface EventBus extends AutoCloseable {
 
 	/**
+	 * Indicates if this client has been closed.
+	 *
+	 * @return {@code true} if {@link #close()} was called (explicitly or implicitly due to an error), {@code false}
+	 * otherwise.
+	 */
+	boolean isClosed();
+
+	/**
 	 * Closes the client.
 	 */
 	@Override

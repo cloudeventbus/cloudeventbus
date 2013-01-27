@@ -86,13 +86,13 @@ class EventBusImpl implements EventBus {
 	// Access to these fields must be synchronized on #lock
 	private Channel channel;
 	private boolean closed = false;
-	private volatile boolean serverReady = false;
 	private final Map<Subject, List<DefaultSubscription>> subscriptions = new HashMap<>();
 	private final List<PublishFrame> publishQueue = new ArrayList<>();
+	private boolean serverReady = false;
 
 	private volatile CloudEventBusClientException error;
 
-	public EventBusImpl(Connector connector) {
+	EventBusImpl(Connector connector) {
 		if (connector.servers.size() == 0) {
 			throw new IllegalArgumentException("No servers were specified to connect to.");
 		}
@@ -121,8 +121,8 @@ class EventBusImpl implements EventBus {
 			if (closed) {
 				return;
 			}
+			serverReady = false;
 		}
-		serverReady = false;
 		final ServerList.Server server = servers.nextServer();
 		LOGGER.debug("Attempting connecting to {}", server.getAddress());
 		new Bootstrap()
@@ -135,6 +135,7 @@ class EventBusImpl implements EventBus {
 			public void operationComplete(ChannelFuture future) throws Exception {
 				if (future.isSuccess()) {
 					LOGGER.debug("Connection to {} successful", server.getAddress());
+					server.connectionSuccess();
 					synchronized (lock) {
 						channel = future.channel();
 						if (closed) {
@@ -143,6 +144,7 @@ class EventBusImpl implements EventBus {
 					}
 				} else {
 					LOGGER.warn("Connection to {} failed", server.getAddress());
+					server.connectionFailure();
 					scheduleReconnect();
 				}
 			}
@@ -151,6 +153,7 @@ class EventBusImpl implements EventBus {
 
 	private void scheduleReconnect() {
 		synchronized (lock) {
+			serverReady = false;
 			if (!closed && autoReconnect) {
 				eventLoopGroup.next().schedule(new Runnable() {
 					@Override
@@ -159,6 +162,13 @@ class EventBusImpl implements EventBus {
 					}
 				}, reconnectWaitTime, TimeUnit.MILLISECONDS);
 			}
+		}
+	}
+
+	@Override
+	public boolean isClosed() {
+		synchronized (lock) {
+			return closed;
 		}
 	}
 
@@ -185,7 +195,9 @@ class EventBusImpl implements EventBus {
 
 	@Override
 	public boolean isServerReady() {
-		return serverReady;
+		synchronized (lock) {
+			return serverReady;
+		}
 	}
 
 	@Override
@@ -274,7 +286,7 @@ class EventBusImpl implements EventBus {
 		return subscription;
 	}
 
-	private DefaultSubscription createSubscription(final Subject subject, final Integer maxMessages, final MessageHandler[] messageHandlers) {
+	private DefaultSubscription createSubscription(final Subject subject, final Integer maxMessages, final MessageHandler... messageHandlers) {
 		return new DefaultSubscription(subject.toString(), maxMessages, messageHandlers) {
 			@Override
 			public void close() {
@@ -443,9 +455,9 @@ class EventBusImpl implements EventBus {
 							}
 							break;
 						case SERVER_READY:
-							serverReady = true;
 							// Resubscribe with server.
 							synchronized (lock) {
+								serverReady = true;
 								for (Subject subject : subscriptions.keySet()) {
 									ctx.write(new SubscribeFrame(subject));
 								}
@@ -474,9 +486,8 @@ class EventBusImpl implements EventBus {
 
 				@Override
 				public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-					fireStateChange(ConnectionStateListener.State.DISCONNECTED);
-					serverReady = false;
 					scheduleReconnect();
+					fireStateChange(ConnectionStateListener.State.DISCONNECTED);
 				}
 
 				@Override
