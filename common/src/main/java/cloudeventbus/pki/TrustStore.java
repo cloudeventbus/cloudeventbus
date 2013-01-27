@@ -73,6 +73,10 @@ public class TrustStore extends AbstractSet<Certificate> {
 		return true;
 	}
 
+	public boolean remove(Long serialNumber) {
+		return certificates.remove(serialNumber) != null;
+	}
+
 	public void validateCertificate(Certificate certificate) {
 		final long issuerSerialNumber = certificate.getIssuer();
 		final Certificate issuerCertificate = get(issuerSerialNumber);

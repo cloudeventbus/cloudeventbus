@@ -19,16 +19,24 @@ package cloudeventbus.cli;
 import cloudeventbus.Subject;
 import cloudeventbus.pki.Certificate;
 import cloudeventbus.pki.CertificateChain;
+import cloudeventbus.pki.CertificateStoreLoader;
 import cloudeventbus.pki.CertificateUtils;
 import cloudeventbus.pki.TrustStore;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
+import org.apache.commons.codec.binary.Base64InputStream;
 
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.KeyPair;
 import java.security.PrivateKey;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -37,6 +45,17 @@ import java.util.concurrent.TimeUnit;
  */
 // TODO Write and publish docs
 public class Certs {
+
+	private static final String CHAIN_CERTIFICATE = "chain-certificate";
+	private static final String CREATE_AUTHORITY = "create-authority";
+	private static final String CREATE_CLIENT = "create-client";
+	private static final String CREATE_SERVER = "create-server";
+	private static final String IMPORT_CERTIFICATES = "import-certificates";
+	private static final String LIST_AUTHORITIES = "list-authorities";
+	private static final String SHOW_CERTIFICATE = "show-certificate";
+	private static final String VALIDATE_CERTIFICATE = "validate-certificate";
+	private static final String REMOVE_AUTHORITY = "remove-authority";
+
 	public static void main(String[] args) throws Exception {
 		final JCommander commander = new JCommander();
 
@@ -46,6 +65,8 @@ public class Certs {
 		final CreateServerCommand createServerCommand = new CreateServerCommand();
 		final ChainCertificateCommand chainCertificateCommand = new ChainCertificateCommand();
 		final ShowCertificateCommand showCertificateCommand = new ShowCertificateCommand();
+		final ImportCertificatesCommand importCertificatesCommand = new ImportCertificatesCommand();
+		final RemoveAuthorityCommand removeAuthorityCommand = new RemoveAuthorityCommand();
 		final ValidateCommand validateCommand = new ValidateCommand();
 		commander.addObject(options);
 		commander.addCommand(createAuthorityCommand);
@@ -54,6 +75,8 @@ public class Certs {
 		commander.addCommand(chainCertificateCommand);
 		commander.addCommand(new ListAuthorities());
 		commander.addCommand(showCertificateCommand);
+		commander.addCommand(importCertificatesCommand);
+		commander.addCommand(removeAuthorityCommand);
 		commander.addCommand(validateCommand);
 
 		commander.setProgramName("eventbus-certs");
@@ -67,7 +90,7 @@ public class Certs {
 			} else {
 				final TrustStore trustStore = CertificateUtils.loadTrustStore(options.trustStore);
 				switch(command) {
-					case "create-authority": {
+					case CREATE_AUTHORITY: {
 						final KeyPair keyPair = CertificateUtils.generateKeyPair();
 						CertificateUtils.savePrivateKey(keyPair.getPrivate(), createAuthorityCommand.privateKey);
 						final Certificate certificate = CertificateUtils.generateSelfSignedCertificate(
@@ -83,30 +106,52 @@ public class Certs {
 						System.out.println("Created authority certificate.");
 						break;
 					}
-					case "list-authorities": {
+					case LIST_AUTHORITIES: {
 						displayCertificates(trustStore);
 						break;
 					}
-					case "create-client":
+					case CREATE_CLIENT:
 						createCertificate(trustStore, Certificate.Type.CLIENT, createClientCommand);
 						break;
-					case "create-server":
+					case CREATE_SERVER:
 						createCertificate(trustStore, Certificate.Type.SERVER, createServerCommand);
 						break;
-					case "show-certificate": {
+					case SHOW_CERTIFICATE: {
 						final CertificateChain certificates = CertificateUtils.loadCertificateChain(showCertificateCommand.certificate);
 						displayCertificates(certificates);
 						break;
 					}
-					case "chain-certificate":
+					case CHAIN_CERTIFICATE:
 						chainCertificate(chainCertificateCommand);
 						break;
-					case "validate-certificate": {
+					case VALIDATE_CERTIFICATE: {
 						final CertificateChain certificates = CertificateUtils.loadCertificateChain(validateCommand.certificate);
 						trustStore.validateCertificateChain(certificates);
 						System.out.println(validateCommand.certificate + " is valid.");
 						break;
 					}
+					case IMPORT_CERTIFICATES: {
+						final Path path = Paths.get(importCertificatesCommand.certificate);
+						try (
+							final InputStream fileIn = Files.newInputStream(path);
+						    final InputStream in = new Base64InputStream(fileIn)
+						) {
+							final Collection<Certificate> certificates = new ArrayList<>();
+							CertificateStoreLoader.load(in, certificates);
+							for (Certificate certificate : certificates) {
+								trustStore.add(certificate);
+							}
+							CertificateUtils.saveCertificates(options.trustStore, trustStore);
+						}
+						break;
+					}
+					case REMOVE_AUTHORITY:
+						if (trustStore.remove(removeAuthorityCommand.serialNumber)) {
+							System.err.println("Removed certificate from trust store.");
+							CertificateUtils.saveCertificates(options.trustStore, trustStore);
+						} else {
+							System.err.println("Certificate with serial number " + removeAuthorityCommand.serialNumber + " not found.");
+						}
 				}
 			}
 		} catch (ParameterException e) {
@@ -212,7 +257,7 @@ public class Certs {
 		List<String> subscribePermissions = Arrays.asList("*");
 	}
 
-	@Parameters(commandNames = "create-authority", commandDescription = "Creates an authority certificate and adds it to the trust store")
+	@Parameters(commandNames = CREATE_AUTHORITY, commandDescription = "Creates an authority certificate and adds it to the trust store")
 	private static class CreateAuthorityCommand extends AbstractCreateCommand {
 
 	}
@@ -229,15 +274,15 @@ public class Certs {
 		String certificate;
 	}
 
-	@Parameters(commandNames = "create-client", commandDescription = "Creates a client certificate")
+	@Parameters(commandNames = CREATE_CLIENT, commandDescription = "Creates a client certificate")
 	private static class CreateClientCommand extends AbstractCreateClientServerCommand {
 	}
 
-	@Parameters(commandNames = "create-server", commandDescription = "Creates a server certificate")
+	@Parameters(commandNames = CREATE_SERVER, commandDescription = "Creates a server certificate")
 	private static class CreateServerCommand extends AbstractCreateClientServerCommand {
 	}
 
-	@Parameters(commandNames = "chain-certificate", commandDescription = "Chains a new certificate to an existing certificate or certificate chain")
+	@Parameters(commandNames = CHAIN_CERTIFICATE, commandDescription = "Chains a new certificate to an existing certificate or certificate chain")
 	private static class ChainCertificateCommand extends AbstractCreateCommand {
 
 		@Parameter(names = "-existingPrivateKey", description = "The private key of the certificate being chained or the private key of the last certificate in the chain", required = true)
@@ -250,20 +295,32 @@ public class Certs {
 		String certificate;
 	}
 
-	@Parameters(commandNames = "list-authorities", commandDescription = "List the certificates in the trust store.")
+	@Parameters(commandNames = LIST_AUTHORITIES, commandDescription = "List the certificates in the trust store.")
 	private static class ListAuthorities {
 	}
 
-	@Parameters(commandNames = "show-certificate", commandDescription = "Displays the contents of a certificate.")
+	@Parameters(commandNames = SHOW_CERTIFICATE, commandDescription = "Displays the contents of a certificate.")
 	private static class ShowCertificateCommand {
 		@Parameter(names = "-certificate", description = "The certificate or certificate chain to display", required = true)
 		String certificate;
 	}
 
-	@Parameters(commandNames = "validate-certificate", commandDescription = "Validates a certificate or certificate chain against the trust store")
+	@Parameters(commandNames = IMPORT_CERTIFICATES, commandDescription = "Imports certificates into the trust store from another trust store or certificate.")
+	private static class ImportCertificatesCommand {
+		@Parameter(names = "-certificate", description = "The trust store, certificate, certificate chain to import", required = true)
+		String certificate;
+	}
+
+	@Parameters(commandNames = VALIDATE_CERTIFICATE, commandDescription = "Validates a certificate or certificate chain against the trust store")
 	private static class ValidateCommand {
 		@Parameter(names = "-certificate", description = "The certificate or certificate chain to validate", required = true)
 		String certificate;
+	}
+
+	@Parameters(commandNames = REMOVE_AUTHORITY, commandDescription = "Removes an authority certificate from the trust store")
+	private static class RemoveAuthorityCommand {
+		@Parameter(names = "-serialNumber", description = "The serial number of the certificate to be removed", required = true)
+		Long serialNumber;
 	}
 
 }
