@@ -26,6 +26,7 @@ import io.netty.handler.codec.EncoderException;
 import org.testng.annotations.Test;
 
 import java.security.KeyPair;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -91,11 +92,13 @@ public class EncoderDecoderTest {
 	public void greetingFrame() {
 		final int version = 1;
 		final String agent = "test-0.1-SNAPSHOT";
-		final GreetingFrame frame = new GreetingFrame(version, agent);
+		final long id = ThreadLocalRandom.current().nextLong();
+		final GreetingFrame frame = new GreetingFrame(version, agent, id);
 		final GreetingFrame recodedFrame = recode(frame);
 
 		assertEquals(recodedFrame.getVersion(), version);
 		assertEquals(recodedFrame.getAgent(), agent);
+		assertEquals(recodedFrame.getId(), id);
 	}
 
 	@Test

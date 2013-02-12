@@ -14,7 +14,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
-			<artifactId>codec</artifactId>
+			<artifactId>client</artifactId>
 		</dependency>
 
 		<dependency>

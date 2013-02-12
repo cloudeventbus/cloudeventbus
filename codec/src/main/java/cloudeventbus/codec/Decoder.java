@@ -110,10 +110,11 @@ public class Decoder extends ByteToMessageDecoder<Frame> {
 					return new ErrorFrame(errorCode);
 				}
 			case GREETING:
-				assertArgumentsLength(2, argumentsLength, "greeting");
+				assertArgumentsLength(3, argumentsLength, "greeting");
 				final int version = Integer.valueOf(parts[1]);
 				final String agent = parts[2];
-				return new GreetingFrame(version, agent);
+				final long id = Long.valueOf(parts[3]);
+				return new GreetingFrame(version, agent, id);
 			case PING:
 				return PingFrame.PING;
 			case PONG:

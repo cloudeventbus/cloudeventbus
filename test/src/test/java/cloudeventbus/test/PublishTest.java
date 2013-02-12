@@ -44,7 +44,7 @@ public class PublishTest {
 			try (
 					EventBus eventBus = new Connector().addServer("localhost").addConnectionStateListener(listener).connect()
 			) {
-				listener.awaitReady();
+				listener.awaitConnection();
 				final String subject = "test";
 				final String body = "This is the message body.";
 				final Subscription subscription = eventBus.subscribe(subject);
@@ -72,7 +72,7 @@ public class PublishTest {
 			try (
 					EventBus eventBus = new Connector().addServer("localhost").addConnectionStateListener(listener).connect()
 			) {
-				listener.awaitReady();
+				listener.awaitConnection();
 				final String subject = "test";
 				final String body1 = "This is the message body.";
 				final String body2 = "Another message body.";

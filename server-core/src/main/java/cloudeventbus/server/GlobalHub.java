@@ -28,18 +28,18 @@ import cloudeventbus.hub.Hub;
 public class GlobalHub implements Hub {
 
 	private final Hub clientHub;
-	private final Hub peerHub;
+	private final Peers peers;
 
 	/**
 	 * The client hub is the hub that will distribute messages to all client connections including the server itself.
 	 * The peer hub is the hub that will distribute messages to all peer servers.
 	 *
 	 * @param clientHub distributes messages to clients
-	 * @param peerHub distributes messages to peer servers
+	 * @param peers distributes messages to peer servers and manages peer connections
 	 */
-	public GlobalHub(Hub clientHub, Hub peerHub) {
+	public GlobalHub(Hub clientHub, Peers peers) {
 		this.clientHub = clientHub;
-		this.peerHub = peerHub;
+		this.peers = peers;
 	}
 
 	/**
@@ -51,7 +51,7 @@ public class GlobalHub implements Hub {
 	 */
 	@Override
 	public void publish(Subject subject, Subject replySubject, String body) {
-		peerHub.publish(subject, replySubject, body);
+		peers.publish(subject, replySubject, body);
 		clientHub.publish(subject, replySubject, body);
 	}
 
@@ -59,7 +59,7 @@ public class GlobalHub implements Hub {
 		return clientHub;
 	}
 
-	public Hub getPeerHub() {
-		return peerHub;
+	public Peers getPeers() {
+		return peers;
 	}
 }

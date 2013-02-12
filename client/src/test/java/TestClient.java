@@ -3,6 +3,7 @@ import cloudeventbus.client.ConnectionStateListener;
 import cloudeventbus.client.Connector;
 import cloudeventbus.client.Message;
 import cloudeventbus.client.MessageHandler;
+import cloudeventbus.client.ServerInfo;
 
 import java.net.InetSocketAddress;
 
@@ -14,10 +15,12 @@ public class TestClient {
 		final EventBus eventBus = new Connector().addServer(new InetSocketAddress("localhost", 4223))
 				.addConnectionStateListener(new ConnectionStateListener() {
 					@Override
-					public void onConnectionStateChange(final EventBus eventBus, State state) {
-						if (state == State.SERVERY_READY) {
-							System.out.println("Server ready.");
-						}
+					public void onOpen(final EventBus eventBus, ServerInfo serverInfo) {
+						System.out.println("Server ready.");
+					}
+					@Override
+					public void onClose(EventBus eventBus, ServerInfo serverInfo) {
+						System.out.println("Connection closed");
 					}
 				})
 				.connect();

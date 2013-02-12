@@ -45,7 +45,7 @@ public class ServerHandlerTest {
 	@Test
 	public void greeting() {
 		final MockServer server = new MockServer();
-		server.write(new GreetingFrame(1, "mock-client"));
+		server.write(new GreetingFrame(1, "mock-client", 0L));
 
 		final GreetingFrame greeting = (GreetingFrame) server.read();
 		assertNotNull(greeting);
@@ -58,7 +58,7 @@ public class ServerHandlerTest {
 	@Test
 	public void doubleSubscribe() {
 		final MockServer server = new MockServer();
-		server.write(new GreetingFrame(1, "mock-client"));
+		server.write(new GreetingFrame(1, "mock-client", 0l));
 
 		final GreetingFrame greeting = (GreetingFrame) server.read();
 		assertNotNull(greeting);
@@ -96,7 +96,7 @@ public class ServerHandlerTest {
 		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);
 
 		final MockServer server = new MockServer(trustStore, null, null);
-		server.write(new GreetingFrame(1, "mock-client"));
+		server.write(new GreetingFrame(1, "mock-client", 0l));
 
 		final GreetingFrame greeting = (GreetingFrame) server.read();
 		assertNotNull(greeting);
@@ -135,7 +135,7 @@ public class ServerHandlerTest {
 		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);
 
 		final MockServer server = new MockServer(trustStore, null, null);
-		server.write(new GreetingFrame(1, "mock-client"));
+		server.write(new GreetingFrame(1, "mock-client", 0l));
 
 		final GreetingFrame greeting = (GreetingFrame) server.read();
 		assertNotNull(greeting);
@@ -178,7 +178,7 @@ public class ServerHandlerTest {
 		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);
 
 		final MockServer server = new MockServer(trustStore, null, null);
-		server.write(new GreetingFrame(1, "mock-client"));
+		server.write(new GreetingFrame(1, "mock-client", 0l));
 
 		final GreetingFrame greeting = (GreetingFrame) server.read();
 		assertNotNull(greeting);
@@ -226,7 +226,7 @@ public class ServerHandlerTest {
 		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);
 
 		final MockServer server = new MockServer(trustStore, null, null);
-		server.write(new GreetingFrame(1, "mock-client"));
+		server.write(new GreetingFrame(1, "mock-client", 0l));
 
 		final GreetingFrame greeting = (GreetingFrame) server.read();
 		assertNotNull(greeting);

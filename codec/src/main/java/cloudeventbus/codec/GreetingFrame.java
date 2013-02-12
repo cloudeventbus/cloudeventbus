@@ -26,13 +26,15 @@ public class GreetingFrame implements Frame {
 
 	private final int version;
 	private final String agent;
+	private final long id;
 
-	public GreetingFrame(int version, String agent) {
+	public GreetingFrame(int version, String agent, long id) {
 		if (WHITESPACE_PATTERN.matcher(agent).find()) {
 			throw new IllegalArgumentException("agent cannot contain whitespace.");
 		}
 		this.version = version;
 		this.agent = agent;
+		this.id = id;
 	}
 
 	public String getAgent() {
@@ -43,9 +45,13 @@ public class GreetingFrame implements Frame {
 		return version;
 	}
 
+	public long getId() {
+		return id;
+	}
+
 	@Override
 	public String toString() {
-		return "Greeting version=" + version + " agent='" + agent + '\'';
+		return "Greeting version=" + version + " agent='" + agent + "\' id=" + id;
 	}
 
 	@Override

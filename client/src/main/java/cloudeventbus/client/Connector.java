@@ -20,6 +20,8 @@ import cloudeventbus.Constants;
 import cloudeventbus.pki.CertificateChain;
 import cloudeventbus.pki.TrustStore;
 import io.netty.channel.EventLoopGroup;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -89,12 +91,18 @@ public class Connector {
 	final List<ConnectionStateListener> listeners = new ArrayList<>();
 
 	/**
-	 * Executor to use for invoking callbacks. By default use same thread.
+	 * Executor to use for invoking callbacks. By default the current thread, usually a Netty IO thread, is used to
+	 * invoke callbacks.
 	 */
 	Executor callbackExecutor = new Executor() {
+		private final Logger logger = LoggerFactory.getLogger(getClass());
 		@Override
 		public void execute(Runnable command) {
-			command.run();
+			try {
+				command.run();
+			} catch (Exception e) {
+				logger.error("Error invoking callback", e);
+			}
 		}
 	};
 

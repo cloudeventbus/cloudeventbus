@@ -86,6 +86,8 @@ public class Encoder extends MessageToByteEncoder<Frame> {
 				writeString(out, Integer.toString(greetingFrame.getVersion()));
 				out.writeByte(' ');
 				writeString(out, greetingFrame.getAgent());
+				out.writeByte(' ');
+				writeString(out, Long.toString(greetingFrame.getId()));
 				break;
 			case PING:
 				out.writeByte(FrameType.PING.getOpcode());

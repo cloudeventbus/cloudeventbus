@@ -51,6 +51,7 @@ import java.security.PrivateKey;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -59,6 +60,8 @@ import java.util.concurrent.TimeUnit;
 public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ServerHandler.class);
+
+	private final long id = ThreadLocalRandom.current().nextLong();
 
 	private final String agentString;
 	private final SubscribeableHub<Frame> hub;
@@ -90,8 +93,8 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 	}
 
 	@Override
-	public void messageReceived(ChannelHandlerContext ctx, Frame frame) throws Exception {
-		resetIdleTask(ctx.channel().eventLoop());
+	public void messageReceived(ChannelHandlerContext context, Frame frame) throws Exception {
+		resetIdleTask(context.channel().eventLoop());
 		LOGGER.debug("Received frame on server: {}", frame);
 		switch (frame.getFrameType()) {
 			case AUTH_RESPONSE: {
@@ -108,7 +111,7 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 						authenticationResponse.getSalt(),
 						authenticationResponse.getDigitalSignature());
 				serverReady = true;
-				ctx.write(ServerReadyFrame.SERVER_READY);
+				context.write(ServerReadyFrame.SERVER_READY);
 				break;
 			}
 			case AUTHENTICATE: {
@@ -119,7 +122,7 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 				final byte[] salt = CertificateUtils.generateChallenge();
 				final byte[] signature = CertificateUtils.signChallenge(privateKey, authenticationRequest.getChallenge(), salt);
 				AuthenticationResponseFrame authenticationResponse = new AuthenticationResponseFrame(certificateChain, salt, signature);
-				ctx.write(authenticationResponse);
+				context.write(authenticationResponse);
 				break;
 			}
 			case GREETING:
@@ -128,13 +131,13 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 				if (greetingFrame.getVersion() != Constants.PROTOCOL_VERSION) {
 					throw new InvalidProtocolVersionException("This server doesn't support protocol version " + greetingFrame.getVersion());
 				}
-				ctx.write(new GreetingFrame(Constants.PROTOCOL_VERSION, agentString));
+				context.write(new GreetingFrame(Constants.PROTOCOL_VERSION, agentString, id));
 				if (trustStore == null) {
 					serverReady = true;
-					ctx.write(ServerReadyFrame.SERVER_READY);
+					context.write(ServerReadyFrame.SERVER_READY);
 				} else {
 					challenge = CertificateUtils.generateChallenge();
-					ctx.write(new AuthenticationRequestFrame(challenge));
+					context.write(new AuthenticationRequestFrame(challenge));
 				}
 				break;
 			case PONG:
@@ -182,7 +185,7 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 							break;
 						}
 						case PING:
-							ctx.write(PongFrame.PONG);
+							context.write(PongFrame.PONG);
 							break;
 						default:
 							throw new CloudEventBusServerException("Unable to handle frame of type " + frame.getClass().getName());

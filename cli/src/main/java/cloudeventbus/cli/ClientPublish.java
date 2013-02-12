@@ -19,6 +19,7 @@ package cloudeventbus.cli;
 import cloudeventbus.client.ConnectionStateListener;
 import cloudeventbus.client.Connector;
 import cloudeventbus.client.EventBus;
+import cloudeventbus.client.ServerInfo;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
@@ -52,11 +53,12 @@ public class ClientPublish {
 			connector.autoReconnect(false);
 			connector.addConnectionStateListener(new ConnectionStateListener() {
 				@Override
-				public void onConnectionStateChange(EventBus eventBus, State state) {
-					if (state == State.SERVERY_READY) {
-						eventBus.publish(options.mainParameters.get(0), options.mainParameters.get(1));
-						eventBus.close();
-					}
+				public void onOpen(EventBus eventBus, ServerInfo serverInfo) {
+					eventBus.publish(options.mainParameters.get(0), options.mainParameters.get(1));
+					eventBus.close();
+				}
+				@Override
+				public void onClose(EventBus eventBus, ServerInfo serverInfo) {
 				}
 			}).connect();
 		} catch (ParameterException e) {

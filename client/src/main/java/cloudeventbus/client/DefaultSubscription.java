@@ -16,21 +16,17 @@
  */
 package cloudeventbus.client;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
 public class DefaultSubscription implements Subscription {
-
-	private static final Logger LOGGER = LoggerFactory.getLogger(DefaultSubscription.class);
 
 	private final String subject;
 	private final Integer maxMessages;
@@ -118,18 +114,19 @@ public class DefaultSubscription implements Subscription {
 		};
 	}
 
-	public void onMessage(String subject, String replySubject, String body) {
+	public void onMessage(String subject, String replySubject, String body, Executor executor) {
 		final int messageCount = receivedMessageCount.incrementAndGet();
 		// If the subscription has closed, don't process any late messages.
 		if (!closed) {
 			final Message message = createMessageObject(subject, replySubject, body);
 			synchronized (handlers) {
-				for (MessageHandler handler : handlers) {
-					try {
-						handler.onMessage(message);
-					} catch (Throwable t) {
-						LOGGER.error("Error in message handler", t);
-					}
+				for (final MessageHandler handler : handlers) {
+					executor.execute(new Runnable() {
+						@Override
+						public void run() {
+							handler.onMessage(message);
+						}
+					});
 				}
 			}
 		}

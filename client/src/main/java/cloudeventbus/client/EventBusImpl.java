@@ -56,6 +56,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -64,6 +65,8 @@ import java.util.concurrent.TimeUnit;
 class EventBusImpl implements EventBus {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(EventBusImpl.class);
+
+	private final long id = ThreadLocalRandom.current().nextLong();
 
 	private final ServerList servers = new ServerList();
 	private final boolean autoReconnect;
@@ -351,15 +354,15 @@ class EventBusImpl implements EventBus {
 		}
 	}
 
-	private void fireStateChange(final ConnectionStateListener.State state) {
+	private void fireStateChange(final boolean connected, final ServerInfo serverInfo) {
 		for (final ConnectionStateListener listener : listeners) {
 			executor.execute(new Runnable() {
 				@Override
 				public void run() {
-					try {
-						listener.onConnectionStateChange(EventBusImpl.this, state);
-					} catch (Throwable t) {
-						LOGGER.error("Error invoking connection state listener.", t);
+					if (connected) {
+						listener.onOpen(EventBusImpl.this, serverInfo);
+					} else {
+						listener.onClose(EventBusImpl.this, serverInfo);
 					}
 				}
 			});
@@ -369,6 +372,9 @@ class EventBusImpl implements EventBus {
 	private class ClientChannelInitializer extends ChannelInitializer<SocketChannel> {
 
 		private byte[] challenge;
+		private long serverId;
+		private CertificateChain serverCertificateChain;
+		private String serverAgent;
 
 		@Override
 		public void initChannel(SocketChannel channel) throws Exception {
@@ -376,18 +382,18 @@ class EventBusImpl implements EventBus {
 			pipeline.addLast("codec", new Codec(maxMessageSize));
 			pipeline.addLast("handler", new ChannelInboundMessageHandlerAdapter<Frame>() {
 				@Override
-				public void messageReceived(ChannelHandlerContext ctx, Frame frame) throws Exception {
+				public void messageReceived(ChannelHandlerContext context, Frame frame) throws Exception {
 					LOGGER.debug("Received frame on client: {}", frame);
 					switch (frame.getFrameType()) {
 						case AUTH_RESPONSE: {
 							AuthenticationResponseFrame authenticationResponse = (AuthenticationResponseFrame) frame;
-							final CertificateChain certificates = authenticationResponse.getCertificates();
-							trustStore.validateCertificateChain(certificates);
-							if (certificates.getLast().getType() != Certificate.Type.SERVER) {
+							serverCertificateChain = authenticationResponse.getCertificates();
+							trustStore.validateCertificateChain(serverCertificateChain);
+							if (serverCertificateChain.getLast().getType() != Certificate.Type.SERVER) {
 								throw new InvalidCertificateException("Server sent a non-server certificate.");
 							}
 							CertificateUtils.validateSignature(
-									certificates.getLast().getPublicKey(),
+									serverCertificateChain.getLast().getPublicKey(),
 									challenge,
 									authenticationResponse.getSalt(),
 									authenticationResponse.getDigitalSignature());
@@ -403,7 +409,7 @@ class EventBusImpl implements EventBus {
 							final byte[] salt = CertificateUtils.generateChallenge();
 							final byte[] signature = CertificateUtils.signChallenge(privateKey, authenticationRequest.getChallenge(), salt);
 							AuthenticationResponseFrame authenticationResponse = new AuthenticationResponseFrame(certificateChain, salt, signature);
-							ctx.write(authenticationResponse);
+							context.write(authenticationResponse);
 							break;
 						}
 						case ERROR:
@@ -411,6 +417,8 @@ class EventBusImpl implements EventBus {
 							throw new CloudEventBusClientException("Server error: " + errorFrame.getMessage());
 						case GREETING:
 							final GreetingFrame greetingFrame = (GreetingFrame) frame;
+							serverAgent = greetingFrame.getAgent();
+
 							if (greetingFrame.getVersion() != Constants.PROTOCOL_VERSION) {
 								close();
 								error = new CloudEventBusClientException("This client does not support protocol version " + greetingFrame.getVersion());
@@ -420,7 +428,7 @@ class EventBusImpl implements EventBus {
 							break;
 						case PING:
 							LOGGER.debug("Received PING from server, sending PONG.");
-							ctx.write(PongFrame.PONG);
+							context.write(PongFrame.PONG);
 							break;
 						case PONG:
 							LOGGER.debug("Received PONG from server.");
@@ -446,7 +454,8 @@ class EventBusImpl implements EventBus {
 													subscription.onMessage(
 															subject.toString(),
 															replySubjectString,
-															publishFrame.getBody());
+															publishFrame.getBody(),
+															executor);
 												}
 											});
 										}
@@ -459,14 +468,20 @@ class EventBusImpl implements EventBus {
 							synchronized (lock) {
 								serverReady = true;
 								for (Subject subject : subscriptions.keySet()) {
-									ctx.write(new SubscribeFrame(subject));
+									context.write(new SubscribeFrame(subject));
 								}
 								for (PublishFrame publish : publishQueue) {
-									ctx.write(publish);
+									context.write(publish);
 								}
 								publishQueue.clear();
 							}
-							fireStateChange(ConnectionStateListener.State.SERVERY_READY);
+							fireStateChange(true, new ServerInfo(
+									context.channel().remoteAddress(),
+									context.channel().localAddress(),
+									serverId,
+									serverCertificateChain,
+									serverAgent
+							));
 							break;
 						default:
 							close();
@@ -475,19 +490,23 @@ class EventBusImpl implements EventBus {
 					}
 				}
 				@Override
-				public void channelActive(ChannelHandlerContext ctx) throws Exception {
-					fireStateChange(ConnectionStateListener.State.CONNECTED);
-					ctx.write(new GreetingFrame(Constants.PROTOCOL_VERSION, "test-client-0.1"));
+				public void channelActive(ChannelHandlerContext context) throws Exception {
+					context.write(new GreetingFrame(Constants.PROTOCOL_VERSION, "test-client-0.1", id));
 					if (trustStore != null) {
 						challenge = CertificateUtils.generateChallenge();
-						ctx.write(new AuthenticationRequestFrame(challenge));
+						context.write(new AuthenticationRequestFrame(challenge));
 					}
 				}
 
 				@Override
-				public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+				public void channelInactive(ChannelHandlerContext context) throws Exception {
 					scheduleReconnect();
-					fireStateChange(ConnectionStateListener.State.DISCONNECTED);
+					fireStateChange(false, new ServerInfo(
+							context.channel().remoteAddress(),
+							context.channel().localAddress(),
+							serverId,
+							serverCertificateChain,
+							serverAgent));
 				}
 
 				@Override

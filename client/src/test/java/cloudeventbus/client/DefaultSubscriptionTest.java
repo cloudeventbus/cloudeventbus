@@ -19,6 +19,7 @@ package cloudeventbus.client;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
@@ -26,6 +27,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Mike Heath <elcapo@gmail.com>
  */
 public class DefaultSubscriptionTest {
+
+	private final Executor executor = new Executor() {
+		@Override
+		public void execute(Runnable command) {
+			command.run();
+		}
+	};
 
 	@Test
 	public void getters() {
@@ -40,9 +48,9 @@ public class DefaultSubscriptionTest {
 	public void receivedMessageCount() {
 		final DefaultSubscription subscription = new DefaultSubscription("subject", 5);
 		assertEquals(subscription.getReceivedMessages(), 0);
-		subscription.onMessage("subject", null, "body");
+		subscription.onMessage("subject", null, "body", executor);
 		assertEquals(subscription.getReceivedMessages(), 1);
-		subscription.onMessage("subject", null, "body");
+		subscription.onMessage("subject", null, "body", executor);
 		assertEquals(subscription.getReceivedMessages(), 2);
 	}
 
@@ -65,7 +73,7 @@ public class DefaultSubscriptionTest {
 		final String body = "This is a nice body.";
 		final DefaultSubscription subscription = new DefaultSubscription("subject", 5);
 		final MessageIterator iterator = subscription.iterator();
-		subscription.onMessage(subject, replySubject, body);
+		subscription.onMessage(subject, replySubject, body, executor);
 		final Message message = iterator.next();
 		assertNotNull(message);
 		assertEquals(message.getSubject(), subject);
@@ -74,7 +82,7 @@ public class DefaultSubscriptionTest {
 		// Make sure the iterator doesn't get messages after close is called.
 		assertTrue(iterator.hasNext());
 		iterator.close();
-		subscription.onMessage(subject, replySubject, body);
+		subscription.onMessage(subject, replySubject, body, executor);
 
 		assertFalse(iterator.hasNext());
 	}
@@ -95,9 +103,9 @@ public class DefaultSubscriptionTest {
 				assertFalse(message.isRequest());
 			}
 		});
-		subscription.onMessage(subject, null, body);
+		subscription.onMessage(subject, null, body, executor);
 		registration.remove();
-		subscription.onMessage(subject, null, body);
+		subscription.onMessage(subject, null, body, executor);
 		assertEquals(messageCounter.get(), 1);
 	}
 
@@ -120,7 +128,7 @@ public class DefaultSubscriptionTest {
 		final MessageIterator iterator = subscription.iterator();
 		assertTrue(iterator.hasNext());
 
-		subscription.onMessage("subject", null, "body");
+		subscription.onMessage("subject", null, "body", executor);
 
 		// Get message off iterator queue
 		assertNotNull(iterator.next());
@@ -135,6 +143,6 @@ public class DefaultSubscriptionTest {
 				fail("Subscription is closed, exception should have been thrown.");
 			}
 		});
-		subscription.onMessage("subject", null, "body");
+		subscription.onMessage("subject", null, "body", executor);
 	}
 }

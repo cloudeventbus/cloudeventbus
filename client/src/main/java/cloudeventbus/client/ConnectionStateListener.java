@@ -17,16 +17,26 @@
 package cloudeventbus.client;
 
 /**
+ * Interface used for listening to server connection state changes.
+ *
  * @author Mike Heath <elcapo@gmail.com>
  */
 public interface ConnectionStateListener {
 
-	public enum State {
-		CONNECTED,
-		SERVERY_READY,
-		DISCONNECTED
-	}
+	/**
+	 * Called when the connection to the server has been established.
+	 *
+	 * @param eventBus the event bus that has connected to the server.
+	 * @param serverInfo information about the server.
+	 */
+	void onOpen(EventBus eventBus, ServerInfo serverInfo);
 
-	void onConnectionStateChange(EventBus eventBus, State state);
+	/**
+	 * Called when the connection to the server has been closed.
+	 *
+	 * @param eventBus the event bus that was connected to the server.
+	 * @param serverInfo information about the server.
+	 */
+	void onClose(EventBus eventBus, ServerInfo serverInfo);
 
 }

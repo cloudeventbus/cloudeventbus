@@ -37,7 +37,7 @@ public class ConnectionTest {
 					EventBus eventBus = new Connector().addServer("localhost").addConnectionStateListener(listener)
 							.connect()
 				) {
-				listener.awaitReady();
+				listener.awaitConnection();
 				assertTrue(eventBus.isServerReady());
 				assertFalse(eventBus.isClosed());
 				assertEquals(server.getConnectionCount(), 1);
@@ -68,7 +68,7 @@ public class ConnectionTest {
 							.addConnectionStateListener(listener2)
 							.connect()
 				) {
-				listener1.awaitReady();
+				listener1.awaitConnection();
 
 				final TestServer activeServer;
 				final TestServer inactiveServer;
@@ -88,7 +88,7 @@ public class ConnectionTest {
 				listener1.awaitDisconnect();
 
 				// Await reconnect
-				listener2.awaitReady();
+				listener2.awaitConnection();
 				assertEquals(inactiveServer.getConnectionCount(), 1);
 
 				eventBus.close();
@@ -112,7 +112,7 @@ public class ConnectionTest {
 							.addConnectionStateListener(listener)
 							.connect()
 				) {
-				listener.awaitReady();
+				listener.awaitConnection();
 				assertEquals(server.getConnectionCount(), 1);
 				eventBus.close();
 				listener.awaitDisconnect();
