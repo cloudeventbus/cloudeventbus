@@ -1,10 +1,8 @@
-- Add support for building .zip to Gradle build
-- Configure Travis CI.
-- Implement a local EventBus for testing.
 - Implement server clustering
   - Advertise cluster info to clients for fail-over
   - Advertise connection state (number of clients, etc.) if peer has significantly less load, redirect new clients to peer
 - Add support for remembering the last client or server cert/key used to simplify repeated execution of CLI tools
+- Implement a local EventBus for testing.
 - Performance test
 - Experiment with how much performance benefit direct buffers will really give us
 - Implement VCAP component based server
@@ -20,3 +18,4 @@
 - Write a wiki about why we don't support "send" (publishing to a single recipient) -- How do you deal with wild cards? Or should we turn wild card support off?
 - Write documentation and tutorials
 - Revamp exceptions - Fewer exception, move error codes to common module.
+- Add support for building .zip to Gradle build
