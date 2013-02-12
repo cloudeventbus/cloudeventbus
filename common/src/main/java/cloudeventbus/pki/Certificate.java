@@ -42,6 +42,7 @@ import java.util.List;
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
+// TODO Add an issuedDate field
 public class Certificate {
 
 	public enum Type {
