@@ -3,11 +3,14 @@
   - Advertise connection state (number of clients, etc.) if peer has significantly less load, redirect new clients to peer
 - Add support for remembering the last client or server cert/key used to simplify repeated execution of CLI tools
 - Implement a local EventBus for testing.
+- Make CLI first class citizen
+  - Added support for "remembering" previous settings
+  - Added support for "profiles" for keeping sets of settings
+  - Add Web Socket gateway CLI
 - Performance test
 - Experiment with how much performance benefit direct buffers will really give us
 - Implement VCAP component based server
   - Use NATS for peer discover
-    - NATS 0.5 release
   - Publish component info on NATS, /varz and /healthz - Get a release of Java component framework out
 - Implement a VCAP service gateway
 - Lower disconnect timeout if client doesn't authenticate. No ping unless server is ready
