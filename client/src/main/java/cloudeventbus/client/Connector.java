@@ -29,6 +29,7 @@ import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -89,6 +90,8 @@ public class Connector {
 	 * The listeners that get invoked when the connection state has changed.
 	 */
 	final List<ConnectionStateListener> listeners = new ArrayList<>();
+
+	long id = ThreadLocalRandom.current().nextLong();
 
 	/**
 	 * Executor to use for invoking callbacks. By default the current thread, usually a Netty IO thread, is used to
@@ -252,6 +255,17 @@ public class Connector {
 	 */
 	public Connector callbackExecutor(Executor executor) {
 		this.callbackExecutor = executor;
+		return this;
+	}
+
+	/**
+	 * Sets the unique id that gets sent to the server.
+	 *
+	 * @param id the unique id
+	 * @return this connector.
+	 */
+	public Connector uniqueId(long id) {
+		this.id = id;
 		return this;
 	}
 

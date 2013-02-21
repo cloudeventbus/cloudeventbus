@@ -66,7 +66,7 @@ class EventBusImpl implements EventBus {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(EventBusImpl.class);
 
-	private final long id = ThreadLocalRandom.current().nextLong();
+	private final long id;
 
 	private final ServerList servers = new ServerList();
 	private final boolean autoReconnect;
@@ -99,6 +99,8 @@ class EventBusImpl implements EventBus {
 		if (connector.servers.size() == 0) {
 			throw new IllegalArgumentException("No servers were specified to connect to.");
 		}
+
+		id = connector.id;
 
 		servers.addServers(connector.servers);
 		autoReconnect = connector.autoReconnect;
