@@ -21,6 +21,7 @@ package cloudeventbus.client;
  *
  * @author Mike Heath <elcapo@gmail.com>
  */
+// TODO We need something for handling a connection failure.
 public interface ConnectionStateListener {
 
 	/**
