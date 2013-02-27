@@ -180,6 +180,7 @@ class EventBusImpl implements EventBus {
 	public void close() {
 		synchronized (lock) {
 			closed = true;
+			serverReady = false;
 			if (channel != null) {
 				channel.close();
 			}
