@@ -56,7 +56,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -207,13 +206,22 @@ class EventBusImpl implements EventBus {
 
 	@Override
 	public void publish(String subject, String body) throws ClientClosedException, IllegalArgumentException {
+		publish(subject, null, body);
+	}
+
+	@Override
+	public void publish(String subject, String replySubject, String body) throws ClientClosedException, IllegalArgumentException {
 		assertNotClosed();
 		final Subject wrappedSubject = new Subject(subject);
+		final Subject wrappedReplySubject = replySubject == null ? null : new Subject(replySubject);
 		if (wrappedSubject.isWildCard()) {
 			throw new IllegalArgumentException("Can't publish to a wild card subject.");
 		}
+		if (wrappedReplySubject != null && wrappedReplySubject.isWildCard()) {
+			throw new IllegalArgumentException("Can't use a wild card in reply subject.");
+		}
 		synchronized (lock) {
-			final PublishFrame message = new PublishFrame(wrappedSubject, null, body);
+			final PublishFrame message = new PublishFrame(wrappedSubject, wrappedReplySubject, body);
 			if (channel == null || !channel.isActive()) {
 				publishQueue.add(message);
 			} else {
@@ -419,6 +427,7 @@ class EventBusImpl implements EventBus {
 							throw new CloudEventBusClientException("Server error: " + errorFrame.getMessage());
 						case GREETING:
 							final GreetingFrame greetingFrame = (GreetingFrame) frame;
+							serverId = greetingFrame.getId();
 							serverAgent = greetingFrame.getAgent();
 
 							if (greetingFrame.getVersion() != Constants.PROTOCOL_VERSION) {

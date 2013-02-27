@@ -62,6 +62,18 @@ public interface EventBus extends AutoCloseable {
 	void publish(String subject, String body) throws ClientClosedException, IllegalArgumentException;
 
 	/**
+	 * Publishes a message to the specified subject and specifies the subject replies should be published on.
+	 *
+	 * @param subject the subject on which the message will be published
+	 * @param replySubject the subject replies will be published on
+	 * @param body the body of the message being published
+	 * @throws ClientClosedException if this client has been closed.
+	 * @throws IllegalArgumentException if the supplied subject contains invalid characters or if the subject is a
+	 *                                  wildcard subject.
+	 */
+	void publish(String subject, String replySubject, String body) throws ClientClosedException, IllegalArgumentException;
+
+	/**
 	 * Issues a request to the specified subject expecting a single reply.
 	 *
 	 * @param subject the subject on which to publish the request
