@@ -50,22 +50,23 @@ public interface Message {
 	String getBody();
 
 	/**
-	 * Replies to the request with the specified body.
+	 * Replies to the message with the specified body. In the case of a
+	 * {@link EventBus#request(String, String, MessageHandler, MessageHandler...) request} the reply will be sent to
+	 * the client that initiated the request. In the case of a normal publish, the reply will be published over the
+	 * same subject used to publish the request. When publishing, the reply subject may be specified using
+	 * {@link EventBus#publish(String, String, String)}.
 	 *
 	 * @param body the body of the response.
-	 *
-	 * @throws UnsupportedOperationException if the message did not originate from a request.
 	 */
 	void reply(String body) throws UnsupportedOperationException;
 
 	/**
 	 * Replies to the request with the specified body after a specified delay.
 	 *
+	 * @see #reply(String) for details on what subject the reply will be published to
 	 * @param body the body of the response.
 	 * @param delay the amount of time to delay
 	 * @param timeUnit the unit of time to delay
-	 *
-	 * @throws UnsupportedOperationException if the message did not originate from a request.
 	 */
 	void reply(String body, long delay, TimeUnit timeUnit) throws UnsupportedOperationException;
 }

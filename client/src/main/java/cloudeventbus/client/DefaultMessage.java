@@ -49,12 +49,12 @@ public class DefaultMessage implements Message {
 	}
 
 	@Override
-	public void reply(String body) throws UnsupportedOperationException {
+	public void reply(String body) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public void reply(String body, long delay, TimeUnit timeUnit) throws UnsupportedOperationException {
+	public void reply(String body, long delay, TimeUnit timeUnit) {
 		throw new UnsupportedOperationException();
 	}
 }

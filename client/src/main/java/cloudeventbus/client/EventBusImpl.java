@@ -318,13 +318,11 @@ class EventBusImpl implements EventBus {
 
 			@Override
 			protected DefaultMessage createMessageObject(String subject, final String replySubject, String body) {
-				if (replySubject == null) {
-					return new DefaultMessage(subject, body, false);
-				}
+				final String actualReplySubject = replySubject != null ? replySubject : subject;
 				return new DefaultMessage(subject, body, true) {
 					@Override
 					public void reply(String body) throws UnsupportedOperationException {
-						publish(replySubject, body);
+						publish(actualReplySubject, body);
 					}
 
 					@Override
@@ -332,10 +330,9 @@ class EventBusImpl implements EventBus {
 						eventLoopGroup.next().schedule(new Runnable() {
 							@Override
 							public void run() {
-								publish(replySubject, body);
+								publish(actualReplySubject, body);
 							}
 						}, delay, timeUnit);
-						super.reply(body, delay, timeUnit);
 					}
 				};
 			}
