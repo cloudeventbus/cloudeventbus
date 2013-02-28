@@ -16,8 +16,10 @@
  */
 package cloudeventbus.test;
 
+import cloudeventbus.client.ConnectionStateAdapter;
 import cloudeventbus.client.Connector;
 import cloudeventbus.client.EventBus;
+import cloudeventbus.client.ServerInfo;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.TimeUnit;
@@ -32,12 +34,20 @@ public class ConnectionTest {
 	@Test
 	public void simpleConnection() throws Exception {
 		try (
-				TestServer server = new TestServer()
+				final TestServer server = new TestServer()
 		) {
 			assertEquals(server.getConnectionCount(), 0);
 			final BlockingConnectionStateListener listener = new BlockingConnectionStateListener();
 			try (
-					EventBus eventBus = new Connector().addServer("localhost").addConnectionStateListener(listener)
+					EventBus eventBus = new Connector().addServer("localhost")
+							.addConnectionStateListener(new ConnectionStateAdapter() {
+								@Override
+								public void onOpen(EventBus eventBus, ServerInfo serverInfo) {
+									assertEquals(serverInfo.getServerAgent(), TestServer.SERVER_AGENT);
+									assertEquals(serverInfo.getServerId(), server.getId());
+								}
+							})
+							.addConnectionStateListener(listener)
 							.connect()
 				) {
 				listener.awaitConnection();

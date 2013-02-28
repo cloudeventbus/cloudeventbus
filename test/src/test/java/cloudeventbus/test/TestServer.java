@@ -29,10 +29,11 @@ import java.util.concurrent.ThreadLocalRandom;
  * @author Mike Heath <elcapo@gmail.com>
  */
 // TODO Write clustering tests
-// TODO Write test to verify server id in greeting frame
 public class TestServer implements AutoCloseable {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(TestServer.class);
+	private final Logger LOGGER = LoggerFactory.getLogger(TestServer.class);
+
+	public static final String SERVER_AGENT = "test-server-0.1";
 
 	private final long id = ThreadLocalRandom.current().nextLong();
 	private final ClusterManager clusterManager;
@@ -66,7 +67,7 @@ public class TestServer implements AutoCloseable {
 	private ConnectionCounterHandler connectionCounter = new ConnectionCounterHandler();
 
 	public TestServer() {
-		this("test-server-0.1", Constants.DEFAULT_PORT);
+		this(SERVER_AGENT, Constants.DEFAULT_PORT);
 	}
 
 	public TestServer(String agent, int port) {
@@ -100,5 +101,9 @@ public class TestServer implements AutoCloseable {
 	@Override
 	public void close() {
 		bootstrap.shutdown();
+	}
+
+	public long getId() {
+		return id;
 	}
 }
