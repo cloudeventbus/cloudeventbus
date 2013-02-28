@@ -1,14 +1,15 @@
 - Implement server clustering
   - Advertise cluster info to clients for fail-over
   - Advertise connection state (number of clients, etc.) if peer has significantly less load, redirect new clients to peer
-- Upgrade to latest release of Netty
 - Remove 'spike' module
 - Add support for remembering the last client or server cert/key used to simplify repeated execution of CLI tools
 - Implement a local EventBus for testing.
 - Make CLI first class citizen
+  - Add request client
   - Added support for "remembering" previous settings
   - Added support for "profiles" for keeping sets of settings
   - Add Web Socket gateway CLI
+- Come up with a clean mechanism for closing requests
 - Performance test
 - Experiment with how much performance benefit direct buffers will really give us
 - Implement VCAP component based server
@@ -20,7 +21,8 @@
 - Browser client/server (websocket based, maybe engine.io based)
 - Build a Node.js client
 - Build a NATS/Cloud Event Bus gateway - This will allow applications to safely subscribe to NATS messages.
-- Write a wiki about why we don't support "send" (publishing to a single recipient) -- How do you deal with wild cards? Or should we turn wild card support off?
+- Write a wiki about why we don't support "send" (publishing to a single recipient) -- How do you deal with wild cards? Cloud Event Bus is a broadcast system. Use REST for single recipient.
 - Write documentation and tutorials
 - Revamp exceptions - Fewer exception, move error codes to common module.
 - Add support for building .zip to Gradle build
+- Spring integration, similar to NATS client
