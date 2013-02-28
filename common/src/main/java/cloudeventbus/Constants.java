@@ -39,7 +39,8 @@ public class Constants {
 	 * By default wait 5 seconds before attempting to reconnect to a Cloud Event Bus cluster.
 	 */
 	public static final long DEFAULT_RECONNECT_WAIT_TIME = TimeUnit.SECONDS.toMillis(5);
-	public static final int REPLY_SUBJECT_SIZE = 20;
+	public static final String REQUEST_REPLY_SUBJECT_PREFIX = "_";
+	public static final int REQUEST_REPLY_SUBJECT_SIZE = 20;
 
 	private Constants() {
 		// Don't instantiate this class.

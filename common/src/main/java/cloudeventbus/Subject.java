@@ -51,13 +51,17 @@ public class Subject {
 		return Collections.unmodifiableList(list);
 	}
 
-	public static Subject createReplySubject() {
+	public static Subject createRequestReplySubject() {
 		final ThreadLocalRandom random = ThreadLocalRandom.current();
-		final char[] randomChars = new char[Constants.REPLY_SUBJECT_SIZE];
-		for (int i=0; i < Constants.REPLY_SUBJECT_SIZE; i++) {
+		final char[] randomChars = new char[Constants.REQUEST_REPLY_SUBJECT_SIZE];
+		for (int i=0; i < Constants.REQUEST_REPLY_SUBJECT_SIZE; i++) {
 			randomChars[i] = VALID_SUBJECT_CHARS[random.nextInt(VALID_SUBJECT_CHARS.length)];
 		}
-		return new Subject("_" + new String(randomChars));
+		return new Subject(Constants.REQUEST_REPLY_SUBJECT_PREFIX + new String(randomChars));
+	}
+
+	public static boolean isRequestReplySubject(String subject) {
+		return subject != null && subject.startsWith(Constants.REQUEST_REPLY_SUBJECT_PREFIX);
 	}
 
 	private final String subject;
@@ -85,6 +89,10 @@ public class Subject {
 			return subSubject.subject.startsWith(subjectSansWildcard);
 		}
 		return equals(subSubject);
+	}
+
+	public boolean isRequestReply() {
+		return isRequestReplySubject(subject);
 	}
 
 	@Override
