@@ -19,6 +19,9 @@ package cloudeventbus.test;
 import cloudeventbus.client.ConnectionStateListener;
 import cloudeventbus.client.EventBus;
 import cloudeventbus.client.ServerInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testng.Assert;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -27,6 +30,8 @@ import java.util.concurrent.TimeUnit;
  * @author Mike Heath <elcapo@gmail.com>
  */
 public class BlockingConnectionStateListener implements ConnectionStateListener {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(BlockingConnectionStateListener.class);
 
 	private final CountDownLatch disconnectLatch;
 	private final CountDownLatch connectLatch;
@@ -42,19 +47,25 @@ public class BlockingConnectionStateListener implements ConnectionStateListener 
 
 	@Override
 	public void onOpen(EventBus eventBus, ServerInfo serverInfo) {
+		LOGGER.debug("onOpen()");
 		connectLatch.countDown();
 	}
 
 	@Override
 	public void onClose(EventBus eventBus, ServerInfo serverInfo) {
+		LOGGER.debug("onClose()");
 		disconnectLatch.countDown();
 	}
 
 	public void awaitDisconnect() throws InterruptedException {
-		disconnectLatch.await(10, TimeUnit.SECONDS);
+		LOGGER.debug("Awaiting disconnect.");
+		Assert.assertTrue(disconnectLatch.await(10, TimeUnit.SECONDS), "Timed out waiting for connection to close.");
+		LOGGER.debug("Disconnected ok.");
 	}
 
 	public void awaitConnection() throws InterruptedException {
-		connectLatch.await(10, TimeUnit.SECONDS);
+		LOGGER.debug("Awaiting connection.");
+		Assert.assertTrue(connectLatch.await(10, TimeUnit.SECONDS), "Timed out waiting for connection to be ready.");
+		LOGGER.debug("Connected ok.");
 	}
 }

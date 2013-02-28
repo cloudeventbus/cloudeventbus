@@ -19,6 +19,9 @@ package cloudeventbus.test;
 import cloudeventbus.client.Connector;
 import cloudeventbus.client.EventBus;
 import org.testng.annotations.Test;
+
+import java.util.concurrent.TimeUnit;
+
 import static org.testng.Assert.*;
 
 /**
@@ -62,6 +65,7 @@ public class ConnectionTest {
 			final BlockingConnectionStateListener listener2 = new BlockingConnectionStateListener(2);
 			try (
 					EventBus eventBus = new Connector()
+							.reconnectWaitTime(100, TimeUnit.MILLISECONDS)
 							.addServer("localhost", port1)
 							.addServer("localhost", port2)
 							.addConnectionStateListener(listener1)
@@ -107,6 +111,7 @@ public class ConnectionTest {
 			final BlockingConnectionStateListener listener = new BlockingConnectionStateListener();
 			try (
 					EventBus eventBus = new Connector()
+							.reconnectWaitTime(100, TimeUnit.MILLISECONDS)
 							.addServer("localhost", 4200)
 							.addServer("localhost")
 							.addConnectionStateListener(listener)

@@ -34,7 +34,7 @@ import java.io.ByteArrayInputStream;
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-public class Decoder extends ByteToMessageDecoder<Frame> {
+public class Decoder extends ByteToMessageDecoder {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(Decoder.class);
 

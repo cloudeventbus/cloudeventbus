@@ -42,8 +42,8 @@ import io.netty.channel.ChannelInboundMessageHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -162,6 +162,7 @@ class EventBusImpl implements EventBus {
 				eventLoopGroup.next().schedule(new Runnable() {
 					@Override
 					public void run() {
+						LOGGER.debug("Attempting reconnect.");
 						connect();
 					}
 				}, reconnectWaitTime, TimeUnit.MILLISECONDS);
@@ -178,6 +179,7 @@ class EventBusImpl implements EventBus {
 
 	@Override
 	public void close() {
+		LOGGER.debug("Closing EventBus");
 		synchronized (lock) {
 			closed = true;
 			serverReady = false;
@@ -503,6 +505,7 @@ class EventBusImpl implements EventBus {
 				}
 				@Override
 				public void channelActive(ChannelHandlerContext context) throws Exception {
+					LOGGER.debug("Client channel active");
 					context.write(new GreetingFrame(Constants.PROTOCOL_VERSION, "test-client-0.1", id));
 					if (trustStore != null) {
 						challenge = CertificateUtils.generateChallenge();
@@ -512,6 +515,7 @@ class EventBusImpl implements EventBus {
 
 				@Override
 				public void channelInactive(ChannelHandlerContext context) throws Exception {
+					LOGGER.debug("Client channel inactive");
 					scheduleReconnect();
 					fireStateChange(false, new ServerInfo(
 							context.channel().remoteAddress(),

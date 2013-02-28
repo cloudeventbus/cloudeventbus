@@ -17,14 +17,18 @@
 package cloudeventbus.codec;
 
 import cloudeventbus.Constants;
-import io.netty.channel.ChannelInboundHandler;
-import io.netty.channel.ChannelOutboundHandler;
-import io.netty.channel.CombinedChannelHandler;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.MessageBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundByteHandler;
+import io.netty.channel.ChannelOutboundMessageHandler;
+import io.netty.channel.CombinedChannelDuplexHandler;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-public class Codec extends CombinedChannelHandler {
+public class Codec extends CombinedChannelDuplexHandler
+        implements ChannelInboundByteHandler, ChannelOutboundMessageHandler<Frame> {
 
 	public static final byte[] DELIMITER = new byte[] {'\r', '\n'};
 
@@ -33,7 +37,39 @@ public class Codec extends CombinedChannelHandler {
 	}
 
 	public Codec(int maxMessageSize) {
-		super(new Decoder(maxMessageSize), new Encoder());
+		init(new Decoder(maxMessageSize), new Encoder());
 	}
 
+	private Decoder decoder() {
+		return (Decoder) stateHandler();
+	}
+
+	private Encoder encoder() {
+		return (Encoder) operationHandler();
+	}
+
+	@Override
+	public ByteBuf newInboundBuffer(ChannelHandlerContext ctx) throws Exception {
+		return decoder().newInboundBuffer(ctx);
+	}
+
+	@Override
+	public void freeInboundBuffer(ChannelHandlerContext ctx) throws Exception {
+		decoder().freeInboundBuffer(ctx);
+	}
+
+	@Override
+	public void discardInboundReadBytes(ChannelHandlerContext ctx) throws Exception {
+		decoder().discardInboundReadBytes(ctx);
+	}
+
+	@Override
+	public MessageBuf<Frame> newOutboundBuffer(ChannelHandlerContext ctx) throws Exception {
+		return encoder().newOutboundBuffer(ctx);
+	}
+
+	@Override
+	public void freeOutboundBuffer(ChannelHandlerContext ctx) throws Exception {
+		encoder().freeOutboundBuffer(ctx);
+	}
 }

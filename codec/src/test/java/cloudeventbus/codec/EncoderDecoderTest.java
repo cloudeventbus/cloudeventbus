@@ -21,8 +21,8 @@ import cloudeventbus.pki.Certificate;
 import cloudeventbus.pki.CertificateChain;
 import cloudeventbus.pki.CertificateUtils;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelException;
 import io.netty.channel.embedded.EmbeddedByteChannel;
-import io.netty.handler.codec.EncoderException;
 import org.testng.annotations.Test;
 
 import java.security.KeyPair;
@@ -159,7 +159,7 @@ public class EncoderDecoderTest {
 		assertEquals(recodedFrame.getSubject(), subject);
 	}
 
-	@Test(expectedExceptions = EncoderException.class)
+	@Test(expectedExceptions = ChannelException.class)
 	public void unknownFrame() {
 		recode(new Frame() {
 			@Override

@@ -7,6 +7,8 @@ import cloudeventbus.server.ClusterManager;
 import cloudeventbus.server.GlobalHub;
 import cloudeventbus.server.ServerChannelInitializer;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
@@ -14,8 +16,10 @@ import io.netty.channel.ChannelStateHandlerAdapter;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioEventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.security.PrivateKey;
@@ -27,6 +31,8 @@ import java.util.concurrent.ThreadLocalRandom;
 // TODO Write clustering tests
 // TODO Write test to verify server id in greeting frame
 public class TestServer implements AutoCloseable {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(TestServer.class);
 
 	private final long id = ThreadLocalRandom.current().nextLong();
 	private final ClusterManager clusterManager;
@@ -40,8 +46,20 @@ public class TestServer implements AutoCloseable {
 	class ConnectionCounterHandler extends ChannelStateHandlerAdapter {
 		@Override
 		public void channelActive(ChannelHandlerContext context) throws Exception {
-			super.channelActive(context);
+			context.channel().closeFuture().addListener(new ChannelFutureListener() {
+				@Override
+				public void operationComplete(ChannelFuture future) throws Exception {
+					LOGGER.debug("Channel closed");
+				}
+			});
+			LOGGER.debug("Adding channel to TestServer group");
 			channels.add(context.channel());
+			super.channelActive(context);
+		}
+
+		@Override
+		public void inboundBufferUpdated(ChannelHandlerContext ctx) throws Exception {
+			ctx.fireInboundBufferUpdated();
 		}
 	}
 
