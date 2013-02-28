@@ -16,6 +16,8 @@
  */
 package cloudeventbus.client;
 
+import cloudeventbus.Subject;
+
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -24,23 +26,28 @@ import java.util.concurrent.TimeUnit;
 public class DefaultMessage implements Message {
 
 	private final String subject;
+	private final String replySubject;
 	private final String body;
-	private final boolean request;
 
-	public DefaultMessage(String subject, String body, boolean request) {
+	public DefaultMessage(String subject, String replySubject, String body) {
 		this.subject = subject;
+		this.replySubject = replySubject;
 		this.body = body;
-		this.request = request;
 	}
 
 	@Override
 	public boolean isRequest() {
-		return request;
+		return Subject.isRequestReplySubject(replySubject);
 	}
 
 	@Override
 	public String getSubject() {
 		return subject;
+	}
+
+	@Override
+	public String getReplySubject() {
+		return replySubject;
 	}
 
 	@Override

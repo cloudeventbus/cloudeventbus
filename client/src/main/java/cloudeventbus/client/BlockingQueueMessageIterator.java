@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
  */
 class BlockingQueueMessageIterator implements MessageIterator, MessageHandler {
 
-	private static final Message CLOSED = new DefaultMessage(null, null, false);
+	private static final Message CLOSED = new DefaultMessage(null, null, null);
 
 	private final BlockingQueue<Message> queue = new LinkedBlockingQueue<>();
 	private volatile boolean closed = false;

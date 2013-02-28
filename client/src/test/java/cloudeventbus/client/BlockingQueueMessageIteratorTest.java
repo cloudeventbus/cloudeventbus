@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class BlockingQueueMessageIteratorTest {
 
-	private static Message EMPTY_MESSAGE = new DefaultMessage("subject", "body", false);
+	private static Message EMPTY_MESSAGE = new DefaultMessage("subject", null, "body");
 
 	@Test(expectedExceptions = NoSuchElementException.class)
 	public void nextOnClosedIterator() {

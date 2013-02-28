@@ -16,6 +16,7 @@
  */
 package cloudeventbus.client;
 
+import cloudeventbus.Subject;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
@@ -30,22 +31,23 @@ public class DefaultMessageTest {
 	@Test
 	public void defaultMessageFields() {
 		final String subject = "some.subject";
+		final String requestReply = Subject.createRequestReplySubject().toString();
 		final String body = "Message body";
-		final boolean request = true;
-		final DefaultMessage message = new DefaultMessage(subject, body, request);
+		final DefaultMessage message = new DefaultMessage(subject, requestReply, body);
 		assertEquals(message.getSubject(), subject);
+		assertEquals(message.getReplySubject(), requestReply);
 		assertEquals(message.getBody(), body);
-		assertEquals(message.isRequest(), request);
+		assertTrue(message.isRequest());
 	}
 
 	@Test(expectedExceptions = UnsupportedOperationException.class)
 	public void reply() {
-		new DefaultMessage("subject", "body", false).reply("This should break.");
+		new DefaultMessage("subject", null, "body").reply("This should break.");
 	}
 
 	@Test(expectedExceptions = UnsupportedOperationException.class)
 	public void delayedReply() {
-		new DefaultMessage("subject", "body", false).reply("This should break.", 1, TimeUnit.MILLISECONDS);
+		new DefaultMessage("subject", null, "body").reply("This should break.", 1, TimeUnit.MILLISECONDS);
 	}
 
 }

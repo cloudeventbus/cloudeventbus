@@ -243,7 +243,7 @@ class EventBusImpl implements EventBus {
 		if (wrappedSubject.isWildCard()) {
 			throw new IllegalArgumentException("Can't publish to a wild card subject.");
 		}
-		final Subject replySubject = Subject.createReplySubject();
+		final Subject replySubject = Subject.createRequestReplySubject();
 		final DefaultSubscription replySubscription = createSubscription(replySubject, maxReplies, replyHandlers);
 		replySubscription.addMessageHandler(replyHandler);
 		addSubscription(replySubject, replySubscription);
@@ -288,6 +288,9 @@ class EventBusImpl implements EventBus {
 	public Subscription subscribe(String subject, Integer maxMessages, MessageHandler... messageHandlers) throws ClientClosedException, IllegalArgumentException {
 		assertNotClosed();
 		final Subject wrappedSubject = new Subject(subject);
+		if (wrappedSubject.isRequestReply()) {
+			throw new IllegalArgumentException("Cannot subscribe to a request's reply");
+		}
 		final DefaultSubscription subscription = createSubscription(wrappedSubject, maxMessages, messageHandlers);
 
 		// Send subscribe to server if this is the first time we're subscribing to this subject.
@@ -318,9 +321,9 @@ class EventBusImpl implements EventBus {
 			}
 
 			@Override
-			protected DefaultMessage createMessageObject(String subject, final String replySubject, String body) {
+			protected DefaultMessage createMessageObject(String subject, String replySubject, String body) {
 				final String actualReplySubject = replySubject != null ? replySubject : subject;
-				return new DefaultMessage(subject, body, true) {
+				return new DefaultMessage(subject, actualReplySubject, body) {
 					@Override
 					public void reply(String body) throws UnsupportedOperationException {
 						publish(actualReplySubject, body);

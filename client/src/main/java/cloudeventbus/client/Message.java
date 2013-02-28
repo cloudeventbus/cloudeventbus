@@ -43,6 +43,13 @@ public interface Message {
 	String getSubject();
 
 	/**
+	 * Returns the subject to send replies to.
+	 *
+	 * @return the reply subject.
+	 */
+	String getReplySubject();
+
+	/**
 	 * Returns the body of the message.
 	 *
 	 * @return the body of the message.
