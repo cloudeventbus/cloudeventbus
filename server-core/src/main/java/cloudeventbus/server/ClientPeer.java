@@ -38,7 +38,7 @@ public class ClientPeer implements Peer {
 
 	@Override
 	public void publish(Subject subject, Subject replySubject, String body) {
-		eventBus.publish(subject.toString(), replySubject.toString(), body);
+		eventBus.publish(subject.toString(), replySubject == null ? null : replySubject.toString(), body);
 	}
 
 	@Override

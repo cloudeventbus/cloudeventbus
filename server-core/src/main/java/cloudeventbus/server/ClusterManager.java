@@ -242,9 +242,11 @@ public class ClusterManager implements Hub {
 					this.peer = peer;
 				} else if (this.peer.isConnected()) {
 					// If the current peer is already connected, close the new peer and don't change anything.
+					LOGGER.debug("Already connected to peer {}, closing new connection.", peer.getId());
 					peer.close();
 				} else {
 					// If the current peer is closed, replace it with the new peer
+					LOGGER.debug("Replacing stale peer new new one {}", peer.getId());
 					this.peer.close();
 					this.peer = peer;
 				}

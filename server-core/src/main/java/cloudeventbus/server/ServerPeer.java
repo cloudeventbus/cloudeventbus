@@ -26,6 +26,7 @@ public class ServerPeer implements Peer {
 
 	@Override
 	public SocketAddress getAddress() {
+		// TODO We need to get the right remote address from the server.
 		return channel.remoteAddress();
 	}
 

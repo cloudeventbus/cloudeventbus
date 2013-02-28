@@ -72,6 +72,7 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 	private boolean serverReady = false;
 	private CertificateChain clientCertificates;
 	private String clientAgent;
+	private long clientId;
 	private boolean serverConnection;
 
 	// Subscription handler fields
@@ -118,7 +119,7 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 						break;
 					case SERVER:
 						serverConnection = true;
-						clusterManager.addPeer(new ServerPeer(id, context.channel()));
+						clusterManager.addPeer(new ServerPeer(clientId, context.channel()));
 						break;
 				}
 				serverReady = true;
@@ -139,6 +140,7 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 			case GREETING:
 				final GreetingFrame greetingFrame = (GreetingFrame) frame;
 				clientAgent = greetingFrame.getAgent();
+				clientId = greetingFrame.getId();
 				if (greetingFrame.getVersion() != Constants.PROTOCOL_VERSION) {
 					throw new InvalidProtocolVersionException("This server doesn't support protocol version " + greetingFrame.getVersion());
 				}

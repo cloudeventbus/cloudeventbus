@@ -410,6 +410,7 @@ class EventBusImpl implements EventBus {
 									challenge,
 									authenticationResponse.getSalt(),
 									authenticationResponse.getDigitalSignature());
+							LOGGER.debug("Authentication success");
 							break;
 						}
 						case AUTHENTICATE: {
