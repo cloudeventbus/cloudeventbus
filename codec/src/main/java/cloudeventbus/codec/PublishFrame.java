@@ -50,7 +50,7 @@ public class PublishFrame implements Frame {
 		final StringBuilder builder = new StringBuilder();
 		builder.append("Publish subject='").append( getSubject()).append("'");
 		if (getReplySubject() != null) {
-			builder.append(", ").append(getReplySubject()).append("'");
+			builder.append(", '").append(getReplySubject()).append("'");
 		}
 		builder.append(", body='").append(getBody()).append("'");
 		return builder.toString();
