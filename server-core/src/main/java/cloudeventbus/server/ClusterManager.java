@@ -106,6 +106,7 @@ public class ClusterManager implements Hub {
 			eventLoopGroup.next().scheduleWithFixedDelay(new Runnable() {
 				@Override
 				public void run() {
+					LOGGER.debug("Checking status of peer connections");
 					synchronized (lock) {
 						// Periodically check for peers that need to be connected to
 						for (Iterator<PeerInfo> i = knownPeers.values().iterator(); i.hasNext();) {
@@ -113,11 +114,10 @@ public class ClusterManager implements Hub {
 							if (peerInfo.peer == null || !peerInfo.peer.isConnected()) {
 								final long timeWithoutConnection = System.currentTimeMillis() - peerInfo.timeConnectionUpdated;
 								if (timeWithoutConnection > MAX_PEER_TRACK_TIME_WITHOUT_CONNECTION && !peerInfo.staticPeer) {
-									LOGGER.info("Unable to connect to peer {}. Removing from tracking list");
+									LOGGER.info("Unable to connect to peer {}. Removing from cluster.");
 									i.remove();
 								} else {
-									LOGGER.info("Attempting reconnect to peer {}", peerInfo.address);
-									connect(peerInfo.address);
+									peerInfo.checkConnection();
 								}
 							}
 						}
@@ -148,7 +148,7 @@ public class ClusterManager implements Hub {
 	 * @param address the address of the peer server to connect to.
 	 */
 	public void registerPeer(SocketAddress address) {
-		connect(address);
+		connect(address, true);
 	}
 
 	/**
@@ -167,7 +167,7 @@ public class ClusterManager implements Hub {
 		}
 	}
 
-	private void connect(final SocketAddress address) {
+	private void connect(final SocketAddress address, final boolean staticPeer) {
 		LOGGER.debug("Connecting to peer server at {}", address);
 		// TODO When we add an option to disable auto discovery of peer servers (when we implement that feature) and disable that here.
 		new Connector()
@@ -194,7 +194,7 @@ public class ClusterManager implements Hub {
 						});
 
 						final ClientPeer clientPeer = new ClientPeer(serverId, address, eventBus);
-						peerInfo = addKnownPeer(serverId, serverInfo.getLocalAddress(), true);
+						peerInfo = addKnownPeer(serverId, serverInfo.getLocalAddress(), staticPeer);
 						peerInfo.setPeer(clientPeer);
 					}
 
@@ -203,6 +203,14 @@ public class ClusterManager implements Hub {
 						LOGGER.debug("Disconnected from peer server at {} with id {}", address, serverInfo.getServerId());
 						// Clean up the client's resources and manage reconnects elsewhere
 						eventBus.close();
+					}
+
+					@Override
+					public void onConnectionFailed(EventBus eventBus) {
+						LOGGER.info("Unable to connect to peer server at {}.", address);
+						if (!staticPeer) {
+							eventBus.close();
+						}
 					}
 				})
 				.connect();
@@ -256,7 +264,8 @@ public class ClusterManager implements Hub {
 		public void checkConnection() {
 			synchronized (lock) {
 				if (peer == null || !peer.isConnected()) {
-					connect(address);
+					LOGGER.debug("Attempting to reconnect to peer {}", address);
+					connect(address, staticPeer);
 				}
 			}
 		}
