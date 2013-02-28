@@ -21,7 +21,6 @@ package cloudeventbus.client;
  *
  * @author Mike Heath <elcapo@gmail.com>
  */
-// TODO We need something for handling a connection failure.
 public interface ConnectionStateListener {
 
 	/**
@@ -39,5 +38,12 @@ public interface ConnectionStateListener {
 	 * @param serverInfo information about the server.
 	 */
 	void onClose(EventBus eventBus, ServerInfo serverInfo);
+
+	/**
+	 * Called when an attempt to connect to a server fails.
+	 *
+	 * @param eventBus the event bus attempting to connect ot the server.
+	 */
+	void onConnectionFailed(EventBus eventBus);
 
 }

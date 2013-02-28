@@ -150,6 +150,7 @@ class EventBusImpl implements EventBus {
 					LOGGER.warn("Connection to {} failed", server.getAddress());
 					server.connectionFailure();
 					scheduleReconnect();
+					fireStateChange(ConnectionState.CONNECTION_FAILED, null);
 				}
 			}
 		});
@@ -367,15 +368,23 @@ class EventBusImpl implements EventBus {
 		}
 	}
 
-	private void fireStateChange(final boolean connected, final ServerInfo serverInfo) {
+	private enum ConnectionState { OPEN, CLOSE, CONNECTION_FAILED }
+
+	private void fireStateChange(final ConnectionState connectionState, final ServerInfo serverInfo) {
 		for (final ConnectionStateListener listener : listeners) {
 			executor.execute(new Runnable() {
 				@Override
 				public void run() {
-					if (connected) {
-						listener.onOpen(EventBusImpl.this, serverInfo);
-					} else {
-						listener.onClose(EventBusImpl.this, serverInfo);
+					switch (connectionState) {
+						case CLOSE:
+							listener.onClose(EventBusImpl.this, serverInfo);
+							break;
+						case CONNECTION_FAILED:
+							listener.onConnectionFailed(EventBusImpl.this);
+							break;
+						case OPEN:
+							listener.onOpen(EventBusImpl.this, serverInfo);
+							break;
 					}
 				}
 			});
@@ -490,7 +499,7 @@ class EventBusImpl implements EventBus {
 								}
 								publishQueue.clear();
 							}
-							fireStateChange(true, new ServerInfo(
+							fireStateChange(ConnectionState.OPEN, new ServerInfo(
 									context.channel().remoteAddress(),
 									context.channel().localAddress(),
 									serverId,
@@ -518,7 +527,7 @@ class EventBusImpl implements EventBus {
 				public void channelInactive(ChannelHandlerContext context) throws Exception {
 					LOGGER.debug("Client channel inactive");
 					scheduleReconnect();
-					fireStateChange(false, new ServerInfo(
+					fireStateChange(ConnectionState.CLOSE, new ServerInfo(
 							context.channel().remoteAddress(),
 							context.channel().localAddress(),
 							serverId,

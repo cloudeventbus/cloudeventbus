@@ -60,6 +60,11 @@ public class ClientPublish {
 				@Override
 				public void onClose(EventBus eventBus, ServerInfo serverInfo) {
 				}
+				@Override
+				public void onConnectionFailed(EventBus eventBus) {
+					System.err.println("Connection to server failed.");
+					eventBus.close();
+				}
 			}).connect();
 		} catch (ParameterException e) {
 			System.err.println(e.getMessage());

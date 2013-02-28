@@ -35,10 +35,12 @@ public class BlockingConnectionStateListener implements ConnectionStateListener 
 
 	private final CountDownLatch disconnectLatch;
 	private final CountDownLatch connectLatch;
+	private final CountDownLatch connectionFailedLatch;
 
 	public BlockingConnectionStateListener(int latchCount) {
 		disconnectLatch = new CountDownLatch(latchCount);
 		connectLatch = new CountDownLatch(latchCount);
+		connectionFailedLatch = new CountDownLatch(latchCount);
 	}
 
 	public BlockingConnectionStateListener() {
@@ -57,6 +59,12 @@ public class BlockingConnectionStateListener implements ConnectionStateListener 
 		disconnectLatch.countDown();
 	}
 
+	@Override
+	public void onConnectionFailed(EventBus eventBus) {
+		LOGGER.debug("onConnectionFailed");
+		connectionFailedLatch.countDown();
+	}
+
 	public void awaitDisconnect() throws InterruptedException {
 		LOGGER.debug("Awaiting disconnect.");
 		Assert.assertTrue(disconnectLatch.await(10, TimeUnit.SECONDS), "Timed out waiting for connection to close.");
@@ -67,5 +75,11 @@ public class BlockingConnectionStateListener implements ConnectionStateListener 
 		LOGGER.debug("Awaiting connection.");
 		Assert.assertTrue(connectLatch.await(10, TimeUnit.SECONDS), "Timed out waiting for connection to be ready.");
 		LOGGER.debug("Connected ok.");
+	}
+
+	public void awaitConnectionFailed() throws InterruptedException {
+		LOGGER.debug("Awaiting connection failed.");
+		Assert.assertTrue(connectLatch.await(10, TimeUnit.SECONDS), "Timed out waiting for connection to fail.");
+		LOGGER.debug("Connection failed as expected.");
 	}
 }
