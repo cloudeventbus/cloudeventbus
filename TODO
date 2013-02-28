@@ -1,6 +1,8 @@
 - Implement server clustering
   - Advertise cluster info to clients for fail-over
   - Advertise connection state (number of clients, etc.) if peer has significantly less load, redirect new clients to peer
+- Upgrade to latest release of Netty
+- Remove 'spike' module
 - Add support for remembering the last client or server cert/key used to simplify repeated execution of CLI tools
 - Implement a local EventBus for testing.
 - Make CLI first class citizen
