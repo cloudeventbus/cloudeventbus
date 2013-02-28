@@ -44,19 +44,22 @@ public class ClientSubscribe {
 
 			DefaultOptions.setLogLevel(options);
 
-			if (options.mainParameters == null || options.mainParameters.size() != 1) {
+			if (options.mainParameters == null || options.mainParameters.size() < 1) {
 				commander.usage();
 				System.exit(1);
 			}
 
 			final Connector connector = AbstractClientOptions.configureConnector(options);
 			final EventBus eventBus = connector.connect();
-			eventBus.subscribe(options.mainParameters.get(0), new MessageHandler() {
-				@Override
-				public void onMessage(Message message) {
-					System.out.println(message.getSubject() + " : " + message.getBody());
-				}
-			});
+			for (String subject : options.mainParameters) {
+				eventBus.subscribe(subject, new MessageHandler() {
+					@Override
+					public void onMessage(Message message) {
+						System.out.println(message.getSubject() + " : " + message.getBody());
+					}
+				});
+
+			}
 		} catch (ParameterException e) {
 			System.err.println(e.getMessage());
 			commander.usage();
@@ -66,7 +69,7 @@ public class ClientSubscribe {
 
 	private static class Options extends AbstractClientOptions {
 
-		@Parameter(description = "subject")
+		@Parameter(description = "subject1 [subject2 ...]")
 		List<String> mainParameters;
 
 	}

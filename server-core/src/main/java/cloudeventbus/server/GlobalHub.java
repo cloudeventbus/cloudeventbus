@@ -19,47 +19,52 @@ package cloudeventbus.server;
 import cloudeventbus.Subject;
 import cloudeventbus.hub.Hub;
 
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 /**
  * This hub is responsible for distributing messages to all client connections and forwarding messages to peer servers.
  * There should only be one instance of this class per server.
  *
  * @author Mike Heath <elcapo@gmail.com>
  */
-public class GlobalHub implements Hub {
+public class GlobalHub {
 
-	private final Hub clientHub;
-	private final Peers peers;
-
-	/**
-	 * The client hub is the hub that will distribute messages to all client connections including the server itself.
-	 * The peer hub is the hub that will distribute messages to all peer servers.
-	 *
-	 * @param clientHub distributes messages to clients
-	 * @param peers distributes messages to peer servers and manages peer connections
-	 */
-	public GlobalHub(Hub clientHub, Peers peers) {
-		this.clientHub = clientHub;
-		this.peers = peers;
-	}
+	private final List<Hub> localHubs = new CopyOnWriteArrayList<>();
+	private final List<Hub> remoteHubs = new CopyOnWriteArrayList<>();
 
 	/**
-	 * Use this method to distribute messages to the entire distributed system.
+	 * Use this method to distribute messages to just the local subscribers.
 	 *
 	 * @param subject the message subject
 	 * @param replySubject the subject replies should be sent to
 	 * @param body the body of the message
 	 */
-	@Override
 	public void publish(Subject subject, Subject replySubject, String body) {
-		peers.publish(subject, replySubject, body);
-		clientHub.publish(subject, replySubject, body);
+		for (Hub hub : localHubs) {
+			hub.publish(subject, replySubject, body);
+		}
 	}
 
-	public Hub getClientHub() {
-		return clientHub;
+	/**
+	 * Use this method to distribute messages locally as well as to peer servers.
+	 *
+	 * @param subject the message subject
+	 * @param replySubject the subject replies should be sent to
+	 * @param body the body of the message
+	 */
+	public void broadcast(Subject subject, Subject replySubject, String body) {
+		for (Hub hub : remoteHubs) {
+			hub.publish(subject, replySubject, body);
+		}
+		publish(subject, replySubject, body);
 	}
 
-	public Peers getPeers() {
-		return peers;
+	public void addLocalHub(Hub hub) {
+		localHubs.add(hub);
+	}
+
+	public void addRemoteHub(Hub hub) {
+		remoteHubs.add(hub);
 	}
 }

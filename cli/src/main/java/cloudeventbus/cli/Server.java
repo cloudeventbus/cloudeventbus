@@ -19,6 +19,8 @@ package cloudeventbus.cli;
 import cloudeventbus.pki.CertificateChain;
 import cloudeventbus.pki.CertificateUtils;
 import cloudeventbus.pki.TrustStore;
+import cloudeventbus.server.ClusterManager;
+import cloudeventbus.server.GlobalHub;
 import cloudeventbus.server.ServerChannelInitializer;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -30,6 +32,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import java.net.InetSocketAddress;
 import java.security.PrivateKey;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
@@ -74,12 +77,25 @@ public class Server {
 					System.out.println("Using private key at: " + options.privateKey);
 				}
 			}
-			// TODO Implement clustering
+
+			final NioEventLoopGroup parentGroup = new NioEventLoopGroup();
+			final long id = ThreadLocalRandom.current().nextLong();
+			final GlobalHub globalHub = new GlobalHub();
+			final ClusterManager clusterManager = new ClusterManager(id, globalHub, trustStore, certificateChain, privateKey, parentGroup);
+			if (options.peers != null) {
+				for (String peer : options.peers) {
+					final String[] parts = peer.split(":");
+					if (parts.length != 2) {
+						throw new IllegalArgumentException("Invalid peer address " + peer + " should be HOST:PORT (e.g. 127.0.0.1:4223)");
+					}
+					clusterManager.registerPeer(new InetSocketAddress(parts[0], Integer.valueOf(parts[1])));
+				}
+			}
 			new ServerBootstrap()
-					.group(new NioEventLoopGroup(), new NioEventLoopGroup())
+					.group(parentGroup, new NioEventLoopGroup())
 					.channel(NioServerSocketChannel.class)
 					.localAddress(new InetSocketAddress(port))
-					.childHandler(new ServerChannelInitializer("eventbus-simple-server", trustStore, certificateChain, privateKey))
+					.childHandler(new ServerChannelInitializer("cloudeventbus-simple-server", id, clusterManager, globalHub, trustStore, certificateChain, privateKey))
 					.bind().awaitUninterruptibly();
 			System.out.println("Server listening on port " + port);
 		} catch (ParameterException e) {
@@ -100,7 +116,7 @@ public class Server {
 		@Parameter(names = "-privateKey", description = "The file containing the private key for the server's certificate.")
 		String privateKey;
 
-		@Parameter(names = "-peer", description = "A peer server to cluster with (e.g. -peer 10.1.2.3:4321)")
+		@Parameter(names = "-peer", description = "A peer server to cluster with (e.g. -peer 10.1.2.3:4223)")
 		List<String> peers;
 	}
 }

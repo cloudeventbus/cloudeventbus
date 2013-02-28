@@ -35,30 +35,38 @@ import java.security.PrivateKey;
  */
 public class ServerChannelInitializer extends ChannelInitializer<SocketChannel> {
 
-	private final String versionString;
+	private final String agentString;
+	private final long id;
+	private final ClusterManager clusterManager;
+	private final GlobalHub globalHub;
 	private final TrustStore trustStore;
 	private final CertificateChain certificateChain;
 	private final PrivateKey privateKey;
-	// TODO Move initialization of Hub out of initializer
-	private final SubscribeableHub<Frame> hub = new AbstractHub<Frame>() {
+
+	final SubscribeableHub<Frame> clientSubscriptionHub = new AbstractHub<Frame>() {
 		@Override
 		protected Frame encode(Subject subject, Subject replySubject, String body, int recipientCount) {
 			return new PublishFrame(subject, replySubject, body);
 		}
 	};
 
-	public ServerChannelInitializer(String versionString, TrustStore trustStore, CertificateChain certificateChain, PrivateKey privateKey) {
-		this.versionString = versionString;
+	public ServerChannelInitializer(String agentString, long id, ClusterManager clusterManager, GlobalHub globalHub, TrustStore trustStore, CertificateChain certificateChain, PrivateKey privateKey) {
+		this.agentString = agentString;
+		this.id = id;
+		this.clusterManager = clusterManager;
+		this.globalHub = globalHub;
 		this.trustStore = trustStore;
 		this.certificateChain = certificateChain;
 		this.privateKey = privateKey;
+
+		globalHub.addLocalHub(clientSubscriptionHub);
 	}
 
 	@Override
 	public void initChannel(SocketChannel ch) throws Exception {
 		final ChannelPipeline pipeline = ch.pipeline();
 		pipeline.addLast(new Codec());
-		pipeline.addLast(new ServerHandler(versionString, hub, trustStore, certificateChain, privateKey));
+		pipeline.addLast(new ServerHandler(agentString, id, clusterManager, globalHub, clientSubscriptionHub, trustStore, certificateChain, privateKey));
 	}
 
 }

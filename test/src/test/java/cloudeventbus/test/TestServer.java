@@ -1,6 +1,10 @@
 package cloudeventbus.test;
 
 import cloudeventbus.Constants;
+import cloudeventbus.pki.CertificateChain;
+import cloudeventbus.pki.TrustStore;
+import cloudeventbus.server.ClusterManager;
+import cloudeventbus.server.GlobalHub;
 import cloudeventbus.server.ServerChannelInitializer;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelHandler;
@@ -14,11 +18,19 @@ import io.netty.channel.socket.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 
 import java.net.InetSocketAddress;
+import java.security.PrivateKey;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
+// TODO Write clustering tests
+// TODO Write test to verify server id in greeting frame
 public class TestServer implements AutoCloseable {
+
+	private final long id = ThreadLocalRandom.current().nextLong();
+	private final ClusterManager clusterManager;
+	private final GlobalHub globalHub;
 
 	final ServerBootstrap bootstrap = new ServerBootstrap();
 
@@ -40,11 +52,18 @@ public class TestServer implements AutoCloseable {
 	}
 
 	public TestServer(String agent, int port) {
+		this(agent, port, null, null, null);
+	}
+
+	public TestServer(String agent, int port, TrustStore trustStore, CertificateChain certificates, PrivateKey privateKey) {
+		final NioEventLoopGroup eventLoopGroup = new NioEventLoopGroup();
+		globalHub = new GlobalHub();
+		clusterManager = new ClusterManager(id, globalHub, trustStore, certificates, privateKey, eventLoopGroup);
 		bootstrap
-				.group(new NioEventLoopGroup(), new NioEventLoopGroup())
+				.group(eventLoopGroup, new NioEventLoopGroup())
 				.channel(NioServerSocketChannel.class)
 				.localAddress(new InetSocketAddress(port))
-				.childHandler(new ServerChannelInitializer(agent, null, null, null) {
+				.childHandler(new ServerChannelInitializer(agent, id, clusterManager, globalHub, trustStore, certificates, privateKey) {
 					@Override
 					public void initChannel(SocketChannel channel) throws Exception {
 						super.initChannel(channel);

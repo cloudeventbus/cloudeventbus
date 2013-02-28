@@ -32,7 +32,6 @@ import cloudeventbus.codec.SubscribeFrame;
 import cloudeventbus.codec.UnsubscribeFrame;
 import cloudeventbus.hub.SubscribeableHub;
 import cloudeventbus.hub.SubscriptionHandle;
-import cloudeventbus.pki.Certificate;
 import cloudeventbus.pki.CertificateChain;
 import cloudeventbus.pki.CertificatePermissionError;
 import cloudeventbus.pki.CertificateUtils;
@@ -51,7 +50,6 @@ import java.security.PrivateKey;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -61,10 +59,11 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ServerHandler.class);
 
-	private final long id = ThreadLocalRandom.current().nextLong();
-
 	private final String agentString;
-	private final SubscribeableHub<Frame> hub;
+	private final long id;
+	private final ClusterManager clusterManager;
+	private final GlobalHub hub;
+	private final SubscribeableHub<Frame> clientSubscriptionHub;
 	private final TrustStore trustStore;
 	private final CertificateChain certificateChain;
 	private final PrivateKey privateKey;
@@ -73,6 +72,7 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 	private boolean serverReady = false;
 	private CertificateChain clientCertificates;
 	private String clientAgent;
+	private boolean serverConnection;
 
 	// Subscription handler fields
 	private NettyHandler handler;
@@ -84,9 +84,12 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 	private Runnable pingTask;
 	private ScheduledFuture<?> pingFuture;
 
-	public ServerHandler(String agentString, SubscribeableHub<Frame> hub, TrustStore trustStore, CertificateChain certificateChain, PrivateKey privateKey) {
+	public ServerHandler(String agentString, long id, ClusterManager clusterManager, GlobalHub hub, SubscribeableHub<Frame> clientSubscriptionHub, TrustStore trustStore, CertificateChain certificateChain, PrivateKey privateKey) {
 		this.agentString = agentString;
+		this.id = id;
+		this.clusterManager = clusterManager;
 		this.hub = hub;
+		this.clientSubscriptionHub = clientSubscriptionHub;
 		this.trustStore = trustStore;
 		this.certificateChain = certificateChain;
 		this.privateKey = privateKey;
@@ -101,15 +104,23 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 				AuthenticationResponseFrame authenticationResponse = (AuthenticationResponseFrame) frame;
 				final CertificateChain certificates = authenticationResponse.getCertificates();
 				trustStore.validateCertificateChain(certificates);
-				if (certificates.getLast().getType() == Certificate.Type.AUTHORITY) {
-					throw new InvalidCertificateException("Can not use an authority certificate to authenticate to server.");
-				}
 				this.clientCertificates = certificates;
 				CertificateUtils.validateSignature(
 						certificates.getLast().getPublicKey(),
 						challenge,
 						authenticationResponse.getSalt(),
 						authenticationResponse.getDigitalSignature());
+				switch (certificates.getLast().getType()) {
+					case AUTHORITY:
+						throw new InvalidCertificateException("Can not use an authority certificate to authenticate to server.");
+					case CLIENT:
+						serverConnection = false;
+						break;
+					case SERVER:
+						serverConnection = true;
+						clusterManager.addPeer(new ServerPeer(id, context.channel()));
+						break;
+				}
 				serverReady = true;
 				context.write(ServerReadyFrame.SERVER_READY);
 				break;
@@ -151,14 +162,21 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 						case PUBLISH: {
 							final PublishFrame publishFrame = (PublishFrame) frame;
 							final Subject subject = publishFrame.getSubject();
+							final String body = publishFrame.getBody();
 							if (clientCertificates != null) {
 								clientCertificates.getLast().validatePublishPermission(subject);
 							}
 							final Subject replySubject = publishFrame.getReplySubject();
-							if (replySubject != null) {
-								hub.subscribe(replySubject, handler);
+							// Implicitly subscribe for requests
+							if (replySubject != null && replySubject.isRequestReply()) {
+								clientSubscriptionHub.subscribe(replySubject, handler);
 							}
-							hub.publish(subject, replySubject, publishFrame.getBody());
+							// If the publish is coming from a peer server, publish locally
+							if (serverConnection) {
+								hub.publish(subject, replySubject, body);
+							} else {
+								hub.broadcast(subject, replySubject, body);
+							}
 							break;
 						}
 						case SUBSCRIBE: {
@@ -170,7 +188,7 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 							if (subscriptionHandles.containsKey(subject)) {
 								throw new DuplicateSubscriptionException("Already subscribed to subject " + subject);
 							}
-							final SubscriptionHandle subscriptionHandle = hub.subscribe(subject, handler);
+							final SubscriptionHandle subscriptionHandle = clientSubscriptionHub.subscribe(subject, handler);
 							subscriptionHandles.put(subject, subscriptionHandle);
 							break;
 						}

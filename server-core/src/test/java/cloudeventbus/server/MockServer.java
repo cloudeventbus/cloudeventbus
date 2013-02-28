@@ -28,6 +28,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.embedded.EmbeddedByteChannel;
 
 import java.security.PrivateKey;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
@@ -36,23 +37,39 @@ public class MockServer {
 
 	public static final String SERVER_AGENT = "mock-server-0.1";
 
+	final long serverId = ThreadLocalRandom.current().nextLong();
 	final EmbeddedByteChannel serverChannel;
 	final EmbeddedByteChannel clientChannel = new EmbeddedByteChannel(new Codec());
 
-	final SubscribeableHub<Frame> hub = new AbstractHub<Frame>() {
-			@Override
-			protected Frame encode(Subject subject, Subject replySubject, String body, int recipientCount) {
-				return new PublishFrame(subject, replySubject, body);
-			}
-		};
+	final ClusterManager clusterManager;
+	final GlobalHub globalHub;
+
+	final SubscribeableHub<Frame> clientSubscriptionHub = new AbstractHub<Frame>() {
+		@Override
+		protected Frame encode(Subject subject, Subject replySubject, String body, int recipientCount) {
+			return new PublishFrame(subject, replySubject, body);
+		}
+	};
+
 	public MockServer() {
-		serverChannel = new EmbeddedByteChannel(new Codec(), new ServerHandler(SERVER_AGENT, hub, null, null, null));
+		this(null, null, null);
 	}
 
 	public MockServer(TrustStore trustStore, CertificateChain certificateChain, PrivateKey privateKey) {
+		globalHub = new GlobalHub();
+		clusterManager = new ClusterManager(serverId, globalHub, trustStore, certificateChain, privateKey, null);
+		globalHub.addLocalHub(clientSubscriptionHub);
 		serverChannel = new EmbeddedByteChannel(
 				new Codec(),
-				new ServerHandler(SERVER_AGENT, hub, trustStore, certificateChain, privateKey));
+				new ServerHandler(
+						SERVER_AGENT,
+						serverId,
+						clusterManager,
+						globalHub,
+						clientSubscriptionHub,
+						trustStore,
+						certificateChain,
+						privateKey));
 	}
 
 	Frame read() {

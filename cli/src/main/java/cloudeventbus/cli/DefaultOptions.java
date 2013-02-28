@@ -29,7 +29,7 @@ class DefaultOptions {
 	@Parameter(names = "-trustStore", description = "Specifies the trust store to use.")
 	String trustStore = System.getProperty("user.home") + "/.cloudeventbus/" + "truststore";
 
-	@Parameter(names = "-logLevel", description = "Logging level (DEBUG, ERROR, INFO, OFF)", converter = LogLevelConverter.class)
+	@Parameter(names = "-logLevel", description = "Logging level (DEBUG, ERROR, INFO, OFF)", converter = LogLevelConverter.class, hidden = true)
 	Level logLevel = Level.WARN;
 
 	static void setLogLevel(DefaultOptions options) {

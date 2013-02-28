@@ -17,27 +17,47 @@
 package cloudeventbus.server;
 
 import cloudeventbus.Subject;
+import cloudeventbus.client.EventBus;
 
 import java.net.SocketAddress;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
-public interface Peer {
+public class ClientPeer implements Peer {
 
-	long getId();
+	private final long id;
+	private final SocketAddress address;
+	private final EventBus eventBus;
 
-	SocketAddress getAddress();
+	public ClientPeer(long id, SocketAddress address, EventBus eventBus) {
+		this.id = id;
+		this.address = address;
+		this.eventBus = eventBus;
+	}
 
-	void publish(Subject subject, Subject replySubject, String body);
+	@Override
+	public void publish(Subject subject, Subject replySubject, String body) {
+		eventBus.publish(subject.toString(), replySubject.toString(), body);
+	}
 
-	/**
-	 * Called by {@link ClusterManager} to clean up any resources the Peer may be holding.
-	 */
-	void close();
+	@Override
+	public boolean isConnected() {
+		return eventBus.isServerReady();
+	}
 
-	/**
-	 * Indicates if this peer is connected.
-	 */
-	boolean isConnected();
+	@Override
+	public void close() {
+		eventBus.close();
+	}
+
+	@Override
+	public long getId() {
+		return id;
+	}
+
+	@Override
+	public SocketAddress getAddress() {
+		return address;
+	}
 }
