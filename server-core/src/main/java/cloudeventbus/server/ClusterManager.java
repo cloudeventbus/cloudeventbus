@@ -24,15 +24,12 @@ import cloudeventbus.client.Message;
 import cloudeventbus.client.MessageHandler;
 import cloudeventbus.client.ServerInfo;
 import cloudeventbus.hub.Hub;
-import cloudeventbus.pki.CertificateChain;
-import cloudeventbus.pki.TrustStore;
 import io.netty.channel.EventLoopGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.security.PrivateKey;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -49,11 +46,8 @@ public class ClusterManager implements Hub {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ClusterManager.class);
 
-	private final long serverId;
+	private final ServerConfig serverConfig;
 	private final GlobalHub globalHub;
-	private final TrustStore trustStore;
-	private final CertificateChain serverCertificates;
-	private final PrivateKey privateKey;
 
 	private final EventLoopGroup eventLoopGroup;
 
@@ -62,12 +56,9 @@ public class ClusterManager implements Hub {
 
 	private final Object lock = new Object();
 
-	public ClusterManager(final long serverId, GlobalHub globalHub, TrustStore trustStore, CertificateChain serverCertificates, PrivateKey privateKey, EventLoopGroup eventLoopGroup) {
-		this.serverId = serverId;
+	public ClusterManager(final ServerConfig serverConfig,GlobalHub globalHub, EventLoopGroup eventLoopGroup) {
+		this.serverConfig = serverConfig;
 		this.globalHub = globalHub;
-		this.trustStore = trustStore;
-		this.serverCertificates = serverCertificates;
-		this.privateKey = privateKey;
 		this.eventLoopGroup = eventLoopGroup;
 
 		globalHub.addRemoteHub(this);
@@ -77,7 +68,7 @@ public class ClusterManager implements Hub {
 		localPeerInfo.setPeer(new Peer() {
 			@Override
 			public long getId() {
-				return serverId;
+				return serverConfig.getId();
 			}
 
 			@Override
@@ -100,28 +91,13 @@ public class ClusterManager implements Hub {
 				return true;
 			}
 		});
-		knownPeers.put(serverId, localPeerInfo);
+		knownPeers.put(serverConfig.getId(), localPeerInfo);
 
 		if (eventLoopGroup != null) {
 			eventLoopGroup.next().scheduleWithFixedDelay(new Runnable() {
 				@Override
 				public void run() {
-					LOGGER.debug("Checking status of peer connections");
-					synchronized (lock) {
-						// Periodically check for peers that need to be connected to
-						for (Iterator<PeerInfo> i = knownPeers.values().iterator(); i.hasNext();) {
-							final PeerInfo peerInfo = i.next();
-							if (peerInfo.peer == null || !peerInfo.peer.isConnected()) {
-								final long timeWithoutConnection = System.currentTimeMillis() - peerInfo.timeConnectionUpdated;
-								if (timeWithoutConnection > MAX_PEER_TRACK_TIME_WITHOUT_CONNECTION && !peerInfo.staticPeer) {
-									LOGGER.info("Unable to connect to peer {}. Removing from cluster.");
-									i.remove();
-								} else {
-									peerInfo.checkConnection();
-								}
-							}
-						}
-					}
+					cloudCheck();
 				}
 			}, CLUSTER_CHECK_INTERVAL, CLUSTER_CHECK_INTERVAL, TimeUnit.MILLISECONDS);
 		}
@@ -167,16 +143,35 @@ public class ClusterManager implements Hub {
 		}
 	}
 
+	public void cloudCheck() {
+		LOGGER.debug("Checking status of peer connections");
+		synchronized (lock) {
+			// Periodically check for peers that need to be connected to
+			for (Iterator<PeerInfo> i = knownPeers.values().iterator(); i.hasNext();) {
+				final PeerInfo peerInfo = i.next();
+				if (peerInfo.peer == null || !peerInfo.peer.isConnected()) {
+					final long timeWithoutConnection = System.currentTimeMillis() - peerInfo.timeConnectionUpdated;
+					if (timeWithoutConnection > MAX_PEER_TRACK_TIME_WITHOUT_CONNECTION && !peerInfo.staticPeer) {
+						LOGGER.info("Unable to connect to peer {}. Removing from cluster.");
+						i.remove();
+					} else {
+						peerInfo.checkConnection();
+					}
+				}
+			}
+		}
+	}
+
 	private void connect(final SocketAddress address, final boolean staticPeer) {
 		LOGGER.debug("Connecting to peer server at {}", address);
 		// TODO When we add an option to disable auto discovery of peer servers (when we implement that feature) and disable that here.
 		new Connector()
 				.addServer(address)
-				.trustStore(trustStore)
-				.certificateChain(serverCertificates)
-				.privateKey(privateKey)
+				.trustStore(serverConfig.getTrustStore())
+				.certificateChain(serverConfig.getCertificateChain())
+				.privateKey(serverConfig.getPrivateKey())
 				.eventLoop(eventLoopGroup)
-				.uniqueId(serverId)
+				.uniqueId(serverConfig.getId())
 				.addConnectionStateListener(new ConnectionStateListener() {
 					private PeerInfo peerInfo;
 

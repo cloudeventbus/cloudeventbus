@@ -37,7 +37,6 @@ import cloudeventbus.pki.CertificatePermissionError;
 import cloudeventbus.pki.CertificateUtils;
 import cloudeventbus.pki.InvalidCertificateException;
 import cloudeventbus.pki.InvalidSignatureException;
-import cloudeventbus.pki.TrustStore;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundMessageHandlerAdapter;
@@ -46,7 +45,6 @@ import io.netty.handler.codec.DecoderException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.security.PrivateKey;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
@@ -59,14 +57,11 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ServerHandler.class);
 
-	private final String agentString;
-	private final long id;
+	private final ServerConfig serverConfig;
+
 	private final ClusterManager clusterManager;
 	private final GlobalHub hub;
 	private final SubscribeableHub<Frame> clientSubscriptionHub;
-	private final TrustStore trustStore;
-	private final CertificateChain certificateChain;
-	private final PrivateKey privateKey;
 
 	private byte[] challenge;
 	private boolean serverReady = false;
@@ -85,15 +80,11 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 	private Runnable pingTask;
 	private ScheduledFuture<?> pingFuture;
 
-	public ServerHandler(String agentString, long id, ClusterManager clusterManager, GlobalHub hub, SubscribeableHub<Frame> clientSubscriptionHub, TrustStore trustStore, CertificateChain certificateChain, PrivateKey privateKey) {
-		this.agentString = agentString;
-		this.id = id;
+	public ServerHandler(ServerConfig serverConfig, ClusterManager clusterManager, GlobalHub hub, SubscribeableHub<Frame> clientSubscriptionHub) {
+		this.serverConfig = serverConfig;
 		this.clusterManager = clusterManager;
 		this.hub = hub;
 		this.clientSubscriptionHub = clientSubscriptionHub;
-		this.trustStore = trustStore;
-		this.certificateChain = certificateChain;
-		this.privateKey = privateKey;
 	}
 
 	@Override
@@ -104,7 +95,7 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 			case AUTH_RESPONSE: {
 				AuthenticationResponseFrame authenticationResponse = (AuthenticationResponseFrame) frame;
 				final CertificateChain certificates = authenticationResponse.getCertificates();
-				trustStore.validateCertificateChain(certificates);
+				serverConfig.getTrustStore().validateCertificateChain(certificates);
 				this.clientCertificates = certificates;
 				CertificateUtils.validateSignature(
 						certificates.getLast().getPublicKey(),
@@ -127,13 +118,13 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 				break;
 			}
 			case AUTHENTICATE: {
-				if (certificateChain == null || privateKey == null) {
+				if (!serverConfig.hasSecurityCredentials()) {
 					throw new CloudEventBusServerException("Unable to authenticate with server, missing private key or certificate chain");
 				}
 				final AuthenticationRequestFrame authenticationRequest = (AuthenticationRequestFrame) frame;
 				final byte[] salt = CertificateUtils.generateChallenge();
-				final byte[] signature = CertificateUtils.signChallenge(privateKey, authenticationRequest.getChallenge(), salt);
-				AuthenticationResponseFrame authenticationResponse = new AuthenticationResponseFrame(certificateChain, salt, signature);
+				final byte[] signature = CertificateUtils.signChallenge(serverConfig.getPrivateKey(), authenticationRequest.getChallenge(), salt);
+				AuthenticationResponseFrame authenticationResponse = new AuthenticationResponseFrame(serverConfig.getCertificateChain(), salt, signature);
 				context.write(authenticationResponse);
 				break;
 			}
@@ -144,8 +135,9 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 				if (greetingFrame.getVersion() != Constants.PROTOCOL_VERSION) {
 					throw new InvalidProtocolVersionException("This server doesn't support protocol version " + greetingFrame.getVersion());
 				}
-				context.write(new GreetingFrame(Constants.PROTOCOL_VERSION, agentString, id));
-				if (trustStore == null) {
+				// TODO Try moving this back to channelActive and see if server still crashes...
+				context.write(new GreetingFrame(Constants.PROTOCOL_VERSION, serverConfig.getAgentString(), serverConfig.getId()));
+				if (serverConfig.getTrustStore() == null) {
 					serverReady = true;
 					context.write(ServerReadyFrame.SERVER_READY);
 				} else {
@@ -169,7 +161,7 @@ public class ServerHandler extends ChannelInboundMessageHandlerAdapter<Frame> {
 								clientCertificates.getLast().validatePublishPermission(subject);
 							}
 							final Subject replySubject = publishFrame.getReplySubject();
-							// Implicitly subscribe for requests
+							// Implicitly subscribe to request reply subjects
 							if (replySubject != null && replySubject.isRequestReply()) {
 								clientSubscriptionHub.subscribe(replySubject, handler);
 							}

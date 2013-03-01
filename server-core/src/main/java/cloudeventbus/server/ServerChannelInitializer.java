@@ -22,26 +22,18 @@ import cloudeventbus.codec.Frame;
 import cloudeventbus.codec.PublishFrame;
 import cloudeventbus.hub.AbstractHub;
 import cloudeventbus.hub.SubscribeableHub;
-import cloudeventbus.pki.CertificateChain;
-import cloudeventbus.pki.TrustStore;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
-
-import java.security.PrivateKey;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
  */
 public class ServerChannelInitializer extends ChannelInitializer<SocketChannel> {
 
-	private final String agentString;
-	private final long id;
+	private final ServerConfig serverConfig;
 	private final ClusterManager clusterManager;
 	private final GlobalHub globalHub;
-	private final TrustStore trustStore;
-	private final CertificateChain certificateChain;
-	private final PrivateKey privateKey;
 
 	final SubscribeableHub<Frame> clientSubscriptionHub = new AbstractHub<Frame>() {
 		@Override
@@ -50,14 +42,10 @@ public class ServerChannelInitializer extends ChannelInitializer<SocketChannel> 
 		}
 	};
 
-	public ServerChannelInitializer(String agentString, long id, ClusterManager clusterManager, GlobalHub globalHub, TrustStore trustStore, CertificateChain certificateChain, PrivateKey privateKey) {
-		this.agentString = agentString;
-		this.id = id;
+	public ServerChannelInitializer(ServerConfig serverConfig, ClusterManager clusterManager, GlobalHub globalHub) {
+		this.serverConfig = serverConfig;
 		this.clusterManager = clusterManager;
 		this.globalHub = globalHub;
-		this.trustStore = trustStore;
-		this.certificateChain = certificateChain;
-		this.privateKey = privateKey;
 
 		globalHub.addLocalHub(clientSubscriptionHub);
 	}
@@ -66,7 +54,7 @@ public class ServerChannelInitializer extends ChannelInitializer<SocketChannel> 
 	public void initChannel(SocketChannel ch) throws Exception {
 		final ChannelPipeline pipeline = ch.pipeline();
 		pipeline.addLast(new Codec());
-		pipeline.addLast(new ServerHandler(agentString, id, clusterManager, globalHub, clientSubscriptionHub, trustStore, certificateChain, privateKey));
+		pipeline.addLast(new ServerHandler(serverConfig, clusterManager, globalHub, clientSubscriptionHub));
 	}
 
 }

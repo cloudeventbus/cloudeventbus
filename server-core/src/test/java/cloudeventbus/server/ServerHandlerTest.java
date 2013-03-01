@@ -16,6 +16,7 @@
  */
 package cloudeventbus.server;
 
+import cloudeventbus.Constants;
 import cloudeventbus.Subject;
 import cloudeventbus.codec.AuthenticationRequestFrame;
 import cloudeventbus.codec.AuthenticationResponseFrame;
@@ -95,7 +96,7 @@ public class ServerHandlerTest {
 		);
 		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);
 
-		final MockServer server = new MockServer(trustStore, null, null);
+		final MockServer server = new MockServer(new ServerConfig(Constants.DEFAULT_PORT, MockServer.SERVER_AGENT, trustStore, null, null));
 		server.write(new GreetingFrame(1, "mock-client", 0l));
 
 		final GreetingFrame greeting = (GreetingFrame) server.read();
@@ -134,7 +135,7 @@ public class ServerHandlerTest {
 		);
 		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);
 
-		final MockServer server = new MockServer(trustStore, null, null);
+		final MockServer server = new MockServer(new ServerConfig(Constants.DEFAULT_PORT, MockServer.SERVER_AGENT, trustStore, null, null));
 		server.write(new GreetingFrame(1, "mock-client", 0l));
 
 		final GreetingFrame greeting = (GreetingFrame) server.read();
@@ -177,7 +178,7 @@ public class ServerHandlerTest {
 		);
 		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);
 
-		final MockServer server = new MockServer(trustStore, null, null);
+		final MockServer server = new MockServer(new ServerConfig(Constants.DEFAULT_PORT, MockServer.SERVER_AGENT, trustStore, null, null));
 		server.write(new GreetingFrame(1, "mock-client", 0l));
 
 		final GreetingFrame greeting = (GreetingFrame) server.read();
@@ -225,7 +226,7 @@ public class ServerHandlerTest {
 		);
 		final CertificateChain clientCertificates = new CertificateChain(clientCertificate);
 
-		final MockServer server = new MockServer(trustStore, null, null);
+		final MockServer server = new MockServer(new ServerConfig(Constants.DEFAULT_PORT, MockServer.SERVER_AGENT, trustStore, null, null));
 		server.write(new GreetingFrame(1, "mock-client", 0l));
 
 		final GreetingFrame greeting = (GreetingFrame) server.read();

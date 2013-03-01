@@ -22,6 +22,7 @@ import cloudeventbus.pki.TrustStore;
 import cloudeventbus.server.ClusterManager;
 import cloudeventbus.server.GlobalHub;
 import cloudeventbus.server.ServerChannelInitializer;
+import cloudeventbus.server.ServerConfig;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
@@ -32,7 +33,6 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import java.net.InetSocketAddress;
 import java.security.PrivateKey;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
@@ -79,9 +79,9 @@ public class Server {
 			}
 
 			final NioEventLoopGroup parentGroup = new NioEventLoopGroup();
-			final long id = ThreadLocalRandom.current().nextLong();
 			final GlobalHub globalHub = new GlobalHub();
-			final ClusterManager clusterManager = new ClusterManager(id, globalHub, trustStore, certificateChain, privateKey, parentGroup);
+			final ServerConfig serverConfig = new ServerConfig(port, "cloudeventbus-simple-server", trustStore, certificateChain, privateKey);
+			final ClusterManager clusterManager = new ClusterManager(serverConfig, globalHub, parentGroup);
 			if (options.peers != null) {
 				for (String peer : options.peers) {
 					final String[] parts = peer.split(":");
@@ -95,7 +95,7 @@ public class Server {
 					.group(parentGroup, new NioEventLoopGroup())
 					.channel(NioServerSocketChannel.class)
 					.localAddress(new InetSocketAddress(port))
-					.childHandler(new ServerChannelInitializer("cloudeventbus-simple-server", id, clusterManager, globalHub, trustStore, certificateChain, privateKey))
+					.childHandler(new ServerChannelInitializer(serverConfig, clusterManager, globalHub))
 					.bind().awaitUninterruptibly();
 			System.out.println("Server listening on port " + port);
 		} catch (ParameterException e) {

@@ -16,19 +16,15 @@
  */
 package cloudeventbus.server;
 
+import cloudeventbus.Constants;
 import cloudeventbus.Subject;
 import cloudeventbus.codec.Codec;
 import cloudeventbus.codec.Frame;
 import cloudeventbus.codec.PublishFrame;
 import cloudeventbus.hub.AbstractHub;
 import cloudeventbus.hub.SubscribeableHub;
-import cloudeventbus.pki.CertificateChain;
-import cloudeventbus.pki.TrustStore;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.embedded.EmbeddedByteChannel;
-
-import java.security.PrivateKey;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
@@ -37,7 +33,6 @@ public class MockServer {
 
 	public static final String SERVER_AGENT = "mock-server-0.1";
 
-	final long serverId = ThreadLocalRandom.current().nextLong();
 	final EmbeddedByteChannel serverChannel;
 	final EmbeddedByteChannel clientChannel = new EmbeddedByteChannel(new Codec());
 
@@ -52,24 +47,21 @@ public class MockServer {
 	};
 
 	public MockServer() {
-		this(null, null, null);
+		this(new ServerConfig(Constants.DEFAULT_PORT, SERVER_AGENT, null, null, null));
 	}
 
-	public MockServer(TrustStore trustStore, CertificateChain certificateChain, PrivateKey privateKey) {
+	public MockServer(ServerConfig serverConfig) {
 		globalHub = new GlobalHub();
-		clusterManager = new ClusterManager(serverId, globalHub, trustStore, certificateChain, privateKey, null);
+		clusterManager = new ClusterManager(serverConfig, globalHub, null);
 		globalHub.addLocalHub(clientSubscriptionHub);
 		serverChannel = new EmbeddedByteChannel(
 				new Codec(),
 				new ServerHandler(
-						SERVER_AGENT,
-						serverId,
+						serverConfig,
 						clusterManager,
 						globalHub,
-						clientSubscriptionHub,
-						trustStore,
-						certificateChain,
-						privateKey));
+						clientSubscriptionHub
+				));
 	}
 
 	Frame read() {

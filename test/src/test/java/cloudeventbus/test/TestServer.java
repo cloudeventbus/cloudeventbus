@@ -1,11 +1,10 @@
 package cloudeventbus.test;
 
 import cloudeventbus.Constants;
-import cloudeventbus.pki.CertificateChain;
-import cloudeventbus.pki.TrustStore;
 import cloudeventbus.server.ClusterManager;
 import cloudeventbus.server.GlobalHub;
 import cloudeventbus.server.ServerChannelInitializer;
+import cloudeventbus.server.ServerConfig;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -15,15 +14,13 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelStateHandlerAdapter;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
-import java.security.PrivateKey;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * @author Mike Heath <elcapo@gmail.com>
@@ -35,7 +32,7 @@ public class TestServer implements AutoCloseable {
 
 	public static final String SERVER_AGENT = "test-server-0.1";
 
-	private final long id = ThreadLocalRandom.current().nextLong();
+	private final ServerConfig serverConfig;
 	private final ClusterManager clusterManager;
 	private final GlobalHub globalHub;
 
@@ -71,18 +68,19 @@ public class TestServer implements AutoCloseable {
 	}
 
 	public TestServer(String agent, int port) {
-		this(agent, port, null, null, null);
+		this(new ServerConfig(port, agent, null, null, null));
 	}
 
-	public TestServer(String agent, int port, TrustStore trustStore, CertificateChain certificates, PrivateKey privateKey) {
+	public TestServer(ServerConfig serverConfig) {
+		this.serverConfig = serverConfig;
 		final NioEventLoopGroup eventLoopGroup = new NioEventLoopGroup();
 		globalHub = new GlobalHub();
-		clusterManager = new ClusterManager(id, globalHub, trustStore, certificates, privateKey, eventLoopGroup);
+		clusterManager = new ClusterManager(serverConfig, globalHub, eventLoopGroup);
 		bootstrap
 				.group(eventLoopGroup, new NioEventLoopGroup())
 				.channel(NioServerSocketChannel.class)
-				.localAddress(new InetSocketAddress(port))
-				.childHandler(new ServerChannelInitializer(agent, id, clusterManager, globalHub, trustStore, certificates, privateKey) {
+				.localAddress(new InetSocketAddress(serverConfig.getPort()))
+				.childHandler(new ServerChannelInitializer(serverConfig, clusterManager, globalHub) {
 					@Override
 					public void initChannel(SocketChannel channel) throws Exception {
 						super.initChannel(channel);
@@ -91,7 +89,7 @@ public class TestServer implements AutoCloseable {
 					}
 				})
 				.bind().awaitUninterruptibly();
-		System.out.println("Server listening on port " + port);
+		System.out.println("Server listening on port " + serverConfig.getPort());
 	}
 
 	public int getConnectionCount() {
@@ -104,6 +102,6 @@ public class TestServer implements AutoCloseable {
 	}
 
 	public long getId() {
-		return id;
+		return serverConfig.getId();
 	}
 }
