@@ -26,3 +26,4 @@
 - Revamp exceptions - Fewer exception, move error codes to common module.
 - Add support for building .zip to Gradle build
 - Spring integration, similar to NATS client
+- Migrate to PEM for persisting/serializing keys - This will make it easier to integrate with platforms that rely on OpenSSL.
