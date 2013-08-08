@@ -15,7 +15,7 @@
 - Implement VCAP component based server
   - Use NATS for peer discover
   - Publish component info on NATS, /varz and /healthz - Get a release of Java component framework out
-- Implement a VCAP service gateway
+- Implement a VCAP service broker on Cloud Foundry
 - Lower disconnect timeout if client doesn't authenticate. No ping unless server is ready
 - Create a BOSH release
 - Browser client/server (websocket based, maybe engine.io based)
